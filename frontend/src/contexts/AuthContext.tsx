@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '../config/supabase';
 import axios from 'axios';
 
 // Configurar base URL para producción
