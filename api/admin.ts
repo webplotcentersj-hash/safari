@@ -49,18 +49,65 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Actualizar estado de piloto
     try {
       const id = path.split('/admin/pilots/')[1]?.split('/status')[0] || query.id;
-      const { estado } = body;
+      const { estado, precio } = body;
 
       if (!['pendiente', 'aprobado', 'rechazado'].includes(estado)) {
         return res.status(400).json({ error: 'Estado inválido' });
       }
 
-      const { error } = await supabaseAdmin
+      // Obtener datos del piloto antes de actualizar
+      const { data: pilot, error: pilotError } = await supabaseAdmin
+        .from('pilots')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (pilotError || !pilot) {
+        return res.status(404).json({ error: 'Piloto no encontrado' });
+      }
+
+      // Actualizar estado del piloto
+      const { error: updateError } = await supabaseAdmin
         .from('pilots')
         .update({ estado })
         .eq('id', id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Si se aprueba el piloto, generar ticket automáticamente
+      if (estado === 'aprobado') {
+        // Verificar si ya existe un ticket para este piloto
+        const { data: existingTicket } = await supabaseAdmin
+          .from('tickets')
+          .select('id')
+          .eq('dni', pilot.dni)
+          .single();
+
+        // Solo generar ticket si no existe uno previo
+        if (!existingTicket) {
+          const codigo = `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+          const nombreCompleto = `${pilot.nombre} ${pilot.apellido}`;
+          const precioTicket = precio ? parseFloat(precio) : 0;
+
+          const { error: ticketError } = await supabaseAdmin
+            .from('tickets')
+            .insert({
+              codigo,
+              tipo: 'Piloto',
+              nombre: nombreCompleto,
+              dni: pilot.dni,
+              email: pilot.email,
+              precio: precioTicket,
+              usado: false
+            });
+
+          if (ticketError) {
+            console.error('Error al generar ticket automático:', ticketError);
+            // No fallar la actualización del estado si falla la generación del ticket
+          }
+        }
+      }
+
       res.json({ message: 'Estado actualizado exitosamente' });
     } catch (error: any) {
       console.error('Update status error:', error);
