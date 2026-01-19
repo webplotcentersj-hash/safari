@@ -58,6 +58,11 @@ export default function AdminDashboard() {
     email: '',
     precio: 0
   });
+  const [bulkTicketForm, setBulkTicketForm] = useState({
+    cantidad: 1,
+    tipo: 'general',
+    precio: 0
+  });
 
   useEffect(() => {
     fetchData();
@@ -113,6 +118,22 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error generating ticket:', error);
       alert('Error al generar el ticket');
+    }
+  };
+
+  const generateBulkTickets = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirm(`¿Generar ${bulkTicketForm.cantidad} tickets de tipo "${bulkTicketForm.tipo}" con precio $${bulkTicketForm.precio}?`)) {
+      return;
+    }
+    try {
+      const response = await axios.post('/api/tickets/generate-bulk', bulkTicketForm);
+      alert(`¡${response.data.cantidad} tickets generados exitosamente!`);
+      setBulkTicketForm({ cantidad: 1, tipo: 'general', precio: 0 });
+      fetchData();
+    } catch (error: any) {
+      console.error('Error generating bulk tickets:', error);
+      alert(error.response?.data?.error || 'Error al generar los tickets');
     }
   };
 
@@ -326,6 +347,58 @@ export default function AdminDashboard() {
 
                     <button type="submit" className="btn btn-primary">
                       Generar y Descargar Ticket
+                    </button>
+                  </form>
+                </div>
+
+                <div className="card" style={{ marginTop: '2rem' }}>
+                  <h2>Generar Tickets Masivamente (Para el Público)</h2>
+                  <p style={{ color: '#666', marginBottom: '1rem' }}>
+                    Genera múltiples tickets de una vez sin datos personales. Los tickets se crearán automáticamente y estarán disponibles para ser asignados al público.
+                  </p>
+                  <form onSubmit={generateBulkTickets} className="ticket-form">
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Cantidad *</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="1000"
+                          value={bulkTicketForm.cantidad}
+                          onChange={(e) => setBulkTicketForm({ ...bulkTicketForm, cantidad: parseInt(e.target.value) || 1 })}
+                          required
+                        />
+                        <small style={{ color: '#666' }}>Máximo 1000 tickets por vez</small>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Tipo *</label>
+                        <select
+                          value={bulkTicketForm.tipo}
+                          onChange={(e) => setBulkTicketForm({ ...bulkTicketForm, tipo: e.target.value })}
+                          required
+                        >
+                          <option value="general">General</option>
+                          <option value="vip">VIP</option>
+                          <option value="estudiante">Estudiante</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Precio *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={bulkTicketForm.precio}
+                          onChange={(e) => setBulkTicketForm({ ...bulkTicketForm, precio: parseFloat(e.target.value) || 0 })}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <button type="submit" className="btn btn-success">
+                      Generar {bulkTicketForm.cantidad} Tickets Automáticamente
                     </button>
                   </form>
                 </div>
