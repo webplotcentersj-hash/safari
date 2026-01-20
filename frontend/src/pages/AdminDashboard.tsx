@@ -79,44 +79,38 @@ export default function AdminDashboard() {
     setErrorMessage(null);
     try {
       if (activeTab === 'pilots') {
-        // BaseURL ya es /api, así que aquí solo usamos la ruta relativa
-        console.log('=== FETCHING PILOTS ===');
-        console.log('API Base URL:', API_BASE_URL);
-        console.log('Request URL:', '/admin/pilots');
-        console.log('Full URL would be:', `${API_BASE_URL}/admin/pilots`);
+        // Consultar directamente desde Supabase usando el cliente del frontend
+        console.log('=== FETCHING PILOTS DIRECTLY FROM SUPABASE ===');
         
-        const response = await axios.get('/admin/pilots', {
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          },
-          validateStatus: (status) => status < 500 // No lanzar error para 4xx
-        });
-        
-        console.log('=== PILOTS RESPONSE ===');
-        console.log('Status:', response.status);
-        console.log('Status Text:', response.statusText);
-        console.log('Headers:', response.headers);
-        console.log('Data:', response.data);
-        console.log('Data type:', typeof response.data);
-        console.log('Is array?', Array.isArray(response.data));
-        
-        if (response.status !== 200) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        if (!supabase) {
+          throw new Error('Supabase client no está configurado');
         }
+
+        const { data: pilotsData, error: supabaseError } = await supabase
+          .from('pilots')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        console.log('Supabase query result - error:', supabaseError);
+        console.log('Supabase query result - data:', pilotsData);
+        console.log('Supabase query result - data length:', pilotsData?.length);
+
+        if (supabaseError) {
+          console.error('Supabase error:', supabaseError);
+          throw new Error(supabaseError.message || 'Error al cargar los pilotos desde Supabase');
+        }
+
+        const pilotsArray = Array.isArray(pilotsData) ? pilotsData : [];
+        console.log(`✅ Successfully loaded ${pilotsArray.length} pilots`);
         
-        const pilotsData = Array.isArray(response.data) ? response.data : [];
-        console.log(`Loaded ${pilotsData.length} pilots`);
-        
-        if (pilotsData.length > 0) {
-          console.log('First pilot:', pilotsData[0]);
-          console.log('All pilots:', pilotsData);
+        if (pilotsArray.length > 0) {
+          console.log('First pilot:', pilotsArray[0]);
+          console.log('All pilots:', pilotsArray);
         } else {
-          console.warn('No pilots returned from API - empty array');
-          console.warn('Response was:', response.data);
+          console.warn('No pilots found in database');
         }
         
-        setPilots(pilotsData);
+        setPilots(pilotsArray);
       } else if (activeTab === 'tickets') {
         const response = await axios.get('/admin/tickets');
         setTickets(Array.isArray(response.data) ? response.data : []);
