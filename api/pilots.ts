@@ -32,11 +32,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Campos requeridos faltantes' });
       }
 
-      const { data: existingPilot } = await supabaseAdmin
+      if (!categoria) {
+        return res.status(400).json({ error: 'El tipo de vehículo (Auto/Moto) es requerido' });
+      }
+
+      // Verificar si ya existe un piloto con ese DNI
+      const { data: existingPilot, error: checkError } = await supabaseAdmin
         .from('pilots')
         .select('id')
         .eq('dni', dni)
-        .single();
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking existing pilot:', checkError);
+        return res.status(500).json({ error: 'Error al verificar la inscripción' });
+      }
 
       if (existingPilot) {
         return res.status(400).json({ error: 'Ya existe una inscripción con este DNI' });
@@ -66,7 +76,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) {
         console.error('Insert error:', error);
-        return res.status(500).json({ error: 'Error al procesar la inscripción' });
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        return res.status(500).json({ 
+          error: 'Error al procesar la inscripción',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+      }
+
+      if (!data) {
+        console.error('No data returned from insert');
+        return res.status(500).json({ error: 'Error al procesar la inscripción: no se recibieron datos' });
       }
 
       // Generar QR para la inscripción del piloto

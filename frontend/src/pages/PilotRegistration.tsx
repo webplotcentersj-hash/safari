@@ -86,6 +86,16 @@ export default function PilotRegistration() {
 
       const comprobanteUrl = publicUrlData?.publicUrl;
 
+      // Validar que la categoría esté presente
+      if (!data.categoria) {
+        setMessage({
+          type: 'error',
+          text: 'Debes seleccionar el tipo de vehículo (Auto o Moto).'
+        });
+        setLoading(false);
+        return;
+      }
+
       // Usamos la baseURL configurada (/api) y acá solo la ruta relativa
       const response = await axios.post('/pilots/register', {
         ...data,
@@ -106,9 +116,11 @@ export default function PilotRegistration() {
         });
       }
     } catch (error: any) {
+      console.error('Error en inscripción:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Error al procesar la inscripción. Por favor, intenta nuevamente.';
       setMessage({
         type: 'error',
-        text: error.response?.data?.error || 'Error al procesar la inscripción. Por favor, intenta nuevamente.'
+        text: errorMessage
       });
     } finally {
       setLoading(false);
