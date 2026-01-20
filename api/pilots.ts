@@ -2,6 +2,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabaseAdmin } from './_utils/supabase';
 import { createClient } from '@supabase/supabase-js';
 
+// Cliente público para inscripciones (permite insert sin auth)
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+const supabasePublic = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { method, url, query } = req;
   const path = url?.split('?')[0] || '';
@@ -40,13 +45,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(400).json({ error: 'Para autos, debes seleccionar un número entre 01 y 250' });
         }
 
-        // Verificar que el número no esté ya asignado
-        const { data: existingNumber } = await supabaseAdmin
+        // Verificar que el número no esté ya asignado (usar cliente público con RLS)
+        const checkClient = supabasePublic || supabaseAdmin;
+        const { data: existingNumber } = await checkClient
           .from('pilots')
           .select('id')
           .eq('numero', numero)
           .eq('categoria', 'auto')
-          .single();
+          .maybeSingle();
 
         if (existingNumber) {
           return res.status(400).json({ error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto` });
@@ -54,7 +60,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       // Verificar si ya existe un piloto con ese DNI
-      const { data: existingPilot, error: checkError } = await supabaseAdmin
+      const checkClient = supabasePublic || supabaseAdmin;
+      const { data: existingPilot, error: checkError } = await checkClient
         .from('pilots')
         .select('id')
         .eq('dni', dni)
@@ -69,8 +76,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Ya existe una inscripción con este DNI' });
       }
 
-      // Insertar piloto
-      const { data, error } = await supabaseAdmin
+      // Insertar piloto (usar cliente público que permite insert con RLS)
+      const insertClient = supabasePublic || supabaseAdmin;
+      const { data, error } = await insertClient
         .from('pilots')
         .insert({
           nombre,
