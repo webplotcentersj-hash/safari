@@ -2,10 +2,25 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabaseAdmin } from './_utils/supabase';
 import { authenticateToken, requireAdmin } from './_utils/auth';
 import { generateTicketPDF } from './_utils/pdfGenerator';
+import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { method, url, query, body } = req;
   const path = url?.split('?')[0] || '';
+
+  // Crear cliente con token del usuario autenticado para consultas que respetan RLS
+  const supabaseUrl = process.env.SUPABASE_URL || '';
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  const supabaseWithAuth = token && supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  }) : null;
 
   // Setup (solo para bootstrap del primer admin) - protegido por secreto
   // POST /api/admin/setup/create-admin { email, password }
@@ -179,30 +194,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Admin - Stats
   else if (method === 'GET' && (path === '/api/admin/stats' || path.endsWith('/admin/stats'))) {
     try {
-      const { count: totalPilots } = await supabaseAdmin
+      // Usar cliente con auth del usuario si está disponible, sino usar admin
+      const client = supabaseWithAuth || supabaseAdmin;
+      
+      const { count: totalPilots } = await client
         .from('pilots')
         .select('*', { count: 'exact', head: true });
 
-      const { count: approvedPilots } = await supabaseAdmin
+      const { count: approvedPilots } = await client
         .from('pilots')
         .select('*', { count: 'exact', head: true })
         .eq('estado', 'aprobado');
 
-      const { count: pendingPilots } = await supabaseAdmin
+      const { count: pendingPilots } = await client
         .from('pilots')
         .select('*', { count: 'exact', head: true })
         .eq('estado', 'pendiente');
 
-      const { count: totalTickets } = await supabaseAdmin
+      const { count: totalTickets } = await client
         .from('tickets')
         .select('*', { count: 'exact', head: true });
 
-      const { count: usedTickets } = await supabaseAdmin
+      const { count: usedTickets } = await client
         .from('tickets')
         .select('*', { count: 'exact', head: true })
         .eq('usado', true);
 
-      const { data: usedTicketsData } = await supabaseAdmin
+      const { data: usedTicketsData } = await client
         .from('tickets')
         .select('precio')
         .eq('usado', true);
@@ -224,7 +242,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     } catch (error: any) {
       console.error('Get stats error:', error);
-      res.status(500).json({ error: 'Error al obtener las estadísticas' });
+      // Devolver stats vacías en lugar de error para que el frontend no crashee
+      res.json({
+        pilots: { total: 0, approved: 0, pending: 0 },
+        tickets: { total: 0, used: 0, available: 0 },
+        revenue: 0
+      });
     }
   } else {
     res.status(404).json({ error: 'Ruta no encontrada' });
