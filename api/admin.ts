@@ -226,8 +226,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Admin - Stats
   else if (method === 'GET' && (path === '/api/admin/stats' || path.endsWith('/admin/stats'))) {
     try {
-      // Usar cliente con auth del usuario si está disponible, sino usar admin
-      const client = supabaseWithAuth || supabaseAdmin;
+      const supabaseUrl = process.env.SUPABASE_URL || '';
+      const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        return res.status(500).json({ error: 'Error de configuración' });
+      }
+      
+      const publicClient = createClient(supabaseUrl, supabaseAnonKey);
+      const client = publicClient;
       
       const { count: totalPilots } = await client
         .from('pilots')
