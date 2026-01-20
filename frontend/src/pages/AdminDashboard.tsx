@@ -9,7 +9,7 @@ axios.defaults.baseURL = API_BASE_URL;
 import './AdminDashboard.css';
 
 interface Pilot {
-  id: number;
+  id: string; // UUID en Supabase
   nombre: string;
   apellido: string;
   dni: string;
@@ -17,6 +17,10 @@ interface Pilot {
   telefono: string;
   estado: string;
   created_at: string;
+  categoria?: string;
+  categoria_auto?: string;
+  categoria_moto?: string;
+  numero?: number;
 }
 
 interface Ticket {

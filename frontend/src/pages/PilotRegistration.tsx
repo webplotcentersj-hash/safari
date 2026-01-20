@@ -213,8 +213,14 @@ export default function PilotRegistration() {
           <p className="subtitle">Completa todos los campos para inscribirte en el Safari Tras las Sierras</p>
 
           {message && (
-            <div className={`alert alert-${message.type === 'success' ? 'success' : 'error'}`}>
-              {message.text}
+            <div className={`alert alert-${message.type === 'success' ? 'success' : 'error'} ${message.type === 'success' ? 'alert-success-prominent' : ''}`}>
+              {message.type === 'success' && (
+                <div className="success-icon">✓</div>
+              )}
+              <div className="alert-content">
+                <strong>{message.type === 'success' ? '¡Éxito!' : 'Error'}</strong>
+                <p>{message.text}</p>
+              </div>
             </div>
           )}
 

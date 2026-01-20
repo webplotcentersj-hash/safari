@@ -82,16 +82,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Admin - Pilots
   if (method === 'GET' && path === '/api/admin/pilots') {
     try {
-      const client = supabaseWithAuth || supabaseAdmin;
+      // Usar cliente público ya que las políticas RLS ahora son públicas
+      const supabaseUrl = process.env.SUPABASE_URL || '';
+      const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+      const client = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : (supabaseWithAuth || supabaseAdmin);
+      
       const { data: pilots, error } = await client
         .from('pilots')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Get pilots error:', error);
+        throw error;
+      }
+      
+      console.log(`Returning ${pilots?.length || 0} pilots`);
       res.json(pilots || []);
     } catch (error: any) {
-      console.error('Get pilots error:', error);
+      console.error('Get pilots error (catch):', error);
       res.json([]); // Devolver array vacío en lugar de error 500
     }
   } else if (method === 'GET' && path.includes('/admin/pilots/') && !path.includes('/status') && !path.includes('/pdf')) {
