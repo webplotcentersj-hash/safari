@@ -456,6 +456,11 @@
     min-width: auto;
   }
 
+  .filter-select {
+    width: 100%;
+    min-width: auto;
+  }
+
   .table-container {
     overflow-x: auto;
     padding: 10px;
