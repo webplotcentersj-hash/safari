@@ -63,30 +63,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const insertClient = supabasePublic || supabaseAdmin;
       
       if (!insertClient) {
+        console.error('No Supabase client available');
         return res.status(500).json({ error: 'Error de configuración del servidor' });
       }
+
+      const insertData = {
+        nombre,
+        apellido,
+        dni,
+        email,
+        telefono,
+        fecha_nacimiento,
+        licencia: licencia || null,
+        vehiculo_marca: vehiculo_marca || null,
+        vehiculo_modelo: vehiculo_modelo || null,
+        vehiculo_patente: vehiculo_patente || null,
+        copiloto_nombre: copiloto_nombre || null,
+        copiloto_dni: copiloto_dni || null,
+        categoria: categoria || null,
+        categoria_auto: categoria === 'auto' ? categoria_auto : null,
+        categoria_moto: categoria === 'moto' ? categoria_moto : null,
+        numero: categoria === 'auto' ? numero : null,
+        comprobante_pago_url: comprobante_pago_url || null,
+        estado: 'pendiente'
+      };
+
+      console.log('Attempting to insert pilot with data:', JSON.stringify(insertData, null, 2));
+
       const { data, error } = await insertClient
         .from('pilots')
-        .insert({
-          nombre,
-          apellido,
-          dni,
-          email,
-          telefono,
-          fecha_nacimiento,
-          licencia: licencia || null,
-          vehiculo_marca: vehiculo_marca || null,
-          vehiculo_modelo: vehiculo_modelo || null,
-          vehiculo_patente: vehiculo_patente || null,
-          copiloto_nombre: copiloto_nombre || null,
-          copiloto_dni: copiloto_dni || null,
-          categoria: categoria || null,
-          categoria_auto: categoria === 'auto' ? categoria_auto : null,
-          categoria_moto: categoria === 'moto' ? categoria_moto : null,
-          numero: categoria === 'auto' ? numero : null,
-          comprobante_pago_url: comprobante_pago_url || null,
-          estado: 'pendiente'
-        })
+        .insert(insertData)
         .select()
         .single();
 
