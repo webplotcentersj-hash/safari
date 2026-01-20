@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabaseAdmin } from './_utils/supabase';
-import QRCode from 'qrcode';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { method, url, query } = req;
@@ -77,13 +76,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (error) {
         console.error('Insert error:', error);
         console.error('Error details:', JSON.stringify(error, null, 2));
-        return res.status(500).json({ 
-          error: error.message || 'Error al procesar la inscripción',
-          details: {
-            code: (error as any).code,
-            hint: (error as any).hint,
-            details: (error as any).details
-          }
+        return res.status(500).json({
+          error: error.message || 'Error al procesar la inscripción'
         });
       }
 
@@ -92,73 +86,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ error: 'Error al procesar la inscripción: no se recibieron datos' });
       }
 
-      // Generar QR para la inscripción del piloto
-      // El QR contendrá un identificador único que puede usarse luego para validación/acreditación
-      const qrPayload = JSON.stringify({
-        type: 'pilot',
-        id: data.id,
-        dni,
-        nombre,
-        apellido
-      });
-
-      let qrDataUrl: string | null = null;
-
-      try {
-        const qrBuffer = await QRCode.toBuffer(qrPayload, {
-          type: 'png',
-          width: 400,
-          errorCorrectionLevel: 'M'
-        });
-
-        const qrBase64 = qrBuffer.toString('base64');
-        qrDataUrl = `data:image/png;base64,${qrBase64}`;
-
-        // Enviar email con el QR si hay API key configurada (por ejemplo Resend)
-        const resendApiKey = process.env.RESEND_API_KEY;
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'no-reply@safari.com';
-
-        if (resendApiKey) {
-          try {
-            await fetch('https://api.resend.com/emails', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${resendApiKey}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                from: `Safari Tras las Sierras <${fromEmail}>`,
-                to: [email],
-                subject: 'Confirmación de inscripción - Safari Tras las Sierras',
-                html: `
-                  <p>Hola ${nombre} ${apellido},</p>
-                  <p>Tu inscripción al <strong>Safari Tras las Sierras</strong> fue recibida correctamente.</p>
-                  <p>Adjuntamos tu código QR para acreditación. Guardalo en tu teléfono o imprimilo.</p>
-                  <p>¡Gracias por participar!</p>
-                `,
-                attachments: [
-                  {
-                    filename: `qr-inscripcion-${dni}.png`,
-                    content: qrBase64,
-                    contentType: 'image/png'
-                  }
-                ]
-              })
-            });
-          } catch (emailError) {
-            console.error('Error enviando email de inscripción:', emailError);
-            // No fallamos la inscripción si el email falla
-          }
-        }
-      } catch (qrError) {
-        console.error('Error generando QR de inscripción:', qrError);
-        // No fallamos la inscripción si el QR falla
-      }
-
+      // Por ahora simplificamos: solo registramos al piloto correctamente.
+      // Más adelante podemos volver a activar QR y envío de email si hace falta.
       res.status(201).json({
         message: 'Inscripción realizada exitosamente',
-        data,
-        qrDataUrl
+        data
       });
     } catch (error: any) {
       console.error('Registration error:', error);
