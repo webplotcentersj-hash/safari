@@ -73,6 +73,10 @@
 }
 
 @media (max-width: 768px) {
+  .registration-page {
+    padding: 20px 10px;
+  }
+
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -81,8 +85,87 @@
     padding: 20px;
   }
 
+  .registration-header {
+    margin-bottom: 20px;
+  }
+
+  .registration-logo {
+    max-width: 120px;
+  }
+
   .registration-card h1 {
     font-size: 2rem;
+  }
+
+  .form-section h2 {
+    font-size: 1.3rem;
+  }
+
+  .alert-success-prominent {
+    padding: 1.5rem !important;
+    font-size: 1.1rem !important;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .alert-success-prominent .success-icon {
+    font-size: 3rem;
+    width: 60px;
+    height: 60px;
+  }
+
+  .alert-success-prominent .alert-content strong {
+    font-size: 1.5rem;
+  }
+
+  .alert-success-prominent .alert-content p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .registration-page {
+    padding: 15px 5px;
+  }
+
+  .registration-card {
+    padding: 15px;
+  }
+
+  .registration-logo {
+    max-width: 100px;
+  }
+
+  .registration-card h1 {
+    font-size: 1.5rem;
+  }
+
+  .form-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+  }
+
+  .form-section h2 {
+    font-size: 1.1rem;
+  }
+
+  .alert-success-prominent {
+    padding: 1rem !important;
+    font-size: 1rem !important;
+  }
+
+  .alert-success-prominent .success-icon {
+    font-size: 2.5rem;
+    width: 50px;
+    height: 50px;
+  }
+
+  .alert-success-prominent .alert-content strong {
+    font-size: 1.2rem;
+  }
+
+  .alert-success-prominent .alert-content p {
+    font-size: 0.9rem;
   }
 }
 

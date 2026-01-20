@@ -283,7 +283,7 @@ export default function AdminDashboard() {
                   <div className="charts-grid">
                     <div className="chart-card">
                       <h3>Estado de Pilotos</h3>
-                      <ResponsiveContainer width="100%" height={300}>
+                      <ResponsiveContainer width="100%" height={300} minHeight={250}>
                         <PieChart>
                           <Pie
                             data={[
@@ -308,14 +308,14 @@ export default function AdminDashboard() {
                             ))}
                           </Pie>
                           <Tooltip />
-                          <Legend />
+                          <Legend wrapperStyle={{ fontSize: '12px' }} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
 
                     <div className="chart-card">
                       <h3>Estado de Tickets</h3>
-                      <ResponsiveContainer width="100%" height={300}>
+                      <ResponsiveContainer width="100%" height={300} minHeight={250}>
                         <BarChart
                           data={[
                             { name: 'Usados', value: stats.tickets?.used || 0 },
@@ -323,10 +323,10 @@ export default function AdminDashboard() {
                           ]}
                         >
                           <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
+                          <XAxis dataKey="name" style={{ fontSize: '12px' }} />
+                          <YAxis style={{ fontSize: '12px' }} />
                           <Tooltip />
-                          <Legend />
+                          <Legend wrapperStyle={{ fontSize: '12px' }} />
                           <Bar dataKey="value" fill="#65b330" />
                         </BarChart>
                       </ResponsiveContainer>

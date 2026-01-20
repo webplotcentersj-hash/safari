@@ -37,5 +37,41 @@
   font-size: 1.1rem;
 }
 
+@media (max-width: 768px) {
+  .ticket-generator-page {
+    padding: 30px 15px;
+  }
+
+  .ticket-generator-card {
+    padding: 30px 20px;
+  }
+
+  .ticket-logo {
+    max-width: 120px;
+  }
+
+  .ticket-generator-card h1 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ticket-generator-page {
+    padding: 20px 10px;
+  }
+
+  .ticket-generator-card {
+    padding: 20px 15px;
+  }
+
+  .ticket-logo {
+    max-width: 100px;
+  }
+
+  .ticket-generator-card h1 {
+    font-size: 1.5rem;
+  }
+}
+
 
 

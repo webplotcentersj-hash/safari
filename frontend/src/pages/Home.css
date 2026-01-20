@@ -76,6 +76,14 @@
 }
 
 @media (max-width: 768px) {
+  .home-header {
+    padding: 40px 20px;
+  }
+
+  .header-logo {
+    max-width: 150px;
+  }
+
   .home-header h1 {
     font-size: 2rem;
   }
@@ -84,8 +92,51 @@
     font-size: 1.2rem;
   }
 
+  .home-main {
+    padding: 40px 20px;
+  }
+
   .home-content {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .home-card {
+    padding: 30px 20px;
+  }
+
+  .home-card h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-header {
+    padding: 30px 15px;
+  }
+
+  .header-logo {
+    max-width: 120px;
+  }
+
+  .home-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .home-main {
+    padding: 30px 15px;
+  }
+
+  .home-card {
+    padding: 20px 15px;
+  }
+
+  .home-card h2 {
+    font-size: 1.3rem;
   }
 }
 

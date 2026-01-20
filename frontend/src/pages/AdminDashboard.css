@@ -85,7 +85,7 @@
 
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
 }
 
@@ -259,12 +259,21 @@
   margin: 0;
   color: #65b330;
   font-size: 1.3rem;
+  flex: 1;
+  min-width: 200px;
+}
+
+.table-header h3 {
+  margin: 0;
+  color: #65b330;
+  font-size: 1.3rem;
 }
 
 .search-box {
   flex: 1;
-  min-width: 300px;
+  min-width: 200px;
   max-width: 500px;
+  width: 100%;
 }
 
 .search-input {
@@ -324,6 +333,30 @@
     gap: 15px;
   }
 
+  .admin-header-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .admin-logo {
+    max-width: 100px;
+  }
+
+  .admin-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .admin-header-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .admin-header-actions .btn {
+    width: 100%;
+  }
+
   .admin-tabs {
     flex-direction: column;
     gap: 0;
@@ -341,12 +374,98 @@
     border-bottom-color: #ddd;
   }
 
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card {
+    padding: 15px;
+  }
+
+  .chart-card h3 {
+    font-size: 1rem;
+  }
+
+  .table-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-header h3 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .search-box {
+    max-width: 100%;
+  }
+
   .table-container {
-    overflow-x: scroll;
+    overflow-x: auto;
+    padding: 10px;
+  }
+
+  .data-table {
+    font-size: 0.85rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 8px 6px;
+    white-space: nowrap;
   }
 
   .action-buttons {
     flex-direction: column;
+    gap: 5px;
+  }
+
+  .btn-sm {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-header {
+    padding: 15px 0;
+  }
+
+  .admin-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .admin-logo {
+    max-width: 80px;
+  }
+
+  .stat-card {
+    padding: 15px;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+  }
+
+  .chart-card {
+    padding: 10px;
+  }
+
+  .data-table {
+    font-size: 0.75rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 6px 4px;
+  }
+
+  .table-container {
+    padding: 5px;
   }
 }
 
