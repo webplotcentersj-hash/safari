@@ -80,23 +80,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log('Request URL:', url);
       console.log('Request path:', path);
       
-      // Crear cliente público explícito con anon key para lectura pública
-      // Las políticas RLS permiten SELECT público, así que esto debería funcionar
-      const publicClient = createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      });
-      
-      console.log('Fetching pilots from Supabase using public client (anon key)...');
+      // Usar supabaseAdmin que tiene service_role_key (bypass RLS) o anon_key como fallback
+      // Esto asegura que podamos leer los datos independientemente de las políticas RLS
+      console.log('Fetching pilots from Supabase using supabaseAdmin...');
       console.log('Supabase URL configured:', !!supabaseUrl);
       console.log('Anon key configured:', !!supabaseAnonKey);
+      console.log('Service role key configured:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
       
-      const { data: pilots, error } = await publicClient
+      // Intentar consultar la tabla pilots usando supabaseAdmin
+      console.log('Querying pilots table...');
+      const { data: pilots, error } = await supabaseAdmin
         .from('pilots')
         .select('*')
         .order('created_at', { ascending: false });
+      
+      console.log('Query result - error:', error);
+      console.log('Query result - data:', pilots);
+      console.log('Query result - data length:', pilots?.length);
 
       if (error) {
         console.error('Get pilots error:', error);
