@@ -44,40 +44,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!numero || numero < 1 || numero > 250) {
           return res.status(400).json({ error: 'Para autos, debes seleccionar un número entre 01 y 250' });
         }
-
-        // Verificar que el número no esté ya asignado (usar cliente público con RLS)
-        const checkClient = supabasePublic || supabaseAdmin;
-        const { data: existingNumber } = await checkClient
-          .from('pilots')
-          .select('id')
-          .eq('numero', numero)
-          .eq('categoria', 'auto')
-          .maybeSingle();
-
-        if (existingNumber) {
-          return res.status(400).json({ error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto` });
-        }
       }
 
-      // Verificar si ya existe un piloto con ese DNI
-      const checkClient = supabasePublic || supabaseAdmin;
-      const { data: existingPilot, error: checkError } = await checkClient
-        .from('pilots')
-        .select('id')
-        .eq('dni', dni)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error('Error checking existing pilot:', checkError);
-        return res.status(500).json({ error: 'Error al verificar la inscripción' });
-      }
-
-      if (existingPilot) {
-        return res.status(400).json({ error: 'Ya existe una inscripción con este DNI' });
-      }
-
-      // Insertar piloto (usar cliente público que permite insert con RLS)
+      // Insertar piloto directamente (las políticas RLS permiten INSERT público)
+      // Si hay duplicados (DNI o número), el error lo manejamos abajo
       const insertClient = supabasePublic || supabaseAdmin;
+      
+      if (!insertClient) {
+        return res.status(500).json({ error: 'Error de configuración del servidor' });
+      }
       const { data, error } = await insertClient
         .from('pilots')
         .insert({
@@ -105,9 +80,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('Insert error:', error);
         console.error('Error details:', JSON.stringify(error, null, 2));
         
-        // Si es error de número duplicado
-        if (error.code === '23505' && error.message.includes('numero')) {
-          return res.status(400).json({ error: 'Este número ya está asignado a otro piloto' });
+        // Manejar errores de constraint único
+        if (error.code === '23505') {
+          if (error.message.includes('dni') || error.message.includes('pilots_dni_key')) {
+            return res.status(400).json({ error: 'Ya existe una inscripción con este DNI' });
+          }
+          if (error.message.includes('numero') || error.message.includes('pilots_numero_key')) {
+            return res.status(400).json({ error: `El número ${numero ? numero.toString().padStart(2, '0') : ''} ya está asignado a otro piloto` });
+          }
         }
         
         return res.status(500).json({ 
