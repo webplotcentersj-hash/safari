@@ -25,21 +25,33 @@ interface PilotFormData {
 }
 
 export default function PilotRegistration() {
-  const { register, handleSubmit, formState: { errors } } = useForm<PilotFormData>();
+  const { register, handleSubmit, formState: { errors }, watch } = useForm<PilotFormData>();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  const watchDni = watch('dni');
 
   const onSubmit = async (data: PilotFormData) => {
     setLoading(true);
     setMessage(null);
 
     try {
-      await axios.post('/api/pilots/register', data);
-      setMessage({ type: 'success', text: '¡Inscripción realizada exitosamente! Te contactaremos pronto.' });
-      // Reset form
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000);
+      const response = await axios.post('/api/pilots/register', data);
+      const qrFromApi = response.data?.qrDataUrl as string | undefined;
+
+      if (qrFromApi) {
+        setQrDataUrl(qrFromApi);
+        setMessage({
+          type: 'success',
+          text: '¡Inscripción realizada exitosamente! Te enviamos un email con tu QR y también podés descargarlo desde aquí.'
+        });
+      } else {
+        setMessage({
+          type: 'success',
+          text: '¡Inscripción realizada exitosamente! Te contactaremos pronto.'
+        });
+      }
     } catch (error: any) {
       setMessage({
         type: 'error',
@@ -180,20 +192,37 @@ export default function PilotRegistration() {
 
             <div className="form-section">
               <div className="form-group">
-                <label>Categoría</label>
-                <select {...register('categoria')}>
-                  <option value="">Seleccione una categoría</option>
-                  <option value="principiante">Principiante</option>
-                  <option value="intermedio">Intermedio</option>
-                  <option value="avanzado">Avanzado</option>
-                  <option value="experto">Experto</option>
+              <label>Tipo de Vehículo *</label>
+              <select {...register('categoria', { required: 'El tipo de vehículo es requerido' })}>
+                <option value="">Seleccione tipo de vehículo</option>
+                <option value="auto">Auto</option>
+                <option value="moto">Moto</option>
                 </select>
+              {errors.categoria && <span className="error">{errors.categoria.message}</span>}
               </div>
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? 'Enviando...' : 'Enviar Inscripción'}
             </button>
+
+          {qrDataUrl && (
+            <div className="qr-section">
+              <h3>Tu código QR de inscripción</h3>
+              <p>Guardalo en tu teléfono o descargalo para presentarlo en la acreditación.</p>
+              <div className="qr-preview">
+                <img src={qrDataUrl} alt="QR de inscripción" />
+              </div>
+              <a
+                href={qrDataUrl}
+                download={`qr-inscripcion-${watchDni || 'safari'}.png`}
+                className="btn btn-secondary"
+                style={{ marginTop: '1rem' }}
+              >
+                Descargar QR
+              </a>
+            </div>
+          )}
           </form>
         </div>
       </div>

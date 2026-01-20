@@ -4,12 +4,16 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "@vercel/node": "^3.0.7",
-    "pdfkit": "^0.14.0"
+    "pdfkit": "^0.14.0",
+    "qrcode": "^1.5.3"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
     "@types/pdfkit": "^0.13.3",
+    "@types/qrcode": "^1.5.5",
     "typescript": "^5.3.3"
   }
 }
+
+
 
