@@ -76,19 +76,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Admin - Pilots (endpoint público para lectura, ya que las políticas RLS son públicas)
   if (method === 'GET' && path === '/api/admin/pilots') {
     try {
-      const supabaseUrl = process.env.SUPABASE_URL || '';
-      const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+      console.log('=== GET /api/admin/pilots ===');
+      console.log('Request URL:', url);
+      console.log('Request path:', path);
       
-      if (!supabaseUrl || !supabaseAnonKey) {
-        console.error('Missing Supabase env variables');
-        return res.status(500).json({ error: 'Error de configuración' });
-      }
+      // Usar supabaseAdmin que ya está configurado y puede leer gracias a las políticas RLS públicas
+      console.log('Fetching pilots from Supabase using supabaseAdmin...');
       
-      // Crear cliente público (anon key) que puede leer pilots gracias a las políticas RLS públicas
-      const publicClient = createClient(supabaseUrl, supabaseAnonKey);
-      
-      console.log('Fetching pilots from Supabase...');
-      const { data: pilots, error } = await publicClient
+      const { data: pilots, error } = await supabaseAdmin
         .from('pilots')
         .select('*')
         .order('created_at', { ascending: false });
@@ -106,10 +101,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       console.log(`Successfully fetched ${pilots?.length || 0} pilots from database`);
       if (pilots && pilots.length > 0) {
-        console.log('Sample pilot:', JSON.stringify(pilots[0], null, 2));
+        console.log('Sample pilot data:', {
+          id: pilots[0].id,
+          nombre: pilots[0].nombre,
+          apellido: pilots[0].apellido,
+          dni: pilots[0].dni,
+          estado: pilots[0].estado
+        });
+      } else {
+        console.warn('No pilots found in database');
       }
       
-      return res.json(pilots || []);
+      // Asegurarse de devolver un array siempre
+      const pilotsArray = Array.isArray(pilots) ? pilots : [];
+      console.log(`Returning ${pilotsArray.length} pilots to frontend`);
+      
+      return res.status(200).json(pilotsArray);
     } catch (error: any) {
       console.error('Get pilots error (catch):', error);
       console.error('Error message:', error.message);
