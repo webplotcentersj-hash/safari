@@ -25,6 +25,7 @@ interface Pilot {
   categoria_auto?: string;
   categoria_moto?: string;
   numero?: number;
+  comprobante_pago_url?: string;
 }
 
 interface Ticket {
@@ -72,6 +73,8 @@ export default function AdminDashboard() {
     precio: 0
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterEstado, setFilterEstado] = useState<string>('todos');
+  const [filterCategoria, setFilterCategoria] = useState<string>('todos');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchData = useCallback(async (silent = false) => {
@@ -491,14 +494,39 @@ export default function AdminDashboard() {
                     )}
                     <div className="table-header">
                       <h3>Total de pilotos: {pilots.length}</h3>
-                      <div className="search-box">
-                        <input
-                          type="text"
-                          placeholder="Buscar por nombre, apellido, DNI, email..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="search-input"
-                        />
+                      <div className="filters-container">
+                        <div className="search-box">
+                          <input
+                            type="text"
+                            placeholder="Buscar por nombre, apellido, DNI, email..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="search-input"
+                          />
+                        </div>
+                        <div className="filter-group">
+                          <select
+                            value={filterEstado}
+                            onChange={(e) => setFilterEstado(e.target.value)}
+                            className="filter-select"
+                          >
+                            <option value="todos">Todos los estados</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="aprobado">Aprobado</option>
+                            <option value="rechazado">Rechazado</option>
+                          </select>
+                        </div>
+                        <div className="filter-group">
+                          <select
+                            value={filterCategoria}
+                            onChange={(e) => setFilterCategoria(e.target.value)}
+                            className="filter-select"
+                          >
+                            <option value="todos">Todas las categorías</option>
+                            <option value="auto">Auto</option>
+                            <option value="moto">Moto</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                     {pilots.length === 0 && !errorMessage ? (
@@ -518,24 +546,40 @@ export default function AdminDashboard() {
                               <th>Categoría</th>
                               <th>Número</th>
                               <th>Estado</th>
+                              <th>Comprobante</th>
                               <th>Acciones</th>
                             </tr>
                           </thead>
                           <tbody>
                             {pilots
                               .filter((pilot) => {
-                                if (!searchTerm) return true;
-                                const search = searchTerm.toLowerCase();
-                                return (
-                                  pilot.nombre?.toLowerCase().includes(search) ||
-                                  pilot.apellido?.toLowerCase().includes(search) ||
-                                  pilot.dni?.toLowerCase().includes(search) ||
-                                  pilot.email?.toLowerCase().includes(search) ||
-                                  pilot.telefono?.toLowerCase().includes(search) ||
-                                  pilot.categoria_auto?.toLowerCase().includes(search) ||
-                                  pilot.categoria_moto?.toLowerCase().includes(search) ||
-                                  pilot.numero?.toString().includes(search)
-                                );
+                                // Filtro por búsqueda de texto
+                                if (searchTerm) {
+                                  const search = searchTerm.toLowerCase();
+                                  const matchesSearch = (
+                                    pilot.nombre?.toLowerCase().includes(search) ||
+                                    pilot.apellido?.toLowerCase().includes(search) ||
+                                    pilot.dni?.toLowerCase().includes(search) ||
+                                    pilot.email?.toLowerCase().includes(search) ||
+                                    pilot.telefono?.toLowerCase().includes(search) ||
+                                    pilot.categoria_auto?.toLowerCase().includes(search) ||
+                                    pilot.categoria_moto?.toLowerCase().includes(search) ||
+                                    pilot.numero?.toString().includes(search)
+                                  );
+                                  if (!matchesSearch) return false;
+                                }
+                                
+                                // Filtro por estado
+                                if (filterEstado !== 'todos' && pilot.estado !== filterEstado) {
+                                  return false;
+                                }
+                                
+                                // Filtro por categoría
+                                if (filterCategoria !== 'todos' && pilot.categoria !== filterCategoria) {
+                                  return false;
+                                }
+                                
+                                return true;
                               })
                               .map((pilot) => (
                                 <tr key={pilot.id}>
@@ -564,6 +608,21 @@ export default function AdminDashboard() {
                                     <span className={`status-badge status-${pilot.estado}`}>
                                       {pilot.estado}
                                     </span>
+                                  </td>
+                                  <td>
+                                    {pilot.comprobante_pago_url ? (
+                                      <a
+                                        href={pilot.comprobante_pago_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="btn btn-secondary btn-sm"
+                                        title="Ver comprobante de pago"
+                                      >
+                                        📄 Ver
+                                      </a>
+                                    ) : (
+                                      <span className="text-muted">Sin comprobante</span>
+                                    )}
                                   </td>
                                   <td>
                                     <div className="action-buttons">
