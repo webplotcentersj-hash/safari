@@ -44,7 +44,7 @@ export default function Home() {
 
       <footer className="home-footer">
         <div className="container">
-          <p>&copy; 2024 Safari Tras las Sierras. Todos los derechos reservados.</p>
+          <p>Desarrollado con ❤️ por <strong>Plot Center</strong> 2026</p>
         </div>
       </footer>
     </div>
