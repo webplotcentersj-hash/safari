@@ -79,24 +79,40 @@ export default function AdminDashboard() {
     try {
       if (activeTab === 'pilots') {
         // BaseURL ya es /api, así que aquí solo usamos la ruta relativa
-        console.log('Fetching pilots from:', '/admin/pilots');
+        console.log('=== FETCHING PILOTS ===');
+        console.log('API Base URL:', API_BASE_URL);
+        console.log('Request URL:', '/admin/pilots');
+        console.log('Full URL would be:', `${API_BASE_URL}/admin/pilots`);
+        
         const response = await axios.get('/admin/pilots', {
           headers: {
-            'Cache-Control': 'no-cache'
-          }
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          },
+          validateStatus: (status) => status < 500 // No lanzar error para 4xx
         });
-        console.log('Pilots response status:', response.status);
-        console.log('Pilots response data:', response.data);
-        console.log('Pilots response data type:', typeof response.data);
+        
+        console.log('=== PILOTS RESPONSE ===');
+        console.log('Status:', response.status);
+        console.log('Status Text:', response.statusText);
+        console.log('Headers:', response.headers);
+        console.log('Data:', response.data);
+        console.log('Data type:', typeof response.data);
         console.log('Is array?', Array.isArray(response.data));
+        
+        if (response.status !== 200) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
         
         const pilotsData = Array.isArray(response.data) ? response.data : [];
         console.log(`Loaded ${pilotsData.length} pilots`);
         
         if (pilotsData.length > 0) {
           console.log('First pilot:', pilotsData[0]);
+          console.log('All pilots:', pilotsData);
         } else {
           console.warn('No pilots returned from API - empty array');
+          console.warn('Response was:', response.data);
         }
         
         setPilots(pilotsData);
