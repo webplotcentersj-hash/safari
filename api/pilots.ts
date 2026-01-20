@@ -24,7 +24,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         vehiculo_patente,
         copiloto_nombre,
         copiloto_dni,
-        categoria
+        categoria,
+        comprobante_pago_url
       } = req.body;
 
       if (!nombre || !apellido || !dni || !email || !telefono || !fecha_nacimiento) {
@@ -57,6 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           copiloto_nombre: copiloto_nombre || null,
           copiloto_dni: copiloto_dni || null,
           categoria: categoria || null,
+          comprobante_pago_url: comprobante_pago_url || null,
           estado: 'pendiente'
         })
         .select()

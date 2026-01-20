@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
+import { supabase } from '../config/supabase';
 
 // Configurar base URL para producción
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -22,6 +23,8 @@ interface PilotFormData {
   copiloto_nombre: string;
   copiloto_dni: string;
   categoria: string;
+  // este campo no lo completa el usuario, lo llenamos nosotros con la URL del comprobante
+  comprobante_pago_url?: string;
 }
 
 export default function PilotRegistration() {
@@ -29,6 +32,7 @@ export default function PilotRegistration() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [paymentFile, setPaymentFile] = useState<File | null>(null);
 
   const watchDni = watch('dni');
 
@@ -37,7 +41,55 @@ export default function PilotRegistration() {
     setMessage(null);
 
     try {
-      const response = await axios.post('/api/pilots/register', data);
+      if (!paymentFile) {
+        setMessage({
+          type: 'error',
+          text: 'Debes adjuntar el comprobante de pago para completar la inscripción.'
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (!supabase) {
+        setMessage({
+          type: 'error',
+          text: 'Error de configuración. Falta Supabase en el frontend.'
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Subir comprobante de pago a Supabase Storage
+      const ext = paymentFile.name.split('.').pop() || 'jpg';
+      const fileNameSafeDni = (data.dni || 'sin-dni').replace(/[^0-9A-Za-z_-]/g, '');
+      const filePath = `comprobantes/${fileNameSafeDni}-${Date.now()}.${ext}`;
+
+      const { data: uploadData, error: uploadError } = await supabase
+        .storage
+        .from('comprobantes')
+        .upload(filePath, paymentFile);
+
+      if (uploadError || !uploadData) {
+        console.error('Error subiendo comprobante de pago:', uploadError);
+        setMessage({
+          type: 'error',
+          text: 'No se pudo subir el comprobante de pago. Verificá el archivo e intenta nuevamente.'
+        });
+        setLoading(false);
+        return;
+      }
+
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('comprobantes')
+        .getPublicUrl(uploadData.path);
+
+      const comprobanteUrl = publicUrlData?.publicUrl;
+
+      const response = await axios.post('/api/pilots/register', {
+        ...data,
+        comprobante_pago_url: comprobanteUrl
+      });
       const qrFromApi = response.data?.qrDataUrl as string | undefined;
 
       if (qrFromApi) {
@@ -192,13 +244,32 @@ export default function PilotRegistration() {
 
             <div className="form-section">
               <div className="form-group">
-              <label>Tipo de Vehículo *</label>
-              <select {...register('categoria', { required: 'El tipo de vehículo es requerido' })}>
-                <option value="">Seleccione tipo de vehículo</option>
-                <option value="auto">Auto</option>
-                <option value="moto">Moto</option>
+                <label>Tipo de Vehículo *</label>
+                <select {...register('categoria', { required: 'El tipo de vehículo es requerido' })}>
+                  <option value="">Seleccione tipo de vehículo</option>
+                  <option value="auto">Auto</option>
+                  <option value="moto">Moto</option>
                 </select>
-              {errors.categoria && <span className="error">{errors.categoria.message}</span>}
+                {errors.categoria && <span className="error">{errors.categoria.message}</span>}
+              </div>
+            </div>
+
+            <div className="form-section">
+              <h2>Comprobante de Pago</h2>
+              <div className="form-group">
+                <label>Adjuntar comprobante de pago (obligatorio)</label>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setPaymentFile(file);
+                  }}
+                  required
+                />
+                <small className="helper-text">
+                  Podés subir una foto del comprobante o un PDF. Tamaño máximo recomendado: 5MB.
+                </small>
               </div>
             </div>
 
