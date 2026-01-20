@@ -19,7 +19,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       password,
     });
 
-    if (authError || !authData.user) {
+    if (authError) {
+      console.error('Supabase auth error:', authError);
+      return res.status(400).json({ error: authError.message || 'Error de autenticación' });
+    }
+
+    if (!authData || !authData.user) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
@@ -31,6 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (userError || !userData) {
+      console.error('User role lookup error:', userError);
       return res.status(401).json({ error: 'Usuario no encontrado en la base de datos' });
     }
 
@@ -47,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     });
   } catch (error: any) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Error en el servidor' });
+    console.error('Login error (unexpected):', error);
+    res.status(500).json({ error: error?.message || 'Error en el servidor' });
   }
 }
