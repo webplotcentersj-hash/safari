@@ -188,7 +188,10 @@ export default function AdminDashboard() {
     <div className="admin-dashboard">
       <header className="admin-header">
         <div className="container">
-          <h1>Panel de Administración</h1>
+          <div className="admin-header-content">
+            <img src="/logo.png" alt="Safari Tras las Sierras" className="admin-logo" />
+            <h1>Panel de Administración</h1>
+          </div>
           <div className="admin-header-actions">
             <span className="admin-user">Bienvenido, {user?.email}</span>
             <button onClick={handleLogout} className="btn btn-secondary">

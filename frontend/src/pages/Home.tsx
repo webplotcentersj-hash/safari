@@ -6,6 +6,7 @@ export default function Home() {
     <div className="home">
       <header className="home-header">
         <div className="container">
+          <img src="/logo.png" alt="Safari Tras las Sierras" className="header-logo" />
           <h1>SAFARI TRAS LAS SIERRAS</h1>
           <p className="subtitle">Rally en Valle Fértil - San Juan</p>
         </div>
@@ -49,4 +50,6 @@ export default function Home() {
     </div>
   );
 }
+
+
 

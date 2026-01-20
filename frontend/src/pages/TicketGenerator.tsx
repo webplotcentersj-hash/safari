@@ -55,8 +55,11 @@ export default function TicketGenerator() {
         <Link to="/" className="back-link">← Volver al inicio</Link>
         
         <div className="ticket-generator-card">
-          <h1>Generar Ticket de Entrada</h1>
-          <p className="subtitle">Completa el formulario para generar tu ticket de entrada al Safari Tras las Sierras</p>
+          <div className="ticket-header">
+            <img src="/logo.png" alt="Safari Tras las Sierras" className="ticket-logo" />
+            <h1>Generar Ticket de Entrada</h1>
+            <p className="subtitle">Completa el formulario para generar tu ticket de entrada al Safari Tras las Sierras</p>
+          </div>
 
           {message && (
             <div className={`alert alert-${message.type === 'success' ? 'success' : 'error'}`}>

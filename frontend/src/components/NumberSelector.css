@@ -10,7 +10,7 @@
   display: block;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #1a472a;
+  color: #65b330;
 }
 
 .number-search {
@@ -24,7 +24,7 @@
 
 .number-search:focus {
   outline: none;
-  border-color: #2d5a3d;
+  border-color: #5aa02a;
 }
 
 .selected-number-display {
@@ -38,7 +38,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 1.5rem 2rem;
-  background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%);
+  background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
   color: white;
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(26, 71, 42, 0.3);
@@ -94,7 +94,7 @@
   border: 2px solid #ddd;
   border-radius: 8px;
   background: white;
-  color: #1a472a;
+  color: #65b330;
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
@@ -104,15 +104,15 @@
 
 .number-button:hover:not(:disabled) {
   background: #e8f5e9;
-  border-color: #2d5a3d;
+  border-color: #5aa02a;
   transform: translateY(-2px);
   box-shadow: 0 2px 8px rgba(45, 90, 61, 0.2);
 }
 
 .number-button.selected {
-  background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%);
+  background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
   color: white;
-  border-color: #1a472a;
+  border-color: #65b330;
   transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(26, 71, 42, 0.4);
   z-index: 1;
@@ -160,11 +160,11 @@
 }
 
 .numbers-grid::-webkit-scrollbar-thumb {
-  background: #2d5a3d;
+  background: #5aa02a;
   border-radius: 4px;
 }
 
 .numbers-grid::-webkit-scrollbar-thumb:hover {
-  background: #1a472a;
+  background: #65b330;
 }
 

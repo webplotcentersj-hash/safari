@@ -7,14 +7,14 @@
 .back-link {
   display: inline-block;
   margin-bottom: 20px;
-  color: #1a472a;
+  color: #65b330;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s ease;
 }
 
 .back-link:hover {
-  color: #2d5a3d;
+  color: #5aa02a;
 }
 
 .registration-card {
@@ -27,7 +27,7 @@
 }
 
 .registration-card h1 {
-  color: #1a472a;
+  color: #65b330;
   margin-bottom: 10px;
   font-size: 2.5rem;
 }
@@ -49,7 +49,7 @@
 }
 
 .form-section h2 {
-  color: #1a472a;
+  color: #65b330;
   margin-bottom: 20px;
   font-size: 1.5rem;
 }

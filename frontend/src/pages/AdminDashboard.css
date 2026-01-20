@@ -4,7 +4,7 @@
 }
 
 .admin-header {
-  background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%);
+  background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
   color: white;
   padding: 20px 0;
   margin-bottom: 30px;
@@ -14,6 +14,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.admin-header-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.admin-logo {
+  max-width: 120px;
+  height: auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .admin-header h1 {
@@ -51,12 +63,12 @@
 }
 
 .admin-tabs button:hover {
-  color: #1a472a;
+  color: #65b330;
 }
 
 .admin-tabs button.active {
-  color: #1a472a;
-  border-bottom-color: #1a472a;
+  color: #65b330;
+  border-bottom-color: #65b330;
 }
 
 .stats-grid {
@@ -84,7 +96,7 @@
 .stat-value {
   font-size: 2.5rem;
   font-weight: bold;
-  color: #1a472a;
+  color: #65b330;
   margin-bottom: 10px;
 }
 
@@ -132,7 +144,7 @@
 }
 
 .data-table thead {
-  background-color: #1a472a;
+  background-color: #65b330;
   color: white;
 }
 
@@ -220,7 +232,7 @@
 
 .table-header h3 {
   margin: 0;
-  color: #1a472a;
+  color: #65b330;
   font-size: 1.3rem;
 }
 
@@ -241,8 +253,8 @@
 
 .search-input:focus {
   outline: none;
-  border-color: #1a472a;
-  box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
+  border-color: #65b330;
+  box-shadow: 0 0 0 3px rgba(101, 179, 48, 0.1);
 }
 
 .empty-state {
@@ -275,7 +287,7 @@
   border-radius: 12px;
   font-size: 0.9rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%);
+  background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
   color: white;
   min-width: 40px;
   text-align: center;
@@ -300,7 +312,7 @@
   }
 
   .admin-tabs button.active {
-    border-left-color: #1a472a;
+    border-left-color: #65b330;
     border-bottom-color: #ddd;
   }
 

@@ -35,6 +35,7 @@ export default function AdminLogin() {
     <div className="admin-login">
       <div className="login-container">
         <div className="login-card">
+          <img src="/logo.png" alt="Safari Tras las Sierras" className="login-logo" />
           <h1>Panel de Administración</h1>
           <p className="subtitle">Safari Tras las Sierras</p>
 

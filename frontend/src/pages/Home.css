@@ -5,10 +5,17 @@
 }
 
 .home-header {
-  background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%);
+  background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
   color: white;
   padding: 60px 20px;
   text-align: center;
+}
+
+.header-logo {
+  max-width: 200px;
+  height: auto;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
 .home-header h1 {
@@ -50,7 +57,7 @@
 }
 
 .home-card h2 {
-  color: #1a472a;
+  color: #65b330;
   margin-bottom: 15px;
   font-size: 1.8rem;
 }
@@ -81,4 +88,6 @@
     grid-template-columns: 1fr;
   }
 }
+
+
 

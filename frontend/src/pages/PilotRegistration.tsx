@@ -209,8 +209,11 @@ export default function PilotRegistration() {
         <Link to="/" className="back-link">← Volver al inicio</Link>
         
         <div className="registration-card">
-          <h1>Inscripción de Pilotos</h1>
-          <p className="subtitle">Completa todos los campos para inscribirte en el Safari Tras las Sierras</p>
+          <div className="registration-header">
+            <img src="/logo.png" alt="Safari Tras las Sierras" className="registration-logo" />
+            <h1>Inscripción de Pilotos</h1>
+            <p className="subtitle">Completa todos los campos para inscribirte en el Safari Tras las Sierras</p>
+          </div>
 
           {message && (
             <div className={`alert alert-${message.type === 'success' ? 'success' : 'error'} ${message.type === 'success' ? 'alert-success-prominent' : ''}`}>

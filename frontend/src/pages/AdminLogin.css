@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%);
+  background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
   padding: 20px;
 }
 
@@ -19,8 +19,16 @@
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
+.login-logo {
+  max-width: 150px;
+  height: auto;
+  margin: 0 auto 20px;
+  display: block;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
 .login-card h1 {
-  color: #1a472a;
+  color: #65b330;
   margin-bottom: 10px;
   text-align: center;
   font-size: 2rem;
@@ -42,4 +50,6 @@
   width: 100%;
   margin-top: 10px;
 }
+
+
 
