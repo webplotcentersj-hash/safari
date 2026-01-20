@@ -78,8 +78,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('Insert error:', error);
         console.error('Error details:', JSON.stringify(error, null, 2));
         return res.status(500).json({ 
-          error: 'Error al procesar la inscripción',
-          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+          error: error.message || 'Error al procesar la inscripción',
+          details: {
+            code: (error as any).code,
+            hint: (error as any).hint,
+            details: (error as any).details
+          }
         });
       }
 
