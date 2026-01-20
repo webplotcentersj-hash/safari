@@ -75,19 +75,18 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
+  }, [activeTab]);
+
+  // Actualización en tiempo real cada 5 segundos cuando está en la pestaña de pilotos
+  useEffect(() => {
+    if (activeTab !== 'pilots') return;
     
-    // Actualización en tiempo real cada 5 segundos cuando está en la pestaña de pilotos
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-    if (activeTab === 'pilots') {
-      intervalId = setInterval(() => {
-        fetchData();
-      }, 5000); // Actualizar cada 5 segundos
-    }
+    const intervalId = setInterval(() => {
+      fetchData();
+    }, 5000); // Actualizar cada 5 segundos
     
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      clearInterval(intervalId);
     };
   }, [activeTab]);
 
