@@ -258,8 +258,8 @@ export default function AdminDashboard() {
 
       console.log('✅ Status updated successfully:', data);
       
-      // Actualizar los datos después de cambiar el estado
-      await fetchData();
+      // Actualizar los datos después de cambiar el estado (sin loading para evitar parpadeo)
+      await fetchData(true);
       
       // Mostrar mensaje de éxito
       alert(`Estado actualizado exitosamente a: ${estado}`);
