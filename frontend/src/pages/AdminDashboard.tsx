@@ -201,30 +201,38 @@ export default function AdminDashboard() {
           <div className="loading">Cargando...</div>
         ) : (
           <>
-            {activeTab === 'stats' && stats && (
+            {activeTab === 'stats' && (
               <div className="stats-grid">
-                <div className="stat-card">
-                  <h3>Pilotos</h3>
-                  <div className="stat-value">{stats.pilots.total}</div>
-                  <div className="stat-details">
-                    <span className="stat-approved">Aprobados: {stats.pilots.approved}</span>
-                    <span className="stat-pending">Pendientes: {stats.pilots.pending}</span>
-                  </div>
-                </div>
+                {stats ? (
+                  <>
+                    <div className="stat-card">
+                      <h3>Pilotos</h3>
+                      <div className="stat-value">{stats.pilots?.total || 0}</div>
+                      <div className="stat-details">
+                        <span className="stat-approved">Aprobados: {stats.pilots?.approved || 0}</span>
+                        <span className="stat-pending">Pendientes: {stats.pilots?.pending || 0}</span>
+                      </div>
+                    </div>
 
-                <div className="stat-card">
-                  <h3>Tickets</h3>
-                  <div className="stat-value">{stats.tickets.total}</div>
-                  <div className="stat-details">
-                    <span className="stat-used">Usados: {stats.tickets.used}</span>
-                    <span className="stat-available">Disponibles: {stats.tickets.available}</span>
-                  </div>
-                </div>
+                    <div className="stat-card">
+                      <h3>Tickets</h3>
+                      <div className="stat-value">{stats.tickets?.total || 0}</div>
+                      <div className="stat-details">
+                        <span className="stat-used">Usados: {stats.tickets?.used || 0}</span>
+                        <span className="stat-available">Disponibles: {stats.tickets?.available || 0}</span>
+                      </div>
+                    </div>
 
-                <div className="stat-card">
-                  <h3>Ingresos</h3>
-                  <div className="stat-value">${stats.revenue.toFixed(2)}</div>
-                </div>
+                    <div className="stat-card">
+                      <h3>Ingresos</h3>
+                      <div className="stat-value">${(stats.revenue || 0).toFixed(2)}</div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
+                    <p>No se pudieron cargar las estadísticas. Verificá la configuración del backend.</p>
+                  </div>
+                )}
               </div>
             )}
 
