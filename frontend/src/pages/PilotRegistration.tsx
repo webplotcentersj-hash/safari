@@ -24,6 +24,7 @@ interface PilotFormData {
   copiloto_nombre: string;
   copiloto_dni: string;
   categoria: string;
+  categoria_auto?: string;
   numero?: number;
   // este campo no lo completa el usuario, lo llenamos nosotros con la URL del comprobante
   comprobante_pago_url?: string;
@@ -134,14 +135,24 @@ export default function PilotRegistration() {
         return;
       }
 
-      // Validar número para autos
-      if (data.categoria === 'auto' && !data.numero) {
-        setMessage({
-          type: 'error',
-          text: 'Debes seleccionar tu número de competencia (01-250).'
-        });
-        setLoading(false);
-        return;
+      // Validar campos requeridos para autos
+      if (data.categoria === 'auto') {
+        if (!data.numero) {
+          setMessage({
+            type: 'error',
+            text: 'Debes seleccionar tu número de competencia (01-250).'
+          });
+          setLoading(false);
+          return;
+        }
+        if (!data.categoria_auto) {
+          setMessage({
+            type: 'error',
+            text: 'Debes seleccionar una categoría de auto.'
+          });
+          setLoading(false);
+          return;
+        }
       }
 
       // Usamos la baseURL configurada (/api) y acá solo la ruta relativa.
@@ -149,6 +160,7 @@ export default function PilotRegistration() {
       const response = await axios.post('/pilots', {
         ...data,
         numero: data.categoria === 'auto' ? data.numero : null,
+        categoria_auto: data.categoria === 'auto' ? data.categoria_auto : null,
         comprobante_pago_url: comprobanteUrl
       });
       const qrFromApi = response.data?.qrDataUrl as string | undefined;
@@ -292,32 +304,60 @@ export default function PilotRegistration() {
               </div>
 
               {watchCategoria === 'auto' && (
-                <div className="form-group">
-                  {loadingNumbers ? (
-                    <div style={{ textAlign: 'center', padding: '2rem' }}>
-                      <p>Cargando números disponibles...</p>
-                    </div>
-                  ) : (
-                    <NumberSelector
-                      selectedNumber={selectedNumber}
-                      onSelect={handleNumberSelect}
-                      usedNumbers={usedNumbers}
-                    />
-                  )}
-                  {errors.numero && <span className="error">{errors.numero.message}</span>}
-                  <input
-                    type="hidden"
-                    {...register('numero', { 
-                      required: watchCategoria === 'auto' ? 'Debes seleccionar un número' : false,
-                      validate: (value) => {
-                        if (watchCategoria === 'auto' && (!value || value < 1 || value > 250)) {
-                          return 'El número debe estar entre 01 y 250';
+                <>
+                  <div className="form-group">
+                    <label>Categoría de Auto *</label>
+                    <select {...register('categoria_auto', { 
+                      required: watchCategoria === 'auto' ? 'Debes seleccionar una categoría' : false 
+                    })}>
+                      <option value="">Seleccione categoría</option>
+                      <option value="A Libre">A Libre</option>
+                      <option value="B 1.000">B 1.000</option>
+                      <option value="D">D</option>
+                      <option value="C">C</option>
+                      <option value="C PLUS">C PLUS</option>
+                      <option value="D ESPECIAL">D ESPECIAL</option>
+                      <option value="D PLUS">D PLUS</option>
+                      <option value="RC5 LIGHT">RC5 LIGHT</option>
+                      <option value="RC5">RC5</option>
+                      <option value="E">E</option>
+                      <option value="G">G</option>
+                      <option value="H">H</option>
+                      <option value="J">J</option>
+                      <option value="UTV">UTV</option>
+                      <option value="4x4">4x4</option>
+                      <option value="FUERZA LIBRE">FUERZA LIBRE</option>
+                    </select>
+                    {errors.categoria_auto && <span className="error">{errors.categoria_auto.message}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    {loadingNumbers ? (
+                      <div style={{ textAlign: 'center', padding: '2rem' }}>
+                        <p>Cargando números disponibles...</p>
+                      </div>
+                    ) : (
+                      <NumberSelector
+                        selectedNumber={selectedNumber}
+                        onSelect={handleNumberSelect}
+                        usedNumbers={usedNumbers}
+                      />
+                    )}
+                    {errors.numero && <span className="error">{errors.numero.message}</span>}
+                    <input
+                      type="hidden"
+                      {...register('numero', { 
+                        required: watchCategoria === 'auto' ? 'Debes seleccionar un número' : false,
+                        validate: (value) => {
+                          if (watchCategoria === 'auto' && (!value || value < 1 || value > 250)) {
+                            return 'El número debe estar entre 01 y 250';
+                          }
+                          return true;
                         }
-                        return true;
-                      }
-                    })}
-                  />
-                </div>
+                      })}
+                    />
+                  </div>
+                </>
               )}
             </div>
 

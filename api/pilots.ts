@@ -27,6 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         copiloto_nombre,
         copiloto_dni,
         categoria,
+        categoria_auto,
         numero,
         comprobante_pago_url
       } = req.body;
@@ -39,10 +40,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'El tipo de vehículo (Auto/Moto) es requerido' });
       }
 
-      // Validar número para autos
+      // Validar campos requeridos para autos
       if (categoria === 'auto') {
         if (!numero || numero < 1 || numero > 250) {
           return res.status(400).json({ error: 'Para autos, debes seleccionar un número entre 01 y 250' });
+        }
+        if (!categoria_auto) {
+          return res.status(400).json({ error: 'Para autos, debes seleccionar una categoría' });
         }
       }
 
@@ -69,6 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           copiloto_nombre: copiloto_nombre || null,
           copiloto_dni: copiloto_dni || null,
           categoria: categoria || null,
+          categoria_auto: categoria === 'auto' ? categoria_auto : null,
           numero: categoria === 'auto' ? numero : null,
           comprobante_pago_url: comprobante_pago_url || null,
           estado: 'pendiente'
