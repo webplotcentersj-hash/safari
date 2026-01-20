@@ -72,25 +72,30 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       if (activeTab === 'pilots') {
-        const response = await axios.get('/api/admin/pilots');
-        setPilots(response.data);
+        // BaseURL ya es /api, así que aquí solo usamos la ruta relativa
+        const response = await axios.get('/admin/pilots');
+        setPilots(Array.isArray(response.data) ? response.data : []);
       } else if (activeTab === 'tickets') {
-        const response = await axios.get('/api/admin/tickets');
-        setTickets(response.data);
+        const response = await axios.get('/admin/tickets');
+        setTickets(Array.isArray(response.data) ? response.data : []);
       } else {
-        const response = await axios.get('/api/admin/stats');
-        setStats(response.data);
+        const response = await axios.get('/admin/stats');
+        setStats(response.data || null);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+      // Evitar crash por estados inesperados
+      if (activeTab === 'pilots') setPilots([]);
+      if (activeTab === 'tickets') setTickets([]);
+      if (activeTab === 'stats') setStats(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const updatePilotStatus = async (id: number, estado: string) => {
+  const updatePilotStatus = async (id: any, estado: string) => {
     try {
-      await axios.patch(`/api/admin/pilots/${id}/status`, { estado });
+      await axios.patch(`/admin/pilots/${id}/status`, { estado });
       fetchData();
     } catch (error) {
       console.error('Error updating status:', error);
@@ -139,7 +144,7 @@ export default function AdminDashboard() {
 
   const downloadTicketPDF = async (codigo: string) => {
     try {
-      const response = await axios.get(`/api/admin/tickets/${codigo}/pdf`, {
+      const response = await axios.get(`/admin/tickets/${codigo}/pdf`, {
         responseType: 'blob'
       });
       
