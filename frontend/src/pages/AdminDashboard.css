@@ -207,6 +207,54 @@
   color: #666;
 }
 
+.table-header {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #eee;
+}
+
+.table-header h3 {
+  margin: 0;
+  color: #1a472a;
+  font-size: 1.3rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state p {
+  font-size: 1.2rem;
+  color: #666;
+  margin: 0;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.number-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%);
+  color: white;
+  min-width: 40px;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .admin-header .container {
     flex-direction: column;
@@ -238,4 +286,6 @@
     flex-direction: column;
   }
 }
+
+
 

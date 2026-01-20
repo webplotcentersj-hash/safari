@@ -247,56 +247,86 @@ export default function AdminDashboard() {
 
             {activeTab === 'pilots' && (
               <div className="admin-content">
-                <div className="table-container">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Nombre</th>
-                        <th>Apellido</th>
-                        <th>DNI</th>
-                        <th>Email</th>
-                        <th>Teléfono</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pilots.map((pilot) => (
-                        <tr key={pilot.id}>
-                          <td>{pilot.nombre}</td>
-                          <td>{pilot.apellido}</td>
-                          <td>{pilot.dni}</td>
-                          <td>{pilot.email}</td>
-                          <td>{pilot.telefono}</td>
-                          <td>
-                            <span className={`status-badge status-${pilot.estado}`}>
-                              {pilot.estado}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="action-buttons">
-                              {pilot.estado !== 'aprobado' && (
-                                <button
-                                  onClick={() => updatePilotStatus(pilot.id, 'aprobado')}
-                                  className="btn btn-success btn-sm"
-                                >
-                                  Aprobar
-                                </button>
-                              )}
-                              {pilot.estado !== 'rechazado' && (
-                                <button
-                                  onClick={() => updatePilotStatus(pilot.id, 'rechazado')}
-                                  className="btn btn-danger btn-sm"
-                                >
-                                  Rechazar
-                                </button>
-                              )}
-                            </div>
-                          </td>
+                {loading ? (
+                  <div className="loading">Cargando pilotos...</div>
+                ) : pilots.length === 0 ? (
+                  <div className="empty-state">
+                    <p>No hay pilotos inscritos aún.</p>
+                  </div>
+                ) : (
+                  <div className="table-container">
+                    <div className="table-header">
+                      <h3>Total de pilotos: {pilots.length}</h3>
+                    </div>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Nombre</th>
+                          <th>Apellido</th>
+                          <th>DNI</th>
+                          <th>Email</th>
+                          <th>Teléfono</th>
+                          <th>Categoría</th>
+                          <th>Número</th>
+                          <th>Estado</th>
+                          <th>Acciones</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {pilots.map((pilot) => (
+                          <tr key={pilot.id}>
+                            <td>{pilot.nombre}</td>
+                            <td>{pilot.apellido}</td>
+                            <td>{pilot.dni}</td>
+                            <td>{pilot.email}</td>
+                            <td>{pilot.telefono}</td>
+                            <td>
+                              {pilot.categoria === 'auto' && pilot.categoria_auto && (
+                                <span className="category-badge">{pilot.categoria_auto}</span>
+                              )}
+                              {pilot.categoria === 'moto' && pilot.categoria_moto && (
+                                <span className="category-badge">{pilot.categoria_moto}</span>
+                              )}
+                              {!pilot.categoria && '-'}
+                            </td>
+                            <td>
+                              {pilot.numero ? (
+                                <span className="number-badge">{pilot.numero.toString().padStart(2, '0')}</span>
+                              ) : (
+                                '-'
+                              )}
+                            </td>
+                            <td>
+                              <span className={`status-badge status-${pilot.estado}`}>
+                                {pilot.estado}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="action-buttons">
+                                {pilot.estado !== 'aprobado' && (
+                                  <button
+                                    onClick={() => updatePilotStatus(pilot.id, 'aprobado')}
+                                    className="btn btn-success btn-sm"
+                                  >
+                                    Aprobar
+                                  </button>
+                                )}
+                                {pilot.estado !== 'rechazado' && (
+                                  <button
+                                    onClick={() => updatePilotStatus(pilot.id, 'rechazado')}
+                                    className="btn btn-danger btn-sm"
+                                  >
+                                    Rechazar
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
                 </div>
               </div>
             )}
