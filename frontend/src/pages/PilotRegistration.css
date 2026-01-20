@@ -26,6 +26,18 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+.registration-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.registration-logo {
+  max-width: 150px;
+  height: auto;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
 .registration-card h1 {
   color: #65b330;
   margin-bottom: 10px;
