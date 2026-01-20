@@ -82,15 +82,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Admin - Pilots
   if (method === 'GET' && path === '/api/admin/pilots') {
     try {
-      // Usar cliente con autenticación del usuario o cliente público como fallback
-      const client = supabaseWithAuth || supabaseAdmin;
+      // Usar cliente público ya que las políticas RLS son públicas
+      // Esto permite que funcione incluso sin autenticación
+      const supabaseUrl = process.env.SUPABASE_URL || '';
+      const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
       
-      if (!client) {
-        console.error('No Supabase client available');
+      if (!supabaseUrl || !supabaseAnonKey) {
+        console.error('Missing Supabase env variables');
         return res.status(500).json({ error: 'Error de configuración' });
       }
       
-      const { data: pilots, error } = await client
+      // Crear cliente público (anon key) que puede leer pilots gracias a las políticas RLS públicas
+      const publicClient = createClient(supabaseUrl, supabaseAnonKey);
+      
+      const { data: pilots, error } = await publicClient
         .from('pilots')
         .select('*')
         .order('created_at', { ascending: false });
