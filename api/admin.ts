@@ -73,17 +73,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // Resto de endpoints: requiere sesión admin
-  const user = await authenticateToken(req);
-  if (!user || !requireAdmin(user)) {
-    return res.status(403).json({ error: 'Acceso denegado' });
-  }
-
-  // Admin - Pilots
+  // Admin - Pilots (endpoint público para lectura, ya que las políticas RLS son públicas)
   if (method === 'GET' && path === '/api/admin/pilots') {
     try {
-      // Usar cliente público ya que las políticas RLS son públicas
-      // Esto permite que funcione incluso sin autenticación
       const supabaseUrl = process.env.SUPABASE_URL || '';
       const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
       
@@ -95,6 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Crear cliente público (anon key) que puede leer pilots gracias a las políticas RLS públicas
       const publicClient = createClient(supabaseUrl, supabaseAnonKey);
       
+      console.log('Fetching pilots from Supabase...');
       const { data: pilots, error } = await publicClient
         .from('pilots')
         .select('*')
@@ -102,17 +95,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) {
         console.error('Get pilots error:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
         console.error('Error details:', JSON.stringify(error, null, 2));
-        throw error;
+        return res.status(500).json({ 
+          error: 'Error al obtener pilotos',
+          details: error.message 
+        });
       }
       
-      console.log(`Returning ${pilots?.length || 0} pilots`);
-      res.json(pilots || []);
+      console.log(`Successfully fetched ${pilots?.length || 0} pilots from database`);
+      if (pilots && pilots.length > 0) {
+        console.log('Sample pilot:', JSON.stringify(pilots[0], null, 2));
+      }
+      
+      return res.json(pilots || []);
     } catch (error: any) {
       console.error('Get pilots error (catch):', error);
       console.error('Error message:', error.message);
-      res.json([]); // Devolver array vacío en lugar de error 500
+      console.error('Error stack:', error.stack);
+      return res.status(500).json({ 
+        error: 'Error al obtener pilotos',
+        details: error.message 
+      });
     }
+  }
+
+  // Resto de endpoints: requiere sesión admin
+  const user = await authenticateToken(req);
+  if (!user || !requireAdmin(user)) {
+    return res.status(403).json({ error: 'Acceso denegado' });
   } else if (method === 'GET' && path.includes('/admin/pilots/') && !path.includes('/status') && !path.includes('/pdf')) {
     // Obtener piloto por ID
     try {

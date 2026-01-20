@@ -97,14 +97,26 @@ export default function AdminDashboard() {
     try {
       if (activeTab === 'pilots') {
         // BaseURL ya es /api, así que aquí solo usamos la ruta relativa
-        const response = await axios.get('/admin/pilots');
-        console.log('Pilots response:', response.data);
-        console.log('Response status:', response.status);
+        console.log('Fetching pilots from:', '/admin/pilots');
+        const response = await axios.get('/admin/pilots', {
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        console.log('Pilots response status:', response.status);
+        console.log('Pilots response data:', response.data);
+        console.log('Pilots response data type:', typeof response.data);
+        console.log('Is array?', Array.isArray(response.data));
+        
         const pilotsData = Array.isArray(response.data) ? response.data : [];
         console.log(`Loaded ${pilotsData.length} pilots`);
-        if (pilotsData.length === 0) {
-          console.warn('No pilots returned from API');
+        
+        if (pilotsData.length > 0) {
+          console.log('First pilot:', pilotsData[0]);
+        } else {
+          console.warn('No pilots returned from API - empty array');
         }
+        
         setPilots(pilotsData);
       } else if (activeTab === 'tickets') {
         const response = await axios.get('/admin/tickets');
@@ -116,11 +128,15 @@ export default function AdminDashboard() {
     } catch (error: any) {
       console.error('Error fetching data:', error);
       console.error('Error response:', error.response);
+      console.error('Error status:', error.response?.status);
       console.error('Error details:', error.response?.data);
-      const errorMsg = error.response?.data?.error || error.message || 'Error al cargar los datos';
+      const errorMsg = error.response?.data?.error || error.response?.data?.details || error.message || 'Error al cargar los datos';
       setErrorMessage(errorMsg);
       // Evitar crash por estados inesperados
-      if (activeTab === 'pilots') setPilots([]);
+      if (activeTab === 'pilots') {
+        console.error('Setting pilots to empty array due to error');
+        setPilots([]);
+      }
       if (activeTab === 'tickets') setTickets([]);
       if (activeTab === 'stats') setStats(null);
     } finally {
