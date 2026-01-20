@@ -300,6 +300,39 @@
   box-shadow: 0 0 0 3px rgba(101, 179, 48, 0.1);
 }
 
+.filter-group {
+  display: flex;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 10px 15px;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.3s;
+  min-width: 180px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #65b330;
+  box-shadow: 0 0 0 3px rgba(101, 179, 48, 0.1);
+}
+
+.filter-select:hover {
+  border-color: #65b330;
+}
+
+.text-muted {
+  color: #999;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
 .empty-state {
   text-align: center;
   padding: 60px 20px;
