@@ -215,18 +215,6 @@ export default function PilotRegistration() {
             <p className="subtitle">Completa todos los campos para inscribirte en el Safari Tras las Sierras</p>
           </div>
 
-          {message && (
-            <div className={`alert alert-${message.type === 'success' ? 'success' : 'error'} ${message.type === 'success' ? 'alert-success-prominent' : ''}`}>
-              {message.type === 'success' && (
-                <div className="success-icon">✓</div>
-              )}
-              <div className="alert-content">
-                <strong>{message.type === 'success' ? '¡Éxito!' : 'Error'}</strong>
-                <p>{message.text}</p>
-              </div>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="form-section">
               <h2>Datos Personales</h2>
@@ -425,9 +413,22 @@ export default function PilotRegistration() {
             <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? 'Enviando...' : 'Enviar Inscripción'}
             </button>
+          </form>
+
+          {message && (
+            <div className={`alert alert-${message.type === 'success' ? 'success' : 'error'} ${message.type === 'success' ? 'alert-success-prominent' : ''}`} style={{ marginTop: '2rem' }}>
+              {message.type === 'success' && (
+                <div className="success-icon">✓</div>
+              )}
+              <div className="alert-content">
+                <strong>{message.type === 'success' ? '¡Éxito!' : 'Error'}</strong>
+                <p>{message.text}</p>
+              </div>
+            </div>
+          )}
 
           {qrDataUrl && (
-            <div className="qr-section">
+            <div className="qr-section" style={{ marginTop: '2rem' }}>
               <h3>Tu código QR de inscripción</h3>
               <p>Guardalo en tu teléfono o descargalo para presentarlo en la acreditación.</p>
               <div className="qr-preview">
@@ -443,7 +444,6 @@ export default function PilotRegistration() {
               </a>
             </div>
           )}
-          </form>
         </div>
       </div>
     </div>

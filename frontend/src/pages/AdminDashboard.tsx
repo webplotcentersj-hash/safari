@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Configurar base URL para producción
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 axios.defaults.baseURL = API_BASE_URL;
 import './AdminDashboard.css';
+
+const COLORS = ['#65b330', '#5aa02a', '#4a8f28', '#3d7a22'];
 
 interface Pilot {
   id: string; // UUID en Supabase
@@ -72,6 +75,20 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
+    
+    // Actualización en tiempo real cada 5 segundos cuando está en la pestaña de pilotos
+    let intervalId: NodeJS.Timeout | null = null;
+    if (activeTab === 'pilots') {
+      intervalId = setInterval(() => {
+        fetchData();
+      }, 5000); // Actualizar cada 5 segundos
+    }
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, [activeTab]);
 
   const fetchData = async () => {
@@ -228,35 +245,92 @@ export default function AdminDashboard() {
         ) : (
           <>
             {activeTab === 'stats' && (
-              <div className="stats-grid">
-                {stats ? (
-                  <>
-                    <div className="stat-card">
-                      <h3>Pilotos</h3>
-                      <div className="stat-value">{stats.pilots?.total || 0}</div>
-                      <div className="stat-details">
-                        <span className="stat-approved">Aprobados: {stats.pilots?.approved || 0}</span>
-                        <span className="stat-pending">Pendientes: {stats.pilots?.pending || 0}</span>
+              <div className="stats-section">
+                <div className="stats-grid">
+                  {stats ? (
+                    <>
+                      <div className="stat-card">
+                        <h3>Pilotos</h3>
+                        <div className="stat-value">{stats.pilots?.total || 0}</div>
+                        <div className="stat-details">
+                          <span className="stat-approved">Aprobados: {stats.pilots?.approved || 0}</span>
+                          <span className="stat-pending">Pendientes: {stats.pilots?.pending || 0}</span>
+                        </div>
                       </div>
+
+                      <div className="stat-card">
+                        <h3>Tickets</h3>
+                        <div className="stat-value">{stats.tickets?.total || 0}</div>
+                        <div className="stat-details">
+                          <span className="stat-used">Usados: {stats.tickets?.used || 0}</span>
+                          <span className="stat-available">Disponibles: {stats.tickets?.available || 0}</span>
+                        </div>
+                      </div>
+
+                      <div className="stat-card">
+                        <h3>Ingresos</h3>
+                        <div className="stat-value">${(stats.revenue || 0).toFixed(2)}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
+                      <p>No se pudieron cargar las estadísticas. Verificá la configuración del backend.</p>
+                    </div>
+                  )}
+                </div>
+
+                {stats && (
+                  <div className="charts-grid">
+                    <div className="chart-card">
+                      <h3>Estado de Pilotos</h3>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Aprobados', value: stats.pilots?.approved || 0 },
+                              { name: 'Pendientes', value: stats.pilots?.pending || 0 },
+                              { name: 'Rechazados', value: (stats.pilots?.total || 0) - (stats.pilots?.approved || 0) - (stats.pilots?.pending || 0) }
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {[
+                              { name: 'Aprobados', value: stats.pilots?.approved || 0 },
+                              { name: 'Pendientes', value: stats.pilots?.pending || 0 },
+                              { name: 'Rechazados', value: (stats.pilots?.total || 0) - (stats.pilots?.approved || 0) - (stats.pilots?.pending || 0) }
+                            ].map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
                     </div>
 
-                    <div className="stat-card">
-                      <h3>Tickets</h3>
-                      <div className="stat-value">{stats.tickets?.total || 0}</div>
-                      <div className="stat-details">
-                        <span className="stat-used">Usados: {stats.tickets?.used || 0}</span>
-                        <span className="stat-available">Disponibles: {stats.tickets?.available || 0}</span>
-                      </div>
+                    <div className="chart-card">
+                      <h3>Estado de Tickets</h3>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart
+                          data={[
+                            { name: 'Usados', value: stats.tickets?.used || 0 },
+                            { name: 'Disponibles', value: stats.tickets?.available || 0 }
+                          ]}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="value" fill="#65b330" />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
-
-                    <div className="stat-card">
-                      <h3>Ingresos</h3>
-                      <div className="stat-value">${(stats.revenue || 0).toFixed(2)}</div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
-                    <p>No se pudieron cargar las estadísticas. Verificá la configuración del backend.</p>
                   </div>
                 )}
               </div>
