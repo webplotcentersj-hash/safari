@@ -265,15 +265,6 @@ export default function PilotRegistration() {
             </div>
 
             <div className="form-section">
-              <h2>Datos del Vehículo</h2>
-              
-              <div className="form-group">
-                <label>Patente</label>
-                <input type="text" {...register('vehiculo_patente')} />
-              </div>
-            </div>
-
-            <div className="form-section">
               <h2>Datos del Copiloto (Opcional)</h2>
               
               <div className="form-row">
