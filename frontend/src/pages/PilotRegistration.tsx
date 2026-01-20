@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import { supabase } from '../config/supabase';
@@ -8,6 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 axios.defaults.baseURL = API_BASE_URL;
 import { Link } from 'react-router-dom';
 import './PilotRegistration.css';
+import NumberSelector from '../components/NumberSelector';
 
 interface PilotFormData {
   nombre: string;
@@ -23,18 +24,55 @@ interface PilotFormData {
   copiloto_nombre: string;
   copiloto_dni: string;
   categoria: string;
+  numero?: number;
   // este campo no lo completa el usuario, lo llenamos nosotros con la URL del comprobante
   comprobante_pago_url?: string;
 }
 
 export default function PilotRegistration() {
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<PilotFormData>();
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<PilotFormData>();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
+  const [usedNumbers, setUsedNumbers] = useState<number[]>([]);
+  const [loadingNumbers, setLoadingNumbers] = useState(false);
 
   const watchDni = watch('dni');
+  const watchCategoria = watch('categoria');
+
+  // Cargar números ya usados cuando se selecciona "auto"
+  useEffect(() => {
+    if (watchCategoria === 'auto') {
+      loadUsedNumbers();
+    } else {
+      setSelectedNumber(null);
+      setValue('numero', undefined);
+    }
+  }, [watchCategoria, setValue]);
+
+  const loadUsedNumbers = async () => {
+    setLoadingNumbers(true);
+    try {
+      const response = await axios.get('/admin/pilots');
+      const pilots = Array.isArray(response.data) ? response.data : [];
+      const used = pilots
+        .filter((p: any) => p.numero && p.categoria === 'auto')
+        .map((p: any) => p.numero);
+      setUsedNumbers(used);
+    } catch (error) {
+      console.error('Error cargando números usados:', error);
+      // Si falla, continuar sin restricciones (pero el backend validará)
+    } finally {
+      setLoadingNumbers(false);
+    }
+  };
+
+  const handleNumberSelect = (num: number) => {
+    setSelectedNumber(num);
+    setValue('numero', num, { shouldValidate: true });
+  };
 
   const onSubmit = async (data: PilotFormData) => {
     setLoading(true);
@@ -96,10 +134,21 @@ export default function PilotRegistration() {
         return;
       }
 
+      // Validar número para autos
+      if (data.categoria === 'auto' && !data.numero) {
+        setMessage({
+          type: 'error',
+          text: 'Debes seleccionar tu número de competencia (01-250).'
+        });
+        setLoading(false);
+        return;
+      }
+
       // Usamos la baseURL configurada (/api) y acá solo la ruta relativa.
       // La función de Vercel es `api/pilots.ts`, cuya ruta real es `/api/pilots`.
       const response = await axios.post('/pilots', {
         ...data,
+        numero: data.categoria === 'auto' ? data.numero : null,
         comprobante_pago_url: comprobanteUrl
       });
       const qrFromApi = response.data?.qrDataUrl as string | undefined;
@@ -266,6 +315,35 @@ export default function PilotRegistration() {
                 </select>
                 {errors.categoria && <span className="error">{errors.categoria.message}</span>}
               </div>
+
+              {watchCategoria === 'auto' && (
+                <div className="form-group">
+                  {loadingNumbers ? (
+                    <div style={{ textAlign: 'center', padding: '2rem' }}>
+                      <p>Cargando números disponibles...</p>
+                    </div>
+                  ) : (
+                    <NumberSelector
+                      selectedNumber={selectedNumber}
+                      onSelect={handleNumberSelect}
+                      usedNumbers={usedNumbers}
+                    />
+                  )}
+                  {errors.numero && <span className="error">{errors.numero.message}</span>}
+                  <input
+                    type="hidden"
+                    {...register('numero', { 
+                      required: watchCategoria === 'auto' ? 'Debes seleccionar un número' : false,
+                      validate: (value) => {
+                        if (watchCategoria === 'auto' && (!value || value < 1 || value > 250)) {
+                          return 'El número debe estar entre 01 y 250';
+                        }
+                        return true;
+                      }
+                    })}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="form-section">
