@@ -74,8 +74,11 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (silent = false) => {
+    // Si es una actualización silenciosa (polling), no mostrar loading
+    if (!silent) {
+      setLoading(true);
+    }
     setErrorMessage(null);
     try {
       if (activeTab === 'pilots') {
