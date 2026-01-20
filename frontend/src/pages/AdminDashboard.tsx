@@ -67,6 +67,7 @@ export default function AdminDashboard() {
     tipo: 'general',
     precio: 0
   });
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -78,7 +79,10 @@ export default function AdminDashboard() {
       if (activeTab === 'pilots') {
         // BaseURL ya es /api, así que aquí solo usamos la ruta relativa
         const response = await axios.get('/admin/pilots');
-        setPilots(Array.isArray(response.data) ? response.data : []);
+        console.log('Pilots response:', response.data);
+        const pilotsData = Array.isArray(response.data) ? response.data : [];
+        console.log(`Loaded ${pilotsData.length} pilots`);
+        setPilots(pilotsData);
       } else if (activeTab === 'tickets') {
         const response = await axios.get('/admin/tickets');
         setTickets(Array.isArray(response.data) ? response.data : []);
@@ -86,8 +90,9 @@ export default function AdminDashboard() {
         const response = await axios.get('/admin/stats');
         setStats(response.data || null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching data:', error);
+      console.error('Error details:', error.response?.data);
       // Evitar crash por estados inesperados
       if (activeTab === 'pilots') setPilots([]);
       if (activeTab === 'tickets') setTickets([]);
@@ -249,16 +254,27 @@ export default function AdminDashboard() {
               <div className="admin-content">
                 {loading ? (
                   <div className="loading">Cargando pilotos...</div>
-                ) : pilots.length === 0 ? (
-                  <div className="empty-state">
-                    <p>No hay pilotos inscritos aún.</p>
-                  </div>
                 ) : (
-                  <div className="table-container">
+                  <>
                     <div className="table-header">
                       <h3>Total de pilotos: {pilots.length}</h3>
+                      <div className="search-box">
+                        <input
+                          type="text"
+                          placeholder="Buscar por nombre, apellido, DNI, email..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="search-input"
+                        />
+                      </div>
                     </div>
-                    <table className="data-table">
+                    {pilots.length === 0 ? (
+                      <div className="empty-state">
+                        <p>No hay pilotos inscritos aún.</p>
+                      </div>
+                    ) : (
+                      <div className="table-container">
+                        <table className="data-table">
                       <thead>
                         <tr>
                           <th>Nombre</th>
@@ -273,7 +289,22 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody>
-                        {pilots.map((pilot) => (
+                        {pilots
+                          .filter((pilot) => {
+                            if (!searchTerm) return true;
+                            const search = searchTerm.toLowerCase();
+                            return (
+                              pilot.nombre?.toLowerCase().includes(search) ||
+                              pilot.apellido?.toLowerCase().includes(search) ||
+                              pilot.dni?.toLowerCase().includes(search) ||
+                              pilot.email?.toLowerCase().includes(search) ||
+                              pilot.telefono?.toLowerCase().includes(search) ||
+                              pilot.categoria_auto?.toLowerCase().includes(search) ||
+                              pilot.categoria_moto?.toLowerCase().includes(search) ||
+                              pilot.numero?.toString().includes(search)
+                            );
+                          })
+                          .map((pilot) => (
                           <tr key={pilot.id}>
                             <td>{pilot.nombre}</td>
                             <td>{pilot.apellido}</td>
@@ -326,6 +357,8 @@ export default function AdminDashboard() {
                       </tbody>
                     </table>
                   </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
