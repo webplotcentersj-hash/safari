@@ -203,21 +203,25 @@ export default function AdminDashboard() {
       if (activeTab === 'tickets') setTickets([]);
       if (activeTab === 'stats') setStats(null);
     } finally {
-      setLoading(false);
+      // Solo ocultar loading si no es una actualización silenciosa
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [activeTab]);
 
   useEffect(() => {
-    fetchData();
+    fetchData(false); // Primera carga con loading
   }, [fetchData]);
 
-  // Actualización en tiempo real cada 5 segundos cuando está en la pestaña de pilotos
+  // Actualización en tiempo real cada 10 segundos cuando está en la pestaña de pilotos
+  // Usar modo silencioso para evitar parpadeos
   useEffect(() => {
     if (activeTab !== 'pilots') return;
     
     const intervalId = setInterval(() => {
-      fetchData();
-    }, 5000); // Actualizar cada 5 segundos
+      fetchData(true); // Actualización silenciosa sin mostrar loading
+    }, 10000); // Actualizar cada 10 segundos (aumentado de 5 para menos intermitencias)
     
     return () => {
       clearInterval(intervalId);
