@@ -82,7 +82,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Admin - Pilots
   if (method === 'GET' && path === '/api/admin/pilots') {
     try {
-      const { data: pilots, error } = await supabaseAdmin
+      const client = supabaseWithAuth || supabaseAdmin;
+      const { data: pilots, error } = await client
         .from('pilots')
         .select('*')
         .order('created_at', { ascending: false });
@@ -91,13 +92,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.json(pilots || []);
     } catch (error: any) {
       console.error('Get pilots error:', error);
-      res.status(500).json({ error: 'Error al obtener los pilotos' });
+      res.json([]); // Devolver array vacío en lugar de error 500
     }
   } else if (method === 'GET' && path.includes('/admin/pilots/') && !path.includes('/status') && !path.includes('/pdf')) {
     // Obtener piloto por ID
     try {
+      const client = supabaseWithAuth || supabaseAdmin;
       const id = path.split('/admin/pilots/')[1]?.split('/')[0] || query.id;
-      const { data: pilot, error } = await supabaseAdmin
+      const { data: pilot, error } = await client
         .from('pilots')
         .select('*')
         .eq('id', id)
@@ -114,6 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } else if (method === 'PATCH' && path.includes('/admin/pilots/') && path.includes('/status')) {
     // Actualizar estado de piloto
     try {
+      const client = supabaseWithAuth || supabaseAdmin;
       const id = path.split('/admin/pilots/')[1]?.split('/status')[0] || query.id;
       const { estado } = body;
 
@@ -121,7 +124,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Estado inválido' });
       }
 
-      const { error } = await supabaseAdmin
+      const { error } = await client
         .from('pilots')
         .update({ estado })
         .eq('id', id);
@@ -135,8 +138,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } else if (method === 'DELETE' && path.includes('/admin/pilots/') && !path.includes('/status')) {
     // Eliminar piloto
     try {
+      const client = supabaseWithAuth || supabaseAdmin;
       const id = path.split('/admin/pilots/')[1]?.split('/')[0] || query.id;
-      const { error } = await supabaseAdmin
+      const { error } = await client
         .from('pilots')
         .delete()
         .eq('id', id);
@@ -151,7 +155,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Admin - Tickets - Listar todos
   else if (method === 'GET' && (path === '/api/admin/tickets' || path.endsWith('/admin/tickets')) && !path.includes('/pdf')) {
     try {
-      const { data: tickets, error } = await supabaseAdmin
+      const client = supabaseWithAuth || supabaseAdmin;
+      const { data: tickets, error } = await client
         .from('tickets')
         .select('*')
         .order('fecha_emision', { ascending: false });
@@ -160,18 +165,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.json(tickets || []);
     } catch (error: any) {
       console.error('Get tickets error:', error);
-      res.status(500).json({ error: 'Error al obtener los tickets' });
+      res.json([]); // Devolver array vacío en lugar de error 500
     }
   } else if (method === 'GET' && path.includes('/admin/tickets/') && path.includes('/pdf')) {
     // Descargar ticket PDF
     try {
+      const client = supabaseWithAuth || supabaseAdmin;
       const codigo = path.split('/admin/tickets/')[1]?.replace('/pdf', '') || query.codigo;
       
       if (!codigo) {
         return res.status(400).json({ error: 'Código requerido' });
       }
 
-      const { data: ticket, error } = await supabaseAdmin
+      const { data: ticket, error } = await client
         .from('tickets')
         .select('*')
         .eq('codigo', codigo)
