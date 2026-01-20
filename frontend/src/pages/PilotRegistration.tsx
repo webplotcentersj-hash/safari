@@ -96,8 +96,9 @@ export default function PilotRegistration() {
         return;
       }
 
-      // Usamos la baseURL configurada (/api) y acá solo la ruta relativa
-      const response = await axios.post('/pilots/register', {
+      // Usamos la baseURL configurada (/api) y acá solo la ruta relativa.
+      // La función de Vercel es `api/pilots.ts`, cuya ruta real es `/api/pilots`.
+      const response = await axios.post('/pilots', {
         ...data,
         comprobante_pago_url: comprobanteUrl
       });
