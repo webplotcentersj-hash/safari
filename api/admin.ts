@@ -174,8 +174,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Admin - Tickets - Listar todos
   else if (method === 'GET' && (path === '/api/admin/tickets' || path.endsWith('/admin/tickets')) && !path.includes('/pdf')) {
     try {
-      const client = supabaseWithAuth || supabaseAdmin;
-      const { data: tickets, error } = await client
+      const supabaseUrl = process.env.SUPABASE_URL || '';
+      const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        return res.status(500).json({ error: 'Error de configuración' });
+      }
+      
+      const publicClient = createClient(supabaseUrl, supabaseAnonKey);
+      const { data: tickets, error } = await publicClient
         .from('tickets')
         .select('*')
         .order('fecha_emision', { ascending: false });
