@@ -242,17 +242,28 @@ export default function AdminDashboard() {
         .select();
 
       if (error) {
-        console.error('Supabase update error:', error);
-        throw new Error(error.message || 'Error al actualizar el estado');
+        console.error('❌ Supabase update error:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        throw new Error(error.message || 'Error al actualizar el estado en Supabase');
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('No se recibió confirmación de la actualización');
       }
 
       console.log('✅ Status updated successfully:', data);
       
       // Actualizar los datos después de cambiar el estado
-      fetchData();
+      await fetchData();
+      
+      // Mostrar mensaje de éxito
+      alert(`Estado actualizado exitosamente a: ${estado}`);
     } catch (error: any) {
-      console.error('Error updating status:', error);
-      alert(error.message || 'Error al actualizar el estado');
+      console.error('❌ Error updating status:', error);
+      const errorMessage = error.message || 'Error al actualizar el estado. Verificá la consola para más detalles.';
+      alert(errorMessage);
     }
   };
 
