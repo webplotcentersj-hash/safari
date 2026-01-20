@@ -68,6 +68,7 @@ export default function AdminDashboard() {
     precio: 0
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -75,13 +76,18 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     setLoading(true);
+    setErrorMessage(null);
     try {
       if (activeTab === 'pilots') {
         // BaseURL ya es /api, así que aquí solo usamos la ruta relativa
         const response = await axios.get('/admin/pilots');
         console.log('Pilots response:', response.data);
+        console.log('Response status:', response.status);
         const pilotsData = Array.isArray(response.data) ? response.data : [];
         console.log(`Loaded ${pilotsData.length} pilots`);
+        if (pilotsData.length === 0) {
+          console.warn('No pilots returned from API');
+        }
         setPilots(pilotsData);
       } else if (activeTab === 'tickets') {
         const response = await axios.get('/admin/tickets');
@@ -92,7 +98,10 @@ export default function AdminDashboard() {
       }
     } catch (error: any) {
       console.error('Error fetching data:', error);
+      console.error('Error response:', error.response);
       console.error('Error details:', error.response?.data);
+      const errorMsg = error.response?.data?.error || error.message || 'Error al cargar los datos';
+      setErrorMessage(errorMsg);
       // Evitar crash por estados inesperados
       if (activeTab === 'pilots') setPilots([]);
       if (activeTab === 'tickets') setTickets([]);
@@ -256,6 +265,14 @@ export default function AdminDashboard() {
                   <div className="loading">Cargando pilotos...</div>
                 ) : (
                   <>
+                    {errorMessage && (
+                      <div className="alert alert-error" style={{ marginBottom: '20px' }}>
+                        <strong>Error:</strong> {errorMessage}
+                        <button onClick={fetchData} className="btn btn-primary btn-sm" style={{ marginLeft: '10px' }}>
+                          Reintentar
+                        </button>
+                      </div>
+                    )}
                     <div className="table-header">
                       <h3>Total de pilotos: {pilots.length}</h3>
                       <div className="search-box">
@@ -268,11 +285,11 @@ export default function AdminDashboard() {
                         />
                       </div>
                     </div>
-                    {pilots.length === 0 ? (
+                    {pilots.length === 0 && !errorMessage ? (
                       <div className="empty-state">
                         <p>No hay pilotos inscritos aún.</p>
                       </div>
-                    ) : (
+                    ) : pilots.length > 0 ? (
                       <div className="table-container">
                         <table className="data-table">
                       <thead>
