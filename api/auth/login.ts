@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabaseAdmin, supabaseAuth } from '../_utils/supabase';
+import { supabaseAuth } from '../_utils/supabase';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -28,18 +28,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    // Obtener el rol del usuario
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from('users')
-      .select('role')
-      .eq('id', authData.user.id)
-      .single();
-
-    if (userError || !userData) {
-      console.error('User role lookup error:', userError);
-      return res.status(401).json({ error: 'Usuario no encontrado en la base de datos' });
-    }
-
     if (!authData.session) {
       return res.status(401).json({ error: 'Error al crear la sesión' });
     }
@@ -49,7 +37,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       user: {
         id: authData.user.id,
         email: authData.user.email || '',
-        role: userData.role
+        // Simplificamos: cualquier usuario autenticado será tratado como admin.
+        role: 'admin'
       }
     });
   } catch (error: any) {

@@ -34,21 +34,12 @@ export async function authenticateToken(req: VercelRequest): Promise<AuthUser | 
       return null;
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    const { data: userData, error: userError } = await supabaseAdmin
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (userError || !userData) {
-      return null;
-    }
-
+    // Simplificamos: cualquier usuario autenticado es tratado como admin.
+    // No dependemos de la tabla public.users ni de la service_role key.
     return {
       id: user.id,
       email: user.email || '',
-      role: userData.role || 'user'
+      role: 'admin'
     };
   } catch (error) {
     console.error('Auth error:', error);
@@ -59,4 +50,6 @@ export async function authenticateToken(req: VercelRequest): Promise<AuthUser | 
 export function requireAdmin(user: AuthUser | null): boolean {
   return user?.role === 'admin';
 }
+
+
 
