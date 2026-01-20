@@ -25,6 +25,7 @@ interface PilotFormData {
   copiloto_dni: string;
   categoria: string;
   categoria_auto?: string;
+  categoria_moto?: string;
   numero?: number;
   // este campo no lo completa el usuario, lo llenamos nosotros con la URL del comprobante
   comprobante_pago_url?: string;
@@ -155,12 +156,25 @@ export default function PilotRegistration() {
         }
       }
 
+      // Validar campos requeridos para motos
+      if (data.categoria === 'moto') {
+        if (!data.categoria_moto) {
+          setMessage({
+            type: 'error',
+            text: 'Debes seleccionar una categoría de moto.'
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       // Usamos la baseURL configurada (/api) y acá solo la ruta relativa.
       // La función de Vercel es `api/pilots.ts`, cuya ruta real es `/api/pilots`.
       const response = await axios.post('/pilots', {
         ...data,
         numero: data.categoria === 'auto' ? data.numero : null,
         categoria_auto: data.categoria === 'auto' ? data.categoria_auto : null,
+        categoria_moto: data.categoria === 'moto' ? data.categoria_moto : null,
         comprobante_pago_url: comprobanteUrl
       });
       const qrFromApi = response.data?.qrDataUrl as string | undefined;
@@ -358,6 +372,25 @@ export default function PilotRegistration() {
                     />
                   </div>
                 </>
+              )}
+
+              {watchCategoria === 'moto' && (
+                <div className="form-group">
+                  <label>Categoría de Moto Enduro Safari *</label>
+                  <select {...register('categoria_moto', { 
+                    required: watchCategoria === 'moto' ? 'Debes seleccionar una categoría' : false 
+                  })}>
+                    <option value="">Seleccione categoría</option>
+                    <option value="1 SENIOR">1 SENIOR</option>
+                    <option value="2 JUNIOR">2 JUNIOR</option>
+                    <option value="3 MASTER A">3 MASTER A</option>
+                    <option value="4 MASTER B">4 MASTER B</option>
+                    <option value="5 MASTER C">5 MASTER C</option>
+                    <option value="6 PROMOCIONALES">6 PROMOCIONALES</option>
+                    <option value="7 JUNIOR Kids">7 JUNIOR Kids</option>
+                  </select>
+                  {errors.categoria_moto && <span className="error">{errors.categoria_moto.message}</span>}
+                </div>
               )}
             </div>
 
