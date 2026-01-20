@@ -4,14 +4,65 @@ import { authenticateToken, requireAdmin } from './_utils/auth';
 import { generateTicketPDF } from './_utils/pdfGenerator';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const { method, url, query, body } = req;
+  const path = url?.split('?')[0] || '';
+
+  // Setup (solo para bootstrap del primer admin) - protegido por secreto
+  // POST /api/admin/setup/create-admin { email, password }
+  if (method === 'POST' && path === '/api/admin/setup/create-admin') {
+    try {
+      const secretHeader = (req.headers['x-admin-setup-secret'] || req.headers['X-Admin-Setup-Secret']) as string | undefined;
+      const expectedSecret = process.env.ADMIN_SETUP_SECRET;
+
+      if (!expectedSecret) {
+        return res.status(500).json({ error: 'ADMIN_SETUP_SECRET no configurado en el servidor' });
+      }
+
+      if (!secretHeader || secretHeader !== expectedSecret) {
+        return res.status(403).json({ error: 'Acceso denegado' });
+      }
+
+      const { email, password } = body || {};
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email y contraseña son requeridos' });
+      }
+
+      const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true
+      });
+
+      if (error || !created?.user) {
+        console.error('Create admin user error:', error);
+        return res.status(500).json({ error: error?.message || 'No se pudo crear el usuario admin' });
+      }
+
+      // Asegurar rol admin en public.users (por si el trigger no corre)
+      const { error: upsertError } = await supabaseAdmin
+        .from('users')
+        .upsert({ id: created.user.id, email, role: 'admin' }, { onConflict: 'id' });
+
+      if (upsertError) {
+        console.error('Upsert users role error:', upsertError);
+        // no fallamos el alta del auth user
+      }
+
+      return res.status(201).json({
+        message: 'Usuario admin creado',
+        user: { id: created.user.id, email }
+      });
+    } catch (e: any) {
+      console.error('Setup create-admin crashed:', e);
+      return res.status(500).json({ error: 'Error al crear el usuario admin' });
+    }
+  }
+
+  // Resto de endpoints: requiere sesión admin
   const user = await authenticateToken(req);
-  
   if (!user || !requireAdmin(user)) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
-
-  const { method, url, query, body } = req;
-  const path = url?.split('?')[0] || '';
 
   // Admin - Pilots
   if (method === 'GET' && path === '/api/admin/pilots') {
