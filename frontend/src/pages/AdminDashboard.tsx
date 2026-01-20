@@ -295,89 +295,89 @@ export default function AdminDashboard() {
                     ) : pilots.length > 0 ? (
                       <div className="table-container">
                         <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Nombre</th>
-                          <th>Apellido</th>
-                          <th>DNI</th>
-                          <th>Email</th>
-                          <th>Teléfono</th>
-                          <th>Categoría</th>
-                          <th>Número</th>
-                          <th>Estado</th>
-                          <th>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pilots
-                          .filter((pilot) => {
-                            if (!searchTerm) return true;
-                            const search = searchTerm.toLowerCase();
-                            return (
-                              pilot.nombre?.toLowerCase().includes(search) ||
-                              pilot.apellido?.toLowerCase().includes(search) ||
-                              pilot.dni?.toLowerCase().includes(search) ||
-                              pilot.email?.toLowerCase().includes(search) ||
-                              pilot.telefono?.toLowerCase().includes(search) ||
-                              pilot.categoria_auto?.toLowerCase().includes(search) ||
-                              pilot.categoria_moto?.toLowerCase().includes(search) ||
-                              pilot.numero?.toString().includes(search)
-                            );
-                          })
-                          .map((pilot) => (
-                          <tr key={pilot.id}>
-                            <td>{pilot.nombre}</td>
-                            <td>{pilot.apellido}</td>
-                            <td>{pilot.dni}</td>
-                            <td>{pilot.email}</td>
-                            <td>{pilot.telefono}</td>
-                            <td>
-                              {pilot.categoria === 'auto' && pilot.categoria_auto && (
-                                <span className="category-badge">{pilot.categoria_auto}</span>
-                              )}
-                              {pilot.categoria === 'moto' && pilot.categoria_moto && (
-                                <span className="category-badge">{pilot.categoria_moto}</span>
-                              )}
-                              {!pilot.categoria && '-'}
-                            </td>
-                            <td>
-                              {pilot.numero ? (
-                                <span className="number-badge">{pilot.numero.toString().padStart(2, '0')}</span>
-                              ) : (
-                                '-'
-                              )}
-                            </td>
-                            <td>
-                              <span className={`status-badge status-${pilot.estado}`}>
-                                {pilot.estado}
-                              </span>
-                            </td>
-                            <td>
-                              <div className="action-buttons">
-                                {pilot.estado !== 'aprobado' && (
-                                  <button
-                                    onClick={() => updatePilotStatus(pilot.id, 'aprobado')}
-                                    className="btn btn-success btn-sm"
-                                  >
-                                    Aprobar
-                                  </button>
-                                )}
-                                {pilot.estado !== 'rechazado' && (
-                                  <button
-                                    onClick={() => updatePilotStatus(pilot.id, 'rechazado')}
-                                    className="btn btn-danger btn-sm"
-                                  >
-                                    Rechazar
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                    )}
+                          <thead>
+                            <tr>
+                              <th>Nombre</th>
+                              <th>Apellido</th>
+                              <th>DNI</th>
+                              <th>Email</th>
+                              <th>Teléfono</th>
+                              <th>Categoría</th>
+                              <th>Número</th>
+                              <th>Estado</th>
+                              <th>Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pilots
+                              .filter((pilot) => {
+                                if (!searchTerm) return true;
+                                const search = searchTerm.toLowerCase();
+                                return (
+                                  pilot.nombre?.toLowerCase().includes(search) ||
+                                  pilot.apellido?.toLowerCase().includes(search) ||
+                                  pilot.dni?.toLowerCase().includes(search) ||
+                                  pilot.email?.toLowerCase().includes(search) ||
+                                  pilot.telefono?.toLowerCase().includes(search) ||
+                                  pilot.categoria_auto?.toLowerCase().includes(search) ||
+                                  pilot.categoria_moto?.toLowerCase().includes(search) ||
+                                  pilot.numero?.toString().includes(search)
+                                );
+                              })
+                              .map((pilot) => (
+                                <tr key={pilot.id}>
+                                  <td>{pilot.nombre}</td>
+                                  <td>{pilot.apellido}</td>
+                                  <td>{pilot.dni}</td>
+                                  <td>{pilot.email}</td>
+                                  <td>{pilot.telefono}</td>
+                                  <td>
+                                    {pilot.categoria === 'auto' && pilot.categoria_auto && (
+                                      <span className="category-badge">{pilot.categoria_auto}</span>
+                                    )}
+                                    {pilot.categoria === 'moto' && pilot.categoria_moto && (
+                                      <span className="category-badge">{pilot.categoria_moto}</span>
+                                    )}
+                                    {!pilot.categoria && '-'}
+                                  </td>
+                                  <td>
+                                    {pilot.numero ? (
+                                      <span className="number-badge">{pilot.numero.toString().padStart(2, '0')}</span>
+                                    ) : (
+                                      '-'
+                                    )}
+                                  </td>
+                                  <td>
+                                    <span className={`status-badge status-${pilot.estado}`}>
+                                      {pilot.estado}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <div className="action-buttons">
+                                      {pilot.estado !== 'aprobado' && (
+                                        <button
+                                          onClick={() => updatePilotStatus(pilot.id, 'aprobado')}
+                                          className="btn btn-success btn-sm"
+                                        >
+                                          Aprobar
+                                        </button>
+                                      )}
+                                      {pilot.estado !== 'rechazado' && (
+                                        <button
+                                          onClick={() => updatePilotStatus(pilot.id, 'rechazado')}
+                                          className="btn btn-danger btn-sm"
+                                        >
+                                          Rechazar
+                                        </button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : null}
                   </>
                 )}
               </div>
