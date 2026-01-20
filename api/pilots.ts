@@ -92,21 +92,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) {
         console.error('Insert error:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
         console.error('Error details:', JSON.stringify(error, null, 2));
+        console.error('Request body:', JSON.stringify(req.body, null, 2));
         
         // Manejar errores de constraint único
         if (error.code === '23505') {
-          if (error.message.includes('dni') || error.message.includes('pilots_dni_key')) {
+          if (error.message?.includes('dni') || error.message?.includes('pilots_dni_key')) {
             return res.status(400).json({ error: 'Ya existe una inscripción con este DNI' });
           }
-          if (error.message.includes('numero') || error.message.includes('pilots_numero_key')) {
+          if (error.message?.includes('numero') || error.message?.includes('pilots_numero_key')) {
             return res.status(400).json({ error: `El número ${numero ? numero.toString().padStart(2, '0') : ''} ya está asignado a otro piloto` });
           }
         }
         
+        // Error de RLS (Row Level Security)
+        if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+          return res.status(500).json({ 
+            error: 'Error de permisos. Por favor contacta al administrador.',
+            details: 'RLS policy violation'
+          });
+        }
+        
         return res.status(500).json({ 
           error: 'Error al procesar la inscripción',
-          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+          details: error.message || 'Error desconocido'
         });
       }
 
