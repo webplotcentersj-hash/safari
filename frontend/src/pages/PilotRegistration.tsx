@@ -86,7 +86,8 @@ export default function PilotRegistration() {
 
       const comprobanteUrl = publicUrlData?.publicUrl;
 
-      const response = await axios.post('/api/pilots/register', {
+      // Usamos la baseURL configurada (/api) y acá solo la ruta relativa
+      const response = await axios.post('/pilots/register', {
         ...data,
         comprobante_pago_url: comprobanteUrl
       });
