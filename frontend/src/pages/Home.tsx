@@ -24,6 +24,14 @@ export default function Home() {
             </div>
 
             <div className="home-card">
+              <h2>Pilotos Inscritos</h2>
+              <p>Consulta la lista de todos los pilotos inscritos en la competencia.</p>
+              <Link to="/pilotos" className="btn btn-primary">
+                Ver Pilotos
+              </Link>
+            </div>
+
+            <div className="home-card">
               <h2>Tickets de Entrada</h2>
               <p>Genera y descarga tu ticket de entrada al evento.</p>
               <Link to="/tickets" className="btn btn-primary">

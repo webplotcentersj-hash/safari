@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Home from './pages/Home';
 import PilotRegistration from './pages/PilotRegistration';
 import TicketGenerator from './pages/TicketGenerator';
+import PilotsList from './pages/PilotsList';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -14,6 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/inscripcion" element={<PilotRegistration />} />
+        <Route path="/pilotos" element={<PilotsList />} />
         <Route path="/tickets" element={<TicketGenerator />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
