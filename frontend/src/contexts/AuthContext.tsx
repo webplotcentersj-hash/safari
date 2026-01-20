@@ -49,7 +49,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('user', JSON.stringify(newUser));
       axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     } catch (error: any) {
-      throw new Error(error.response?.data?.error || 'Error al iniciar sesión');
+      let msg: any = error?.response?.data?.error || 'Error al iniciar sesión';
+      if (typeof msg === 'object') {
+        msg = msg.message || JSON.stringify(msg);
+      }
+      throw new Error(String(msg));
     }
   };
 
