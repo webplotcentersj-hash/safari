@@ -221,13 +221,38 @@ export default function AdminDashboard() {
     };
   }, [activeTab, fetchData]);
 
-  const updatePilotStatus = async (id: any, estado: string) => {
+  const updatePilotStatus = async (id: string, estado: string) => {
     try {
-      await axios.patch(`/admin/pilots/${id}/status`, { estado });
+      console.log('Updating pilot status:', { id, estado });
+      
+      if (!supabase) {
+        throw new Error('Supabase client no está configurado');
+      }
+
+      // Validar estado
+      if (!['pendiente', 'aprobado', 'rechazado'].includes(estado)) {
+        throw new Error('Estado inválido');
+      }
+
+      // Actualizar estado directamente en Supabase
+      const { data, error } = await supabase
+        .from('pilots')
+        .update({ estado })
+        .eq('id', id)
+        .select();
+
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw new Error(error.message || 'Error al actualizar el estado');
+      }
+
+      console.log('✅ Status updated successfully:', data);
+      
+      // Actualizar los datos después de cambiar el estado
       fetchData();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating status:', error);
-      alert('Error al actualizar el estado');
+      alert(error.message || 'Error al actualizar el estado');
     }
   };
 
