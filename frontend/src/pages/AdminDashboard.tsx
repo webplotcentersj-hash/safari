@@ -484,9 +484,9 @@ export default function AdminDashboard() {
                     {errorMessage && (
                       <div className="alert alert-error" style={{ marginBottom: '20px' }}>
                         <strong>Error:</strong> {errorMessage}
-                        <button onClick={fetchData} className="btn btn-primary btn-sm" style={{ marginLeft: '10px' }}>
-                          Reintentar
-                        </button>
+                    <button onClick={() => fetchData(false)} className="btn btn-primary btn-sm" style={{ marginLeft: '10px' }}>
+                      Reintentar
+                    </button>
                       </div>
                     )}
                     <div className="table-header">
