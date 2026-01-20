@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { supabase } from '../config/supabase';
 import './PilotsList.css';
-
-// Configurar base URL para producción
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-axios.defaults.baseURL = API_BASE_URL;
 
 interface Pilot {
   id: string;
@@ -32,21 +28,38 @@ export default function PilotsList() {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching pilots from public page...');
-      const response = await axios.get('/admin/pilots', {
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      });
+      console.log('=== FETCHING PILOTS DIRECTLY FROM SUPABASE ===');
       
-      console.log('Pilots response:', response.data);
-      const pilotsData = Array.isArray(response.data) ? response.data : [];
-      console.log(`Loaded ${pilotsData.length} pilots`);
+      if (!supabase) {
+        throw new Error('Supabase client no está configurado');
+      }
+
+      // Consultar directamente desde Supabase usando el cliente del frontend
+      const { data: pilotsData, error: supabaseError } = await supabase
+        .from('pilots')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      console.log('Supabase query result - error:', supabaseError);
+      console.log('Supabase query result - data:', pilotsData);
+      console.log('Supabase query result - data length:', pilotsData?.length);
+
+      if (supabaseError) {
+        console.error('Supabase error:', supabaseError);
+        throw new Error(supabaseError.message || 'Error al cargar los pilotos desde Supabase');
+      }
+
+      const pilotsArray = Array.isArray(pilotsData) ? pilotsData : [];
+      console.log(`✅ Successfully loaded ${pilotsArray.length} pilots`);
       
-      setPilots(pilotsData);
+      if (pilotsArray.length > 0) {
+        console.log('First pilot:', pilotsArray[0]);
+      }
+      
+      setPilots(pilotsArray);
     } catch (err: any) {
-      console.error('Error fetching pilots:', err);
-      setError(err.response?.data?.error || 'Error al cargar los pilotos');
+      console.error('❌ Error fetching pilots:', err);
+      setError(err.message || 'Error al cargar los pilotos');
     } finally {
       setLoading(false);
     }
