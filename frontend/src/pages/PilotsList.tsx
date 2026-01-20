@@ -29,9 +29,12 @@ export default function PilotsList() {
     setError(null);
     try {
       console.log('=== FETCHING PILOTS DIRECTLY FROM SUPABASE ===');
+      console.log('Supabase client available:', !!supabase);
       
       if (!supabase) {
-        throw new Error('Supabase client no está configurado');
+        const errorMsg = 'Supabase client no está configurado. Verificá que VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY estén configuradas en Vercel.';
+        console.error('❌', errorMsg);
+        throw new Error(errorMsg);
       }
 
       // Consultar directamente desde Supabase usando el cliente del frontend

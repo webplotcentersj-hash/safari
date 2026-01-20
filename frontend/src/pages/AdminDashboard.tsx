@@ -112,11 +112,75 @@ export default function AdminDashboard() {
         
         setPilots(pilotsArray);
       } else if (activeTab === 'tickets') {
-        const response = await axios.get('/admin/tickets');
-        setTickets(Array.isArray(response.data) ? response.data : []);
+        // Consultar tickets desde Supabase directamente
+        if (!supabase) {
+          throw new Error('Supabase client no está configurado');
+        }
+        const { data: ticketsData, error: ticketsError } = await supabase
+          .from('tickets')
+          .select('*')
+          .order('fecha_emision', { ascending: false });
+        
+        if (ticketsError) {
+          throw new Error(ticketsError.message || 'Error al cargar los tickets');
+        }
+        setTickets(Array.isArray(ticketsData) ? ticketsData : []);
       } else {
-        const response = await axios.get('/admin/stats');
-        setStats(response.data || null);
+        // Calcular estadísticas desde Supabase directamente
+        if (!supabase) {
+          throw new Error('Supabase client no está configurado');
+        }
+        
+        // Obtener conteos de pilotos
+        const { count: totalPilots, error: pilotsCountError } = await supabase
+          .from('pilots')
+          .select('*', { count: 'exact', head: true });
+        
+        const { count: approvedPilots, error: approvedError } = await supabase
+          .from('pilots')
+          .select('*', { count: 'exact', head: true })
+          .eq('estado', 'aprobado');
+        
+        const { count: pendingPilots, error: pendingError } = await supabase
+          .from('pilots')
+          .select('*', { count: 'exact', head: true })
+          .eq('estado', 'pendiente');
+        
+        // Obtener conteos de tickets
+        const { count: totalTickets, error: ticketsCountError } = await supabase
+          .from('tickets')
+          .select('*', { count: 'exact', head: true });
+        
+        const { count: usedTickets, error: usedError } = await supabase
+          .from('tickets')
+          .select('*', { count: 'exact', head: true })
+          .eq('usado', true);
+        
+        // Obtener ingresos
+        const { data: usedTicketsData, error: revenueError } = await supabase
+          .from('tickets')
+          .select('precio')
+          .eq('usado', true);
+        
+        const totalRevenue = usedTicketsData?.reduce((sum: number, ticket: any) => sum + (parseFloat(ticket.precio) || 0), 0) || 0;
+        
+        if (pilotsCountError || approvedError || pendingError || ticketsCountError || usedError || revenueError) {
+          console.error('Error calculating stats:', { pilotsCountError, approvedError, pendingError, ticketsCountError, usedError, revenueError });
+        }
+        
+        setStats({
+          pilots: {
+            total: totalPilots || 0,
+            approved: approvedPilots || 0,
+            pending: pendingPilots || 0
+          },
+          tickets: {
+            total: totalTickets || 0,
+            used: usedTickets || 0,
+            available: (totalTickets || 0) - (usedTickets || 0)
+          },
+          revenue: totalRevenue
+        });
       }
     } catch (error: any) {
       console.error('Error fetching data:', error);
