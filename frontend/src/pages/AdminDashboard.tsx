@@ -77,7 +77,7 @@ export default function AdminDashboard() {
     fetchData();
     
     // Actualización en tiempo real cada 5 segundos cuando está en la pestaña de pilotos
-    let intervalId: NodeJS.Timeout | null = null;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
     if (activeTab === 'pilots') {
       intervalId = setInterval(() => {
         fetchData();
@@ -294,7 +294,10 @@ export default function AdminDashboard() {
                             cx="50%"
                             cy="50%"
                             labelLine={false}
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            label={({ name, percent }) => {
+                              const p = typeof percent === 'number' ? percent : 0;
+                              return `${name}: ${(p * 100).toFixed(0)}%`;
+                            }}
                             outerRadius={80}
                             fill="#8884d8"
                             dataKey="value"
