@@ -73,24 +73,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab]);
-
-  // Actualización en tiempo real cada 5 segundos cuando está en la pestaña de pilotos
-  useEffect(() => {
-    if (activeTab !== 'pilots') return;
-    
-    const intervalId = setInterval(() => {
-      fetchData();
-    }, 5000); // Actualizar cada 5 segundos
-    
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [activeTab]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setErrorMessage(null);
     try {
@@ -141,7 +124,24 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Actualización en tiempo real cada 5 segundos cuando está en la pestaña de pilotos
+  useEffect(() => {
+    if (activeTab !== 'pilots') return;
+    
+    const intervalId = setInterval(() => {
+      fetchData();
+    }, 5000); // Actualizar cada 5 segundos
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [activeTab, fetchData]);
 
   const updatePilotStatus = async (id: any, estado: string) => {
     try {
