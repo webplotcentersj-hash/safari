@@ -8,7 +8,7 @@ export default function Home() {
         <div className="container">
           <img src="/logo.png" alt="Safari Tras las Sierras" className="header-logo" />
           <h1>SAFARI TRAS LAS SIERRAS</h1>
-          <p className="subtitle">Rally en Valle Fértil - San Juan</p>
+          <p className="subtitle">Safari en Valle Fértil - San Juan</p>
         </div>
       </header>
 

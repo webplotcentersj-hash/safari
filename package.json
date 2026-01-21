@@ -1,7 +1,7 @@
 {
   "name": "safari-tras-las-sierras",
   "version": "1.0.0",
-  "description": "Aplicación para gestión de Safari tras las Sierras - Rally en Valle Fértil, San Juan",
+  "description": "Aplicación para gestión de Safari Tras las Sierras en Valle Fértil, San Juan",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",
@@ -11,7 +11,7 @@
     "start": "cd backend && npm start",
     "vercel-build": "cd frontend && npm install && npm run build"
   },
-  "keywords": ["rally", "safari", "san-juan"],
+  "keywords": ["safari", "san-juan"],
   "author": "",
   "license": "ISC",
   "devDependencies": {

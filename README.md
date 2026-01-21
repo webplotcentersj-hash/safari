@@ -1,6 +1,6 @@
 # Safari Tras las Sierras
 
-Aplicación web para la gestión del Safari Tras las Sierras - Rally en Valle Fértil, San Juan.
+Aplicación web para la gestión del Safari Tras las Sierras en Valle Fértil, San Juan.
 
 ## Funcionalidades
 
