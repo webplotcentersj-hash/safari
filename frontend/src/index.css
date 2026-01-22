@@ -4,6 +4,27 @@
   box-sizing: border-box;
 }
 
+/* Fuente Fendesert Sans para títulos */
+@font-face {
+  font-family: 'Fendesert Sans';
+  src: url('/fonts/FendesertSans-Regular.woff2') format('woff2'),
+       url('/fonts/FendesertSans-Regular.woff') format('woff'),
+       url('/fonts/FendesertSans-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fendesert Sans';
+  src: url('/fonts/FendesertSans-Bold.woff2') format('woff2'),
+       url('/fonts/FendesertSans-Bold.woff') format('woff'),
+       url('/fonts/FendesertSans-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -13,10 +34,20 @@ body {
   background-color: #f5f5f5;
 }
 
+/* Aplicar Fendesert Sans a todos los títulos */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Fendesert Sans', 'Oswald', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+
+
 
 
 
