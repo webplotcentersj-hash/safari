@@ -62,9 +62,16 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
               className={`number-button ${isSelected ? 'selected' : ''} ${isUsed ? 'used' : ''}`}
               onClick={() => handleNumberClick(num)}
               disabled={isUsed}
-              title={isUsed ? 'Número ya asignado' : `Seleccionar número ${num.toString().padStart(2, '0')}`}
+              title={isUsed ? `Número ${num.toString().padStart(2, '0')} ya está asignado a otro piloto` : `Seleccionar número ${num.toString().padStart(2, '0')}`}
             >
-              {num.toString().padStart(2, '0')}
+              {isUsed ? (
+                <>
+                  <span className="used-number-text">{num.toString().padStart(2, '0')}</span>
+                  <span className="used-badge">Ocupado</span>
+                </>
+              ) : (
+                num.toString().padStart(2, '0')
+              )}
             </button>
           );
         })}
@@ -78,4 +85,9 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
     </div>
   );
 }
+
+
+
+
+
 

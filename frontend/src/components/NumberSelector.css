@@ -119,23 +119,39 @@
 }
 
 .number-button.used {
-  background: #f5f5f5;
-  color: #999;
-  border-color: #ddd;
+  background: linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 100%);
+  color: #666;
+  border: 2px solid #999;
+  border-style: dashed;
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.8;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.5rem 0.75rem;
+  text-decoration: line-through;
 }
 
-.number-button.used::after {
-  content: '✕';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 1.2rem;
-  color: #dc3545;
-  font-weight: bold;
+.number-button.used .used-number-text {
+  font-size: 0.85rem;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.number-button.used .used-badge {
+  font-size: 0.65rem;
+  background-color: #dc3545;
+  color: white;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  opacity: 1;
 }
 
 .number-button:active:not(:disabled):not(.used) {
