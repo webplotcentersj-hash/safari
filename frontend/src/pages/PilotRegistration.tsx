@@ -57,15 +57,14 @@ export default function PilotRegistration() {
   const loadUsedNumbers = async () => {
     setLoadingNumbers(true);
     try {
-      const response = await axios.get('/admin/pilots');
-      const pilots = Array.isArray(response.data) ? response.data : [];
-      const used = pilots
-        .filter((p: any) => p.numero && p.categoria === 'auto')
-        .map((p: any) => p.numero);
+      // Usar endpoint público específico para números usados
+      const response = await axios.get('/pilots/used-numbers');
+      const used = Array.isArray(response.data) ? response.data : [];
       setUsedNumbers(used);
     } catch (error) {
       console.error('Error cargando números usados:', error);
       // Si falla, continuar sin restricciones (pero el backend validará)
+      setUsedNumbers([]);
     } finally {
       setLoadingNumbers(false);
     }

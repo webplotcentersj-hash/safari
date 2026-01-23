@@ -49,6 +49,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!categoria_auto) {
           return res.status(400).json({ error: 'Para autos, debes seleccionar una categoría' });
         }
+        
+        // Verificar si el número ya está asignado a otro piloto
+        const { data: existingPilot, error: checkError } = await supabaseAdmin
+          .from('pilots')
+          .select('id, nombre, apellido')
+          .eq('numero', numero)
+          .eq('categoria', 'auto')
+          .maybeSingle();
+        
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+          console.error('Error verificando número:', checkError);
+        }
+        
+        if (existingPilot) {
+          return res.status(400).json({ 
+            error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto. Por favor, selecciona otro número.` 
+          });
+        }
       }
 
       // Validar campos requeridos para motos
@@ -163,6 +181,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
       console.error('Check error:', error);
       res.status(500).json({ error: 'Error al consultar la inscripción' });
+    }
+  } else if (method === 'GET' && path === '/api/pilots/used-numbers') {
+    // Endpoint público para obtener números usados (solo para autos)
+    try {
+      const { data: pilots, error } = await supabaseAdmin
+        .from('pilots')
+        .select('numero')
+        .eq('categoria', 'auto')
+        .not('numero', 'is', null);
+      
+      if (error) {
+        console.error('Error obteniendo números usados:', error);
+        return res.status(500).json({ error: 'Error al obtener números usados' });
+      }
+
+      const usedNumbers = pilots
+        .map((p: any) => p.numero)
+        .filter((num: number | null) => num !== null && num >= 1 && num <= 250)
+        .sort((a: number, b: number) => a - b);
+
+      res.json(usedNumbers);
+    } catch (error: any) {
+      console.error('Used numbers error:', error);
+      res.status(500).json({ error: 'Error al obtener números usados' });
     }
   } else {
     res.status(405).json({ error: 'Method not allowed' });
