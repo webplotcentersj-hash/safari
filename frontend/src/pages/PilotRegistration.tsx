@@ -178,6 +178,11 @@ export default function PilotRegistration() {
       });
       const qrFromApi = response.data?.qrDataUrl as string | undefined;
 
+      // Actualizar la lista de números usados después de una inscripción exitosa
+      if (data.categoria === 'auto' && data.numero) {
+        setUsedNumbers(prev => [...prev, data.numero!].sort((a, b) => a - b));
+      }
+
       if (qrFromApi) {
         setQrDataUrl(qrFromApi);
         setMessage({

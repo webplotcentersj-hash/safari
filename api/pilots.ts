@@ -51,9 +51,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         
         // Verificar si el número ya está asignado a otro piloto
+        // Esta verificación previa ayuda a dar un mensaje más claro, pero la constraint única en la BD es la protección real
         const { data: existingPilot, error: checkError } = await supabaseAdmin
           .from('pilots')
-          .select('id, nombre, apellido')
+          .select('id, nombre, apellido, dni')
           .eq('numero', numero)
           .eq('categoria', 'auto')
           .maybeSingle();
@@ -64,7 +65,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         if (existingPilot) {
           return res.status(400).json({ 
-            error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto. Por favor, selecciona otro número.` 
+            error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto (${existingPilot.nombre} ${existingPilot.apellido}). Por favor, selecciona otro número.` 
           });
         }
       }
@@ -124,10 +125,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Manejar errores de constraint único
         if (error.code === '23505') {
           if (error.message?.includes('dni') || error.message?.includes('pilots_dni_key')) {
-            return res.status(400).json({ error: 'Ya existe una inscripción con este DNI' });
+            return res.status(400).json({ error: 'Ya existe una inscripción con este DNI. Si ya te inscribiste, verifica tu email o contacta a los organizadores.' });
           }
-          if (error.message?.includes('numero') || error.message?.includes('pilots_numero_key')) {
-            return res.status(400).json({ error: `El número ${numero ? numero.toString().padStart(2, '0') : ''} ya está asignado a otro piloto` });
+          if (error.message?.includes('numero') || error.message?.includes('pilots_numero_key') || error.message?.includes('pilots_numero_auto_unique')) {
+            return res.status(400).json({ 
+              error: `El número ${numero ? numero.toString().padStart(2, '0') : ''} ya está asignado a otro piloto. Por favor, selecciona otro número disponible.` 
+            });
           }
         }
         
