@@ -65,7 +65,14 @@ export default function PilotRegistration() {
       console.log('🔍 Cargando números usados para categoría:', categoria);
       console.log('🔍 URL completa:', `/pilots/used-numbers?categoria=${categoria}`);
       
-      const response = await axios.get(`/pilots/used-numbers?categoria=${categoria}`);
+      // Intentar con /api/pilots/used-numbers primero, si falla intentar /pilots/used-numbers
+      let response;
+      try {
+        response = await axios.get(`/api/pilots/used-numbers?categoria=${categoria}`);
+      } catch (firstError) {
+        console.log('⚠️ Primera ruta falló, intentando segunda ruta...');
+        response = await axios.get(`/pilots/used-numbers?categoria=${categoria}`);
+      }
       
       console.log('📊 Respuesta completa:', response);
       console.log('📊 Respuesta status:', response.status);
