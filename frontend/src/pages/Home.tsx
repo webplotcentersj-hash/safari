@@ -17,12 +17,9 @@ export default function Home() {
       </section>
 
       <section className="background-overlay-section">
-        {/* Fondo superpuesto */}
-      </section>
-
-      <main className="home-main">
-        <div className="container">
-          <div className="home-content">
+        <main className="home-main">
+          <div className="container">
+            <div className="home-content">
             <div className="home-card">
               <h2>Inscripción de Pilotos</h2>
               <p>Completa el formulario para inscribirte como piloto en la competencia.</p>
@@ -56,7 +53,8 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </main>
+        </main>
+      </section>
 
       <footer className="home-footer">
         <div className="container">

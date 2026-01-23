@@ -41,22 +41,19 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
-  z-index: 1;
-}
-
-.background-overlay-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('http://plotcenter.com.ar/wp-content/uploads/2026/01/Recurso-1-3.png');
+  background-image: url('https://plotcenter.com.ar/wp-content/uploads/2026/01/Recurso-1-3.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
-  z-index: -1;
+  z-index: 1;
+  display: block;
+  padding: 0;
+}
+
+.background-overlay-section .home-main {
+  position: relative;
+  z-index: 2;
 }
 
 .home-main {
