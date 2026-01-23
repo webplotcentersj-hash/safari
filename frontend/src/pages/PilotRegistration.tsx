@@ -63,18 +63,43 @@ export default function PilotRegistration() {
       // Pasar la categoría para obtener solo números usados de esa categoría
       const categoria = watchCategoria === 'auto' ? 'auto' : 'moto';
       console.log('🔍 Cargando números usados para categoría:', categoria);
+      console.log('🔍 URL completa:', `/pilots/used-numbers?categoria=${categoria}`);
+      
       const response = await axios.get(`/pilots/used-numbers?categoria=${categoria}`);
-      console.log('📊 Respuesta del endpoint:', response.data);
+      
+      console.log('📊 Respuesta completa:', response);
+      console.log('📊 Respuesta status:', response.status);
+      console.log('📊 Respuesta data:', response.data);
+      console.log('📊 Tipo de data:', typeof response.data);
+      console.log('📊 ¿Es array?', Array.isArray(response.data));
+      
+      if (!response.data) {
+        console.error('❌ La respuesta está vacía o es null');
+        setUsedNumbers([]);
+        return;
+      }
+      
       const used = Array.isArray(response.data) ? response.data.map((n: any) => {
         // Asegurar que todos los números sean enteros
         const num = typeof n === 'string' ? parseInt(n, 10) : Number(n);
+        console.log('🔢 Procesando:', n, '->', num, '(tipo original:', typeof n, ')');
         return !isNaN(num) && num >= 1 && num <= 250 ? num : null;
       }).filter((n: number | null) => n !== null) as number[] : [];
+      
       console.log('✅ Números usados procesados (enteros):', used);
+      console.log('✅ Cantidad final:', used.length);
+      
+      if (used.length === 0) {
+        console.warn('⚠️ ADVERTENCIA: No se encontraron números usados, pero debería haber algunos');
+      }
+      
       setUsedNumbers(used);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error cargando números usados:', error);
-      console.error('Error details:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error response:', error.response);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error data:', error.response?.data);
       // Si falla, continuar sin restricciones (pero el backend validará)
       setUsedNumbers([]);
     } finally {
