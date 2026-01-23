@@ -35,15 +35,22 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
   };
 
   const isNumberUsed = (num: number) => {
-    // Asegurar comparación correcta de números (puede haber strings o numbers en el array)
+    // Normalizar el número a verificar
     const numToCheck = Number(num);
-    const isUsed = usedNumbers.some((usedNum: any) => {
-      const used = typeof usedNum === 'string' ? parseInt(usedNum, 10) : Number(usedNum);
-      return !isNaN(used) && !isNaN(numToCheck) && used === numToCheck;
-    });
+    if (isNaN(numToCheck)) return false;
+    
+    // Normalizar todos los números usados y comparar
+    const normalizedUsed = usedNumbers.map((n: any) => {
+      if (typeof n === 'string') return parseInt(n, 10);
+      return Number(n);
+    }).filter((n: number) => !isNaN(n));
+    
+    const isUsed = normalizedUsed.includes(numToCheck);
+    
     if (isUsed) {
-      console.log('🚫 Número', num, 'está ocupado. Números usados:', usedNumbers);
+      console.log('🚫 Número', num, 'está ocupado. Números usados normalizados:', normalizedUsed);
     }
+    
     return isUsed;
   };
 
@@ -75,8 +82,8 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
           const isUsed = isNumberUsed(num);
           
           // Log para depuración de los primeros números
-          if (num <= 20 && isUsed) {
-            console.log(`🎯 Número ${num} marcado como USADO. Array usado:`, usedNumbers);
+          if (num <= 20) {
+            console.log(`🔍 Número ${num}: isUsed=${isUsed}, usedNumbers=`, usedNumbers, 'tipo usado=', typeof usedNumbers[0]);
           }
           
           return (
@@ -86,6 +93,8 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
               className={`number-button ${isSelected ? 'selected' : ''} ${isUsed ? 'used' : ''}`}
               onClick={() => handleNumberClick(num)}
               disabled={isUsed}
+              data-used={isUsed ? 'true' : 'false'}
+              data-number={num}
               title={isUsed ? `Número ${num.toString().padStart(2, '0')} ya está asignado a otro piloto` : `Seleccionar número ${num.toString().padStart(2, '0')}`}
             >
               {isUsed ? (
