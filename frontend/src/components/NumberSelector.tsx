@@ -79,16 +79,31 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
         </div>
       )}
 
-      {normalizedUsedNumbers.length > 0 && (
-        <div style={{ marginBottom: '1rem', padding: '0.5rem', background: '#fff3cd', borderRadius: '8px', fontSize: '0.85rem' }}>
-          ⚠️ Números ocupados: {normalizedUsedNumbers.sort((a, b) => a - b).join(', ')}
-        </div>
-      )}
+      <div style={{ 
+        marginBottom: '1rem', 
+        padding: '1rem', 
+        background: normalizedUsedNumbers.length > 0 ? '#fff3cd' : '#d4edda', 
+        borderRadius: '8px', 
+        fontSize: '0.9rem',
+        border: normalizedUsedNumbers.length > 0 ? '2px solid #ffc107' : '2px solid #28a745',
+        fontWeight: 'bold'
+      }}>
+        {normalizedUsedNumbers.length > 0 ? (
+          <>⚠️ NÚMEROS OCUPADOS: {normalizedUsedNumbers.sort((a, b) => a - b).join(', ')}</>
+        ) : (
+          <>✅ Todos los números están disponibles</>
+        )}
+      </div>
 
       <div className="numbers-grid">
         {filteredNumbers.map((num) => {
           const isSelected = selectedNumber === num;
           const isUsed = isNumberUsed(num);
+          
+          // Log crítico para los primeros números
+          if (num <= 20) {
+            console.log(`🔍 Renderizando número ${num}: isUsed=${isUsed}, normalizedUsedNumbers=`, normalizedUsedNumbers);
+          }
           
           return (
             <button
@@ -97,14 +112,29 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
               className={`number-button ${isSelected ? 'selected' : ''} ${isUsed ? 'used' : ''}`}
               onClick={() => handleNumberClick(num)}
               disabled={isUsed}
-              data-used={isUsed}
+              data-used={isUsed ? 'true' : 'false'}
               data-number={num}
+              style={isUsed ? {
+                background: 'repeating-linear-gradient(45deg, #f5f5f5, #f5f5f5 10px, #e8e8e8 10px, #e8e8e8 20px)',
+                border: '3px dashed #dc3545',
+                color: '#999',
+                cursor: 'not-allowed',
+                opacity: 1
+              } : {}}
               title={isUsed ? `Número ${num.toString().padStart(2, '0')} ya está asignado a otro piloto` : `Seleccionar número ${num.toString().padStart(2, '0')}`}
             >
               {isUsed ? (
                 <>
-                  <span className="used-number-text">{num.toString().padStart(2, '0')}</span>
-                  <span className="used-badge">Ocupado</span>
+                  <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{num.toString().padStart(2, '0')}</span>
+                  <span style={{ 
+                    fontSize: '0.6rem', 
+                    background: '#dc3545', 
+                    color: 'white', 
+                    padding: '0.2rem 0.5rem', 
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    marginTop: '0.2rem'
+                  }}>OCUPADO</span>
                 </>
               ) : (
                 num.toString().padStart(2, '0')
