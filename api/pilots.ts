@@ -30,7 +30,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         categoria_auto,
         categoria_moto,
         numero,
-        comprobante_pago_url
+        comprobante_pago_url,
+        certificado_medico_url
       } = req.body;
 
       if (!nombre || !apellido || !dni || !email || !telefono || !fecha_nacimiento) {
@@ -127,6 +128,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         categoria_moto: categoria === 'moto' ? categoria_moto : null,
         numero: (categoria === 'auto' || categoria === 'moto') ? numero : null,
         comprobante_pago_url: comprobante_pago_url || null,
+        certificado_medico_url: certificado_medico_url || null,
         estado: 'pendiente'
       };
 

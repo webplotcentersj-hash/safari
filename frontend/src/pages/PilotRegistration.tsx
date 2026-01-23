@@ -27,8 +27,9 @@ interface PilotFormData {
   categoria_auto?: string;
   categoria_moto?: string;
   numero?: number;
-  // este campo no lo completa el usuario, lo llenamos nosotros con la URL del comprobante
+  // estos campos no los completa el usuario, los llenamos nosotros con las URLs
   comprobante_pago_url?: string;
+  certificado_medico_url?: string;
 }
 
 export default function PilotRegistration() {
@@ -127,6 +128,35 @@ export default function PilotRegistration() {
 
       const comprobanteUrl = publicUrlData?.publicUrl;
 
+      // Subir certificado médico a Supabase Storage (si se proporcionó)
+      let certificadoMedicoUrl: string | null = null;
+      if (medicalCertificateFile) {
+        const extMedico = medicalCertificateFile.name.split('.').pop() || 'pdf';
+        const filePathMedico = `certificados-medicos/${fileNameSafeDni}-${Date.now()}.${extMedico}`;
+
+        const { data: uploadDataMedico, error: uploadErrorMedico } = await supabase
+          .storage
+          .from('certificados-medicos')
+          .upload(filePathMedico, medicalCertificateFile);
+
+        if (uploadErrorMedico || !uploadDataMedico) {
+          console.error('Error subiendo certificado médico:', uploadErrorMedico);
+          setMessage({
+            type: 'error',
+            text: 'No se pudo subir el certificado médico. Verificá el archivo e intenta nuevamente.'
+          });
+          setLoading(false);
+          return;
+        }
+
+        const { data: publicUrlDataMedico } = supabase
+          .storage
+          .from('certificados-medicos')
+          .getPublicUrl(uploadDataMedico.path);
+
+        certificadoMedicoUrl = publicUrlDataMedico?.publicUrl;
+      }
+
       // Validar que la categoría esté presente
       if (!data.categoria) {
         setMessage({
@@ -184,7 +214,8 @@ export default function PilotRegistration() {
         numero: (data.categoria === 'auto' || data.categoria === 'moto') ? data.numero : null,
         categoria_auto: data.categoria === 'auto' ? data.categoria_auto : null,
         categoria_moto: data.categoria === 'moto' ? data.categoria_moto : null,
-        comprobante_pago_url: comprobanteUrl
+        comprobante_pago_url: comprobanteUrl,
+        certificado_medico_url: certificadoMedicoUrl
       });
       const qrFromApi = response.data?.qrDataUrl as string | undefined;
 
@@ -437,7 +468,8 @@ export default function PilotRegistration() {
             </div>
 
             <div className="form-section">
-              <h2>Comprobante de Pago</h2>
+              <h2>Documentos</h2>
+              
               <div className="form-group">
                 <label>Adjuntar comprobante de pago (obligatorio)</label>
                 <input
@@ -451,6 +483,21 @@ export default function PilotRegistration() {
                 />
                 <small className="helper-text">
                   Podés subir una foto del comprobante o un PDF. Tamaño máximo recomendado: 5MB.
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label>Adjuntar certificado médico (opcional)</label>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setMedicalCertificateFile(file);
+                  }}
+                />
+                <small className="helper-text">
+                  Podés subir una foto del certificado médico o un PDF. Tamaño máximo recomendado: 5MB.
                 </small>
               </div>
             </div>

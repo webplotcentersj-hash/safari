@@ -3,7 +3,8 @@ ALTER TABLE pilots
 ADD COLUMN IF NOT EXISTS numero INTEGER,
 ADD COLUMN IF NOT EXISTS categoria_auto TEXT,
 ADD COLUMN IF NOT EXISTS categoria_moto TEXT,
-ADD COLUMN IF NOT EXISTS comprobante_pago_url TEXT;
+ADD COLUMN IF NOT EXISTS comprobante_pago_url TEXT,
+ADD COLUMN IF NOT EXISTS certificado_medico_url TEXT;
 
 -- Crear constraint única para número de autos (números únicos solo dentro de autos)
 CREATE UNIQUE INDEX IF NOT EXISTS pilots_numero_auto_unique 
