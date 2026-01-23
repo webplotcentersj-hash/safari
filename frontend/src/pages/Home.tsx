@@ -12,6 +12,14 @@ export default function Home() {
         </div>
       </header>
 
+      <section className="counter-section">
+        {/* Sección del contador */}
+      </section>
+
+      <section className="background-overlay-section">
+        {/* Fondo superpuesto */}
+      </section>
+
       <main className="home-main">
         <div className="container">
           <div className="home-content">
