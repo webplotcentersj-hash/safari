@@ -42,6 +42,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'El tipo de vehículo (Auto/Moto) es requerido' });
       }
 
+      if (!comprobante_pago_url) {
+        return res.status(400).json({ error: 'El comprobante de pago es obligatorio' });
+      }
+
+      if (!certificado_medico_url) {
+        return res.status(400).json({ error: 'El certificado médico es obligatorio' });
+      }
+
       // Validar campos requeridos para autos
       if (categoria === 'auto') {
         if (!numero || numero < 1 || numero > 250) {
@@ -128,7 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         categoria_moto: categoria === 'moto' ? categoria_moto : null,
         numero: (categoria === 'auto' || categoria === 'moto') ? numero : null,
         comprobante_pago_url: comprobante_pago_url || null,
-        certificado_medico_url: certificado_medico_url || null,
+        certificado_medico_url: certificado_medico_url,
         estado: 'pendiente'
       };
 
