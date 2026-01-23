@@ -369,6 +369,24 @@
   text-align: center;
 }
 
+.vehicle-type-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.vehicle-type-badge.vehicle-auto {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.vehicle-type-badge.vehicle-moto {
+  background-color: #e24a4a;
+  color: white;
+}
+
 @media (max-width: 768px) {
   .admin-header .container {
     flex-direction: column;

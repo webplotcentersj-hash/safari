@@ -26,6 +26,7 @@ interface Pilot {
   categoria_moto?: string;
   numero?: number;
   comprobante_pago_url?: string;
+  certificado_medico_url?: string;
 }
 
 interface Ticket {
@@ -543,10 +544,12 @@ export default function AdminDashboard() {
                               <th>DNI</th>
                               <th>Email</th>
                               <th>Teléfono</th>
+                              <th>Tipo</th>
                               <th>Categoría</th>
                               <th>Número</th>
                               <th>Estado</th>
                               <th>Comprobante</th>
+                              <th>Certificado Médico</th>
                               <th>Acciones</th>
                             </tr>
                           </thead>
@@ -589,6 +592,15 @@ export default function AdminDashboard() {
                                   <td>{pilot.email}</td>
                                   <td>{pilot.telefono}</td>
                                   <td>
+                                    {pilot.categoria === 'auto' && (
+                                      <span className="vehicle-type-badge vehicle-auto">🚗 Auto</span>
+                                    )}
+                                    {pilot.categoria === 'moto' && (
+                                      <span className="vehicle-type-badge vehicle-moto">🏍️ Moto</span>
+                                    )}
+                                    {!pilot.categoria && '-'}
+                                  </td>
+                                  <td>
                                     {pilot.categoria === 'auto' && pilot.categoria_auto && (
                                       <span className="category-badge">{pilot.categoria_auto}</span>
                                     )}
@@ -621,7 +633,22 @@ export default function AdminDashboard() {
                                         📄 Ver
                                       </a>
                                     ) : (
-                                      <span className="text-muted">Sin comprobante</span>
+                                      <span className="text-muted">-</span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    {pilot.certificado_medico_url ? (
+                                      <a
+                                        href={pilot.certificado_medico_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="btn btn-secondary btn-sm"
+                                        title="Ver certificado médico"
+                                      >
+                                        🏥 Ver
+                                      </a>
+                                    ) : (
+                                      <span className="text-muted">-</span>
                                     )}
                                   </td>
                                   <td>
