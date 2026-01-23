@@ -60,7 +60,9 @@ export default function PilotRegistration() {
     setLoadingNumbers(true);
     try {
       // Usar endpoint público específico para números usados
-      const response = await axios.get('/pilots/used-numbers');
+      // Pasar la categoría para obtener solo números usados de esa categoría
+      const categoria = watchCategoria === 'auto' ? 'auto' : 'moto';
+      const response = await axios.get(`/pilots/used-numbers?categoria=${categoria}`);
       const used = Array.isArray(response.data) ? response.data : [];
       setUsedNumbers(used);
     } catch (error) {
