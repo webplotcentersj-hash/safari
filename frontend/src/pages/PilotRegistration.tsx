@@ -38,6 +38,7 @@ export default function PilotRegistration() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
+  const [medicalCertificateFile, setMedicalCertificateFile] = useState<File | null>(null);
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [usedNumbers, setUsedNumbers] = useState<number[]>([]);
   const [loadingNumbers, setLoadingNumbers] = useState(false);
