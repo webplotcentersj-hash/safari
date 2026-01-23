@@ -322,22 +322,24 @@ export default function PilotRegistration() {
                       required: watchCategoria === 'auto' ? 'Debes seleccionar una categoría' : false 
                     })}>
                       <option value="">Seleccione categoría</option>
-                      <option value="A Libre">A Libre</option>
-                      <option value="B 1.000">B 1.000</option>
-                      <option value="D">D</option>
-                      <option value="C">C</option>
-                      <option value="C PLUS">C PLUS</option>
-                      <option value="D ESPECIAL">D ESPECIAL</option>
-                      <option value="D PLUS">D PLUS</option>
-                      <option value="RC5 LIGHT">RC5 LIGHT</option>
-                      <option value="RC5">RC5</option>
-                      <option value="E">E</option>
-                      <option value="G">G</option>
-                      <option value="H">H</option>
-                      <option value="J">J</option>
-                      <option value="UTV">UTV</option>
-                      <option value="4x4">4x4</option>
-                      <option value="FUERZA LIBRE">FUERZA LIBRE</option>
+                      <option value="1 A libres">1 A libres</option>
+                      <option value="2 B 1000">2 B 1000</option>
+                      <option value="4 C">4 C</option>
+                      <option value="5 C plus">5 C plus</option>
+                      <option value="6 D Plus">6 D Plus</option>
+                      <option value="7 D Especial">7 D Especial</option>
+                      <option value="8 RC5 8v">8 RC5 8v</option>
+                      <option value="9 RC5 16v">9 RC5 16v</option>
+                      <option value="10 E">10 E</option>
+                      <option value="11 G">11 G</option>
+                      <option value="12 Jeep Libres">12 Jeep Libres</option>
+                      <option value="13 Fuerza Libre">13 Fuerza Libre</option>
+                      <option value="14 4X4">14 4X4</option>
+                      <option value="15 Integrales">15 Integrales</option>
+                      <option value="16 UTV Aspirados">16 UTV Aspirados</option>
+                      <option value="17 UTV Turbos">17 UTV Turbos</option>
+                      <option value="Mejor Vallisto">Mejor Vallisto</option>
+                      <option value="GENERAL">GENERAL</option>
                     </select>
                     {errors.categoria_auto && <span className="error">{errors.categoria_auto.message}</span>}
                   </div>
