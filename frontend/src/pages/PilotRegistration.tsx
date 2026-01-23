@@ -48,11 +48,15 @@ export default function PilotRegistration() {
 
   // Cargar números ya usados cuando se selecciona una categoría
   useEffect(() => {
+    console.log('🔄 useEffect ejecutado. watchCategoria:', watchCategoria);
     if (watchCategoria === 'auto' || watchCategoria === 'moto') {
+      console.log('✅ Categoría válida detectada, cargando números...');
       loadUsedNumbers();
     } else {
+      console.log('⚠️ Categoría no válida o no seleccionada');
       setSelectedNumber(null);
       setValue('numero', undefined);
+      setUsedNumbers([]);
     }
   }, [watchCategoria, setValue]);
 
