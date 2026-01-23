@@ -50,13 +50,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(400).json({ error: 'Para autos, debes seleccionar una categoría' });
         }
         
-        // Verificar si el número ya está asignado a otro piloto
-        // Esta verificación previa ayuda a dar un mensaje más claro, pero la constraint única en la BD es la protección real
+        // Verificar si el número ya está asignado a otro piloto (en cualquier categoría)
+        // Los números son únicos globalmente para todas las categorías
         const { data: existingPilot, error: checkError } = await supabaseAdmin
           .from('pilots')
-          .select('id, nombre, apellido, dni')
+          .select('id, nombre, apellido, dni, categoria')
           .eq('numero', numero)
-          .eq('categoria', 'auto')
           .maybeSingle();
         
         if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
@@ -64,18 +63,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         
         if (existingPilot) {
+          const categoriaTexto = existingPilot.categoria === 'auto' ? 'auto' : 'moto';
           return res.status(400).json({ 
-            error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto (${existingPilot.nombre} ${existingPilot.apellido}). Por favor, selecciona otro número.` 
+            error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto de ${categoriaTexto} (${existingPilot.nombre} ${existingPilot.apellido}). Por favor, selecciona otro número.` 
           });
         }
       }
-
+      
       // Validar campos requeridos para motos
       if (categoria === 'moto') {
         if (!categoria_moto) {
           return res.status(400).json({ error: 'Para motos, debes seleccionar una categoría' });
         }
+        
+        // Si se proporciona un número para moto, verificar que no esté usado
+        if (numero) {
+          if (numero < 1 || numero > 250) {
+            return res.status(400).json({ error: 'El número debe estar entre 01 y 250' });
+          }
+          
+          // Verificar si el número ya está asignado a otro piloto (en cualquier categoría)
+          const { data: existingPilot, error: checkError } = await supabaseAdmin
+            .from('pilots')
+            .select('id, nombre, apellido, dni, categoria')
+            .eq('numero', numero)
+            .maybeSingle();
+          
+          if (checkError && checkError.code !== 'PGRST116') {
+            console.error('Error verificando número:', checkError);
+          }
+          
+          if (existingPilot) {
+            const categoriaTexto = existingPilot.categoria === 'auto' ? 'auto' : 'moto';
+            return res.status(400).json({ 
+              error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto de ${categoriaTexto} (${existingPilot.nombre} ${existingPilot.apellido}). Por favor, selecciona otro número.` 
+            });
+          }
+        }
       }
+
 
       // Insertar piloto directamente (las políticas RLS permiten INSERT público)
       // Si hay duplicados (DNI o número), el error lo manejamos abajo
@@ -127,9 +153,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (error.message?.includes('dni') || error.message?.includes('pilots_dni_key')) {
             return res.status(400).json({ error: 'Ya existe una inscripción con este DNI. Si ya te inscribiste, verifica tu email o contacta a los organizadores.' });
           }
-          if (error.message?.includes('numero') || error.message?.includes('pilots_numero_key') || error.message?.includes('pilots_numero_auto_unique')) {
+          if (error.message?.includes('numero') || error.message?.includes('pilots_numero_key') || error.message?.includes('pilots_numero_unique') || error.message?.includes('pilots_numero_auto_unique')) {
             return res.status(400).json({ 
-              error: `El número ${numero ? numero.toString().padStart(2, '0') : ''} ya está asignado a otro piloto. Por favor, selecciona otro número disponible.` 
+              error: `El número ${numero ? numero.toString().padStart(2, '0') : ''} ya está asignado a otro piloto (en cualquier categoría). Por favor, selecciona otro número disponible.` 
             });
           }
         }
@@ -186,12 +212,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(500).json({ error: 'Error al consultar la inscripción' });
     }
   } else if (method === 'GET' && path === '/api/pilots/used-numbers') {
-    // Endpoint público para obtener números usados (solo para autos)
+    // Endpoint público para obtener números usados (de todas las categorías)
+    // Los números son únicos globalmente
     try {
       const { data: pilots, error } = await supabaseAdmin
         .from('pilots')
         .select('numero')
-        .eq('categoria', 'auto')
         .not('numero', 'is', null);
       
       if (error) {

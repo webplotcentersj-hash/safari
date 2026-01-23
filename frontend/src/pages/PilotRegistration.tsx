@@ -44,13 +44,15 @@ export default function PilotRegistration() {
   const watchDni = watch('dni');
   const watchCategoria = watch('categoria');
 
-  // Cargar números ya usados cuando se selecciona "auto"
+  // Cargar números ya usados (son únicos para todas las categorías)
   useEffect(() => {
     if (watchCategoria === 'auto') {
       loadUsedNumbers();
     } else {
       setSelectedNumber(null);
       setValue('numero', undefined);
+      // También cargar números usados para motos si se necesita en el futuro
+      // Por ahora solo autos requieren número
     }
   }, [watchCategoria, setValue]);
 

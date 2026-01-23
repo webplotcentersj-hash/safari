@@ -5,11 +5,11 @@ ADD COLUMN IF NOT EXISTS categoria_auto TEXT,
 ADD COLUMN IF NOT EXISTS categoria_moto TEXT,
 ADD COLUMN IF NOT EXISTS comprobante_pago_url TEXT;
 
--- Crear constraint única para número cuando categoria = 'auto'
--- Solo permite un número único por categoría auto
-CREATE UNIQUE INDEX IF NOT EXISTS pilots_numero_auto_unique 
+-- Crear constraint única para número (único para todas las categorías)
+-- Los números son únicos globalmente, no pueden repetirse entre autos y motos
+CREATE UNIQUE INDEX IF NOT EXISTS pilots_numero_unique 
 ON pilots(numero) 
-WHERE categoria = 'auto' AND numero IS NOT NULL;
+WHERE numero IS NOT NULL;
 
 -- Crear índice para mejorar búsquedas por número
 CREATE INDEX IF NOT EXISTS idx_pilots_numero ON pilots(numero) WHERE numero IS NOT NULL;
