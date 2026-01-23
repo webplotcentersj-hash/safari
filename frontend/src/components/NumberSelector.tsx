@@ -14,7 +14,11 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
   // Log para depuración
   useEffect(() => {
     console.log('🔢 NumberSelector - Números usados recibidos:', usedNumbers);
-    console.log('🔢 NumberSelector - Cantidad de números usados:', usedNumbers.length);
+    console.log('🔢 NumberSelector - Tipo de array:', Array.isArray(usedNumbers));
+    console.log('🔢 NumberSelector - Cantidad:', usedNumbers.length);
+    if (usedNumbers.length > 0) {
+      console.log('🔢 NumberSelector - Primer elemento:', usedNumbers[0], 'tipo:', typeof usedNumbers[0]);
+    }
   }, [usedNumbers]);
 
   const numbers = Array.from({ length: 250 }, (_, i) => i + 1);
@@ -23,35 +27,34 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
     num.toString().padStart(2, '0').includes(searchTerm)
   );
 
+  // Normalizar números usados a enteros una sola vez
+  const normalizedUsedNumbers = usedNumbers.map(n => {
+    if (typeof n === 'string') {
+      const parsed = parseInt(n, 10);
+      return isNaN(parsed) ? null : parsed;
+    }
+    const num = Number(n);
+    return isNaN(num) ? null : num;
+  }).filter((n): n is number => n !== null);
+
+  console.log('🔢 Números usados normalizados:', normalizedUsedNumbers);
+
   const handleNumberClick = (num: number) => {
-    // Usar la misma función de comparación que isNumberUsed
-    if (isNumberUsed(num)) {
+    if (normalizedUsedNumbers.includes(num)) {
       console.log('⚠️ Intento de seleccionar número ocupado:', num);
-      return; // No permitir seleccionar números ya usados
+      return;
     }
     setShowAnimation(true);
     onSelect(num);
     setTimeout(() => setShowAnimation(false), 1000);
   };
 
-  const isNumberUsed = (num: number) => {
-    // Normalizar el número a verificar
-    const numToCheck = Number(num);
-    if (isNaN(numToCheck)) return false;
-    
-    // Normalizar todos los números usados y comparar
-    const normalizedUsed = usedNumbers.map((n: any) => {
-      if (typeof n === 'string') return parseInt(n, 10);
-      return Number(n);
-    }).filter((n: number) => !isNaN(n));
-    
-    const isUsed = normalizedUsed.includes(numToCheck);
-    
-    if (isUsed) {
-      console.log('🚫 Número', num, 'está ocupado. Números usados normalizados:', normalizedUsed);
+  const isNumberUsed = (num: number): boolean => {
+    const result = normalizedUsedNumbers.includes(num);
+    if (result && num <= 20) {
+      console.log(`🚫 Número ${num} está OCUPADO. Array normalizado:`, normalizedUsedNumbers);
     }
-    
-    return isUsed;
+    return result;
   };
 
   return (
@@ -76,15 +79,16 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
         </div>
       )}
 
+      {normalizedUsedNumbers.length > 0 && (
+        <div style={{ marginBottom: '1rem', padding: '0.5rem', background: '#fff3cd', borderRadius: '8px', fontSize: '0.85rem' }}>
+          ⚠️ Números ocupados: {normalizedUsedNumbers.sort((a, b) => a - b).join(', ')}
+        </div>
+      )}
+
       <div className="numbers-grid">
         {filteredNumbers.map((num) => {
           const isSelected = selectedNumber === num;
           const isUsed = isNumberUsed(num);
-          
-          // Log para depuración de los primeros números
-          if (num <= 20) {
-            console.log(`🔍 Número ${num}: isUsed=${isUsed}, usedNumbers=`, usedNumbers, 'tipo usado=', typeof usedNumbers[0]);
-          }
           
           return (
             <button
@@ -93,7 +97,7 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
               className={`number-button ${isSelected ? 'selected' : ''} ${isUsed ? 'used' : ''}`}
               onClick={() => handleNumberClick(num)}
               disabled={isUsed}
-              data-used={isUsed ? 'true' : 'false'}
+              data-used={isUsed}
               data-number={num}
               title={isUsed ? `Número ${num.toString().padStart(2, '0')} ya está asignado a otro piloto` : `Seleccionar número ${num.toString().padStart(2, '0')}`}
             >
@@ -110,17 +114,11 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
         })}
       </div>
 
-      {usedNumbers.length > 0 && (
+      {normalizedUsedNumbers.length > 0 && (
         <div className="used-numbers-info">
-          <small>Números ya asignados: {usedNumbers.length} de 250</small>
+          <small>Números ya asignados: {normalizedUsedNumbers.length} de 250</small>
         </div>
       )}
     </div>
   );
 }
-
-
-
-
-
-
