@@ -29,7 +29,6 @@ interface PilotFormData {
   numero?: number;
   // estos campos no los completa el usuario, los llenamos nosotros con las URLs
   comprobante_pago_url?: string;
-  certificado_medico_url?: string;
 }
 
 export default function PilotRegistration() {
@@ -38,7 +37,6 @@ export default function PilotRegistration() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [paymentFile, setPaymentFile] = useState<File | null>(null);
-  const [medicalCertificateFile, setMedicalCertificateFile] = useState<File | null>(null);
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [usedNumbers, setUsedNumbers] = useState<number[]>([]);
   const [loadingNumbers, setLoadingNumbers] = useState(false);
@@ -173,35 +171,6 @@ export default function PilotRegistration() {
 
       const comprobanteUrl = publicUrlData?.publicUrl;
 
-      // Subir certificado médico a Supabase Storage (opcional)
-      let certificadoMedicoUrl: string | null = null;
-      if (medicalCertificateFile) {
-        const extMedico = medicalCertificateFile.name.split('.').pop() || 'pdf';
-        const filePathMedico = `certificados-medicos/${fileNameSafeDni}-${Date.now()}.${extMedico}`;
-
-        const { data: uploadDataMedico, error: uploadErrorMedico } = await supabase
-          .storage
-          .from('certificados-medicos')
-          .upload(filePathMedico, medicalCertificateFile);
-
-        if (uploadErrorMedico || !uploadDataMedico) {
-          console.error('Error subiendo certificado médico:', uploadErrorMedico);
-          setMessage({
-            type: 'error',
-            text: 'No se pudo subir el certificado médico. Verificá el archivo e intenta nuevamente.'
-          });
-          setLoading(false);
-          return;
-        }
-
-        const { data: publicUrlDataMedico } = supabase
-          .storage
-          .from('certificados-medicos')
-          .getPublicUrl(uploadDataMedico.path);
-
-        certificadoMedicoUrl = publicUrlDataMedico?.publicUrl;
-      }
-
       // Validar que la categoría esté presente
       if (!data.categoria) {
         setMessage({
@@ -259,8 +228,7 @@ export default function PilotRegistration() {
         numero: (data.categoria === 'auto' || data.categoria === 'moto') ? data.numero : null,
         categoria_auto: data.categoria === 'auto' ? data.categoria_auto : null,
         categoria_moto: data.categoria === 'moto' ? data.categoria_moto : null,
-        comprobante_pago_url: comprobanteUrl,
-        certificado_medico_url: certificadoMedicoUrl
+        comprobante_pago_url: comprobanteUrl
       });
       const qrFromApi = response.data?.qrDataUrl as string | undefined;
 
