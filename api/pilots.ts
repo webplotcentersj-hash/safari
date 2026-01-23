@@ -72,34 +72,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Validar campos requeridos para motos
       if (categoria === 'moto') {
+        if (!numero || numero < 1 || numero > 250) {
+          return res.status(400).json({ error: 'Para motos, debes seleccionar un número entre 01 y 250' });
+        }
         if (!categoria_moto) {
           return res.status(400).json({ error: 'Para motos, debes seleccionar una categoría' });
         }
         
-        // Si se proporciona un número para moto, verificar que no esté usado en motos
-        if (numero) {
-          if (numero < 1 || numero > 250) {
-            return res.status(400).json({ error: 'El número debe estar entre 01 y 250' });
-          }
-          
-          // Verificar si el número ya está asignado a otro piloto de MOTO
-          // Los números son únicos solo dentro de la misma categoría
-          const { data: existingPilot, error: checkError } = await supabaseAdmin
-            .from('pilots')
-            .select('id, nombre, apellido, dni')
-            .eq('numero', numero)
-            .eq('categoria', 'moto')
-            .maybeSingle();
-          
-          if (checkError && checkError.code !== 'PGRST116') {
-            console.error('Error verificando número:', checkError);
-          }
-          
-          if (existingPilot) {
-            return res.status(400).json({ 
-              error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto de moto (${existingPilot.nombre} ${existingPilot.apellido}). Por favor, selecciona otro número.` 
-            });
-          }
+        // Verificar si el número ya está asignado a otro piloto de MOTO
+        // Los números son únicos solo dentro de la misma categoría
+        const { data: existingPilot, error: checkError } = await supabaseAdmin
+          .from('pilots')
+          .select('id, nombre, apellido, dni')
+          .eq('numero', numero)
+          .eq('categoria', 'moto')
+          .maybeSingle();
+        
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+          console.error('Error verificando número:', checkError);
+        }
+        
+        if (existingPilot) {
+          return res.status(400).json({ 
+            error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto de moto (${existingPilot.nombre} ${existingPilot.apellido}). Por favor, selecciona otro número.` 
+          });
         }
       }
 
@@ -129,7 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         categoria: categoria || null,
         categoria_auto: categoria === 'auto' ? categoria_auto : null,
         categoria_moto: categoria === 'moto' ? categoria_moto : null,
-        numero: categoria === 'auto' ? numero : null,
+        numero: (categoria === 'auto' || categoria === 'moto') ? numero : null,
         comprobante_pago_url: comprobante_pago_url || null,
         estado: 'pendiente'
       };

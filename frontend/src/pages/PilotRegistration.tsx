@@ -44,15 +44,13 @@ export default function PilotRegistration() {
   const watchDni = watch('dni');
   const watchCategoria = watch('categoria');
 
-  // Cargar números ya usados (son únicos para todas las categorías)
+  // Cargar números ya usados cuando se selecciona una categoría
   useEffect(() => {
-    if (watchCategoria === 'auto') {
+    if (watchCategoria === 'auto' || watchCategoria === 'moto') {
       loadUsedNumbers();
     } else {
       setSelectedNumber(null);
       setValue('numero', undefined);
-      // También cargar números usados para motos si se necesita en el futuro
-      // Por ahora solo autos requieren número
     }
   }, [watchCategoria, setValue]);
 
@@ -169,13 +167,21 @@ export default function PilotRegistration() {
           setLoading(false);
           return;
         }
+        if (!data.numero) {
+          setMessage({
+            type: 'error',
+            text: 'Debes seleccionar tu número de competencia (01-250).'
+          });
+          setLoading(false);
+          return;
+        }
       }
 
       // Usamos la baseURL configurada (/api) y acá solo la ruta relativa.
       // La función de Vercel es `api/pilots.ts`, cuya ruta real es `/api/pilots`.
       const response = await axios.post('/pilots', {
         ...data,
-        numero: data.categoria === 'auto' ? data.numero : null,
+        numero: (data.categoria === 'auto' || data.categoria === 'moto') ? data.numero : null,
         categoria_auto: data.categoria === 'auto' ? data.categoria_auto : null,
         categoria_moto: data.categoria === 'moto' ? data.categoria_moto : null,
         comprobante_pago_url: comprobanteUrl
@@ -183,7 +189,7 @@ export default function PilotRegistration() {
       const qrFromApi = response.data?.qrDataUrl as string | undefined;
 
       // Actualizar la lista de números usados después de una inscripción exitosa
-      if (data.categoria === 'auto' && data.numero) {
+      if ((data.categoria === 'auto' || data.categoria === 'moto') && data.numero) {
         setUsedNumbers(prev => [...prev, data.numero!].sort((a, b) => a - b));
       }
 
@@ -382,22 +388,51 @@ export default function PilotRegistration() {
               )}
 
               {watchCategoria === 'moto' && (
-                <div className="form-group">
-                  <label>Categoría de Moto Enduro Safari *</label>
-                  <select {...register('categoria_moto', { 
-                    required: watchCategoria === 'moto' ? 'Debes seleccionar una categoría' : false 
-                  })}>
-                    <option value="">Seleccione categoría</option>
-                    <option value="1 SENIOR">1 SENIOR</option>
-                    <option value="2 JUNIOR">2 JUNIOR</option>
-                    <option value="3 MASTER A">3 MASTER A</option>
-                    <option value="4 MASTER B">4 MASTER B</option>
-                    <option value="5 MASTER C">5 MASTER C</option>
-                    <option value="6 PROMOCIONALES">6 PROMOCIONALES</option>
-                    <option value="7 JUNIOR Kids">7 JUNIOR Kids</option>
-                  </select>
-                  {errors.categoria_moto && <span className="error">{errors.categoria_moto.message}</span>}
-                </div>
+                <>
+                  <div className="form-group">
+                    <label>Categoría de Moto Enduro Safari *</label>
+                    <select {...register('categoria_moto', { 
+                      required: watchCategoria === 'moto' ? 'Debes seleccionar una categoría' : false 
+                    })}>
+                      <option value="">Seleccione categoría</option>
+                      <option value="1 SENIOR">1 SENIOR</option>
+                      <option value="2 JUNIOR">2 JUNIOR</option>
+                      <option value="3 MASTER A">3 MASTER A</option>
+                      <option value="4 MASTER B">4 MASTER B</option>
+                      <option value="5 MASTER C">5 MASTER C</option>
+                      <option value="6 PROMOCIONALES">6 PROMOCIONALES</option>
+                      <option value="7 JUNIOR Kids">7 JUNIOR Kids</option>
+                    </select>
+                    {errors.categoria_moto && <span className="error">{errors.categoria_moto.message}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    {loadingNumbers ? (
+                      <div style={{ textAlign: 'center', padding: '2rem' }}>
+                        <p>Cargando números disponibles...</p>
+                      </div>
+                    ) : (
+                      <NumberSelector
+                        selectedNumber={selectedNumber}
+                        onSelect={handleNumberSelect}
+                        usedNumbers={usedNumbers}
+                      />
+                    )}
+                    {errors.numero && <span className="error">{errors.numero.message}</span>}
+                    <input
+                      type="hidden"
+                      {...register('numero', { 
+                        required: watchCategoria === 'moto' ? 'Debes seleccionar un número' : false,
+                        validate: (value) => {
+                          if (watchCategoria === 'moto' && (!value || value < 1 || value > 250)) {
+                            return 'El número debe estar entre 01 y 250';
+                          }
+                          return true;
+                        }
+                      })}
+                    />
+                  </div>
+                </>
               )}
             </div>
 
