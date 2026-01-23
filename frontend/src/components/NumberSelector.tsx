@@ -37,7 +37,17 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
     return isNaN(num) ? null : num;
   }).filter((n): n is number => n !== null);
 
+  console.log('🔢 Números usados recibidos (raw):', usedNumbers);
   console.log('🔢 Números usados normalizados:', normalizedUsedNumbers);
+  console.log('🔢 ¿Es array?', Array.isArray(normalizedUsedNumbers));
+  console.log('🔢 Longitud:', normalizedUsedNumbers.length);
+  
+  // TEST: Verificar si los números 2, 10, 15 están en el array
+  if (normalizedUsedNumbers.length > 0) {
+    console.log('🔢 ¿Contiene 2?', normalizedUsedNumbers.includes(2));
+    console.log('🔢 ¿Contiene 10?', normalizedUsedNumbers.includes(10));
+    console.log('🔢 ¿Contiene 15?', normalizedUsedNumbers.includes(15));
+  }
 
   const handleNumberClick = (num: number) => {
     if (normalizedUsedNumbers.includes(num)) {
