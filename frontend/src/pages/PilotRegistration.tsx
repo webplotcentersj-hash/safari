@@ -499,20 +499,6 @@ export default function PilotRegistration() {
                 </small>
               </div>
 
-              <div className="form-group">
-                <label>Adjuntar certificado médico (opcional)</label>
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] || null;
-                    setMedicalCertificateFile(file);
-                  }}
-                />
-                <small className="helper-text">
-                  Podés subir una foto del certificado médico o un PDF. Tamaño máximo recomendado: 5MB.
-                </small>
-              </div>
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={loading}>
