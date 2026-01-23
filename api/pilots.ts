@@ -46,10 +46,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'El comprobante de pago es obligatorio' });
       }
 
-      if (!certificado_medico_url) {
-        return res.status(400).json({ error: 'El certificado médico es obligatorio' });
-      }
-
       // Validar campos requeridos para autos
       if (categoria === 'auto') {
         if (!numero || numero < 1 || numero > 250) {

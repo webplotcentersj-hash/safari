@@ -136,14 +136,6 @@ export default function PilotRegistration() {
         return;
       }
 
-      if (!medicalCertificateFile) {
-        setMessage({
-          type: 'error',
-          text: 'Debes adjuntar el certificado médico para completar la inscripción.'
-        });
-        setLoading(false);
-        return;
-      }
 
       if (!supabase) {
         setMessage({
@@ -181,31 +173,34 @@ export default function PilotRegistration() {
 
       const comprobanteUrl = publicUrlData?.publicUrl;
 
-      // Subir certificado médico a Supabase Storage (obligatorio)
-      const extMedico = medicalCertificateFile.name.split('.').pop() || 'pdf';
-      const filePathMedico = `certificados-medicos/${fileNameSafeDni}-${Date.now()}.${extMedico}`;
+      // Subir certificado médico a Supabase Storage (opcional)
+      let certificadoMedicoUrl: string | null = null;
+      if (medicalCertificateFile) {
+        const extMedico = medicalCertificateFile.name.split('.').pop() || 'pdf';
+        const filePathMedico = `certificados-medicos/${fileNameSafeDni}-${Date.now()}.${extMedico}`;
 
-      const { data: uploadDataMedico, error: uploadErrorMedico } = await supabase
-        .storage
-        .from('certificados-medicos')
-        .upload(filePathMedico, medicalCertificateFile);
+        const { data: uploadDataMedico, error: uploadErrorMedico } = await supabase
+          .storage
+          .from('certificados-medicos')
+          .upload(filePathMedico, medicalCertificateFile);
 
-      if (uploadErrorMedico || !uploadDataMedico) {
-        console.error('Error subiendo certificado médico:', uploadErrorMedico);
-        setMessage({
-          type: 'error',
-          text: 'No se pudo subir el certificado médico. Verificá el archivo e intenta nuevamente.'
-        });
-        setLoading(false);
-        return;
+        if (uploadErrorMedico || !uploadDataMedico) {
+          console.error('Error subiendo certificado médico:', uploadErrorMedico);
+          setMessage({
+            type: 'error',
+            text: 'No se pudo subir el certificado médico. Verificá el archivo e intenta nuevamente.'
+          });
+          setLoading(false);
+          return;
+        }
+
+        const { data: publicUrlDataMedico } = supabase
+          .storage
+          .from('certificados-medicos')
+          .getPublicUrl(uploadDataMedico.path);
+
+        certificadoMedicoUrl = publicUrlDataMedico?.publicUrl;
       }
-
-      const { data: publicUrlDataMedico } = supabase
-        .storage
-        .from('certificados-medicos')
-        .getPublicUrl(uploadDataMedico.path);
-
-      const certificadoMedicoUrl = publicUrlDataMedico?.publicUrl;
 
       // Validar que la categoría esté presente
       if (!data.categoria) {
@@ -537,7 +532,7 @@ export default function PilotRegistration() {
               </div>
 
               <div className="form-group">
-                <label>Adjuntar certificado médico (obligatorio)</label>
+                <label>Adjuntar certificado médico (opcional)</label>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
@@ -545,7 +540,6 @@ export default function PilotRegistration() {
                     const file = e.target.files?.[0] || null;
                     setMedicalCertificateFile(file);
                   }}
-                  required
                 />
                 <small className="helper-text">
                   Podés subir una foto del certificado médico o un PDF. Tamaño máximo recomendado: 5MB.
