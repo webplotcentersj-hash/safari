@@ -24,7 +24,8 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
   );
 
   const handleNumberClick = (num: number) => {
-    if (usedNumbers.includes(num)) {
+    // Usar la misma función de comparación que isNumberUsed
+    if (isNumberUsed(num)) {
       console.log('⚠️ Intento de seleccionar número ocupado:', num);
       return; // No permitir seleccionar números ya usados
     }
@@ -72,6 +73,11 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
         {filteredNumbers.map((num) => {
           const isSelected = selectedNumber === num;
           const isUsed = isNumberUsed(num);
+          
+          // Log para depuración de los primeros números
+          if (num <= 20 && isUsed) {
+            console.log(`🎯 Número ${num} marcado como USADO. Array usado:`, usedNumbers);
+          }
           
           return (
             <button

@@ -242,16 +242,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ error: 'Error al obtener números usados' });
       }
 
+      console.log('📋 Pilotos encontrados con números:', pilots);
+      console.log('📋 Categoría filtrada:', categoria);
+
       const usedNumbers = pilots
         .map((p: any) => {
           // Asegurar que el número sea un entero
-          const num = typeof p.numero === 'string' ? parseInt(p.numero, 10) : p.numero;
+          const num = typeof p.numero === 'string' ? parseInt(p.numero, 10) : Number(p.numero);
+          console.log('🔢 Procesando número:', p.numero, '->', num, '(tipo:', typeof num, ')');
           return num;
         })
-        .filter((num: number | null) => num !== null && !isNaN(num) && num >= 1 && num <= 250)
+        .filter((num: number | null) => {
+          const isValid = num !== null && !isNaN(num) && num >= 1 && num <= 250;
+          if (!isValid) {
+            console.log('⚠️ Número inválido filtrado:', num);
+          }
+          return isValid;
+        })
         .sort((a: number, b: number) => a - b);
 
       console.log('📊 Números usados encontrados para categoría', categoria, ':', usedNumbers);
+      console.log('📊 Tipo de array:', Array.isArray(usedNumbers));
+      console.log('📊 Primer elemento tipo:', typeof usedNumbers[0]);
       res.json(usedNumbers);
     } catch (error: any) {
       console.error('Used numbers error:', error);
