@@ -62,11 +62,19 @@ export default function PilotRegistration() {
       // Usar endpoint público específico para números usados
       // Pasar la categoría para obtener solo números usados de esa categoría
       const categoria = watchCategoria === 'auto' ? 'auto' : 'moto';
+      console.log('🔍 Cargando números usados para categoría:', categoria);
       const response = await axios.get(`/pilots/used-numbers?categoria=${categoria}`);
-      const used = Array.isArray(response.data) ? response.data : [];
+      console.log('📊 Respuesta del endpoint:', response.data);
+      const used = Array.isArray(response.data) ? response.data.map((n: any) => {
+        // Asegurar que todos los números sean enteros
+        const num = typeof n === 'string' ? parseInt(n, 10) : Number(n);
+        return !isNaN(num) && num >= 1 && num <= 250 ? num : null;
+      }).filter((n: number | null) => n !== null) as number[] : [];
+      console.log('✅ Números usados procesados (enteros):', used);
       setUsedNumbers(used);
     } catch (error) {
-      console.error('Error cargando números usados:', error);
+      console.error('❌ Error cargando números usados:', error);
+      console.error('Error details:', error);
       // Si falla, continuar sin restricciones (pero el backend validará)
       setUsedNumbers([]);
     } finally {

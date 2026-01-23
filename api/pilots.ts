@@ -243,10 +243,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const usedNumbers = pilots
-        .map((p: any) => p.numero)
-        .filter((num: number | null) => num !== null && num >= 1 && num <= 250)
+        .map((p: any) => {
+          // Asegurar que el número sea un entero
+          const num = typeof p.numero === 'string' ? parseInt(p.numero, 10) : p.numero;
+          return num;
+        })
+        .filter((num: number | null) => num !== null && !isNaN(num) && num >= 1 && num <= 250)
         .sort((a: number, b: number) => a - b);
 
+      console.log('📊 Números usados encontrados para categoría', categoria, ':', usedNumbers);
       res.json(usedNumbers);
     } catch (error: any) {
       console.error('Used numbers error:', error);

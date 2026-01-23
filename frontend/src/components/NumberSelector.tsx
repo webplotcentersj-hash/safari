@@ -11,6 +11,12 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
   const [searchTerm, setSearchTerm] = useState('');
   const [showAnimation, setShowAnimation] = useState(false);
 
+  // Log para depuración
+  useEffect(() => {
+    console.log('🔢 NumberSelector - Números usados recibidos:', usedNumbers);
+    console.log('🔢 NumberSelector - Cantidad de números usados:', usedNumbers.length);
+  }, [usedNumbers]);
+
   const numbers = Array.from({ length: 250 }, (_, i) => i + 1);
   const filteredNumbers = numbers.filter(num => 
     num.toString().includes(searchTerm) || 
@@ -19,6 +25,7 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
 
   const handleNumberClick = (num: number) => {
     if (usedNumbers.includes(num)) {
+      console.log('⚠️ Intento de seleccionar número ocupado:', num);
       return; // No permitir seleccionar números ya usados
     }
     setShowAnimation(true);
@@ -26,7 +33,18 @@ export default function NumberSelector({ selectedNumber, onSelect, usedNumbers }
     setTimeout(() => setShowAnimation(false), 1000);
   };
 
-  const isNumberUsed = (num: number) => usedNumbers.includes(num);
+  const isNumberUsed = (num: number) => {
+    // Asegurar comparación correcta de números (puede haber strings o numbers en el array)
+    const numToCheck = Number(num);
+    const isUsed = usedNumbers.some((usedNum: any) => {
+      const used = typeof usedNum === 'string' ? parseInt(usedNum, 10) : Number(usedNum);
+      return !isNaN(used) && !isNaN(numToCheck) && used === numToCheck;
+    });
+    if (isUsed) {
+      console.log('🚫 Número', num, 'está ocupado. Números usados:', usedNumbers);
+    }
+    return isUsed;
+  };
 
   return (
     <div className="number-selector-container">
