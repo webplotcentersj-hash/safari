@@ -1,45 +1,11 @@
-// Service Worker básico para PWA
-const CACHE_NAME = 'safari-qr-scanner-v1';
-const urlsToCache = [
-  '/',
-  '/admin/scan',
-  '/logo.png'
-];
-
+// Service Worker mínimo para PWA (sin cache offline)
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(urlsToCache);
-      })
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      }
-    )
-  );
+  // Instalación inmediata sin cache
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
+  // Activar inmediatamente
+  event.waitUntil(self.clients.claim());
 });
 
