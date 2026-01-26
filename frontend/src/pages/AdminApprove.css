@@ -1,0 +1,273 @@
+.admin-approve {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%);
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.approve-container {
+  max-width: 600px;
+  width: 100%;
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.approve-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.approve-header h1 {
+  color: #1a472a;
+  font-size: 28px;
+  margin: 0;
+}
+
+.approve-loading,
+.approve-error {
+  text-align: center;
+  padding: 24px;
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.approve-alert {
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.approve-alert-error {
+  background: #ffebee;
+  color: #c62828;
+  border: 2px solid #ef5350;
+}
+
+.approve-alert-success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 2px solid #4caf50;
+}
+
+.alert-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pilot-info-card {
+  margin-top: 24px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  background: #f9f9f9;
+}
+
+.pilot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pilot-header h2 {
+  color: #1a472a;
+  font-size: 24px;
+  margin: 0;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-pendiente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-aprobado {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-rechazado {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.pilot-details {
+  margin-bottom: 20px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
+}
+
+.detail-value {
+  color: #333;
+  font-size: 14px;
+  text-align: right;
+  flex: 1;
+  margin-left: 16px;
+}
+
+.pilot-actions {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.pilot-actions-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-large {
+  padding: 16px 24px;
+  font-size: 18px;
+}
+
+.btn-small {
+  padding: 8px 16px;
+  font-size: 14px;
+  width: auto;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(101, 179, 48, 0.4);
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #f44336 0%, #e53935 100%);
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+/* Estilos para móviles */
+@media (max-width: 768px) {
+  .admin-approve {
+    padding: 10px;
+  }
+
+  .approve-container {
+    padding: 16px;
+  }
+
+  .approve-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .approve-header h1 {
+    font-size: 24px;
+  }
+
+  .pilot-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .pilot-header h2 {
+    font-size: 20px;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .detail-value {
+    text-align: left;
+    margin-left: 0;
+  }
+}
+

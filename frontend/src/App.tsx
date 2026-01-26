@@ -7,6 +7,7 @@ import PilotsList from './pages/PilotsList';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminScan from './pages/AdminScan';
+import AdminApprove from './pages/AdminApprove';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -32,6 +33,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminScan />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/approve/:id"
+          element={
+            <ProtectedRoute>
+              <AdminApprove />
             </ProtectedRoute>
           }
         />

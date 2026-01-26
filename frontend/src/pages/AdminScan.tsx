@@ -198,12 +198,31 @@ export default function AdminScan() {
       // Detener el escáner primero
       await stopScanning();
       
+      // Si el QR es una URL (contiene /admin/approve/), redirigir directamente
+      if (decodedText.includes('/admin/approve/')) {
+        console.log('🔗 QR contiene URL de aprobación, redirigiendo...');
+        const pilotId = decodedText.split('/admin/approve/')[1]?.split('?')[0]?.split('#')[0];
+        if (pilotId) {
+          navigate(`/admin/approve/${pilotId}`);
+          return;
+        }
+      }
+      
       let qrData: PilotData | null = null;
       
       // Intentar parsear como JSON
       try {
         qrData = JSON.parse(decodedText);
         console.log('✅ QR parseado como JSON:', qrData);
+        
+        // Si el JSON tiene una URL, redirigir
+        if (qrData.url && qrData.url.includes('/admin/approve/')) {
+          const pilotId = qrData.id || qrData.url.split('/admin/approve/')[1]?.split('?')[0]?.split('#')[0];
+          if (pilotId) {
+            navigate(`/admin/approve/${pilotId}`);
+            return;
+          }
+        }
       } catch (parseError) {
         // Si no es JSON, puede ser solo un número (QR antiguo) o formato diferente
         console.log('⚠️ No es JSON válido, intentando otros formatos...');

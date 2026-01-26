@@ -375,6 +375,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Generar QR code con información del piloto
       let qrDataUrl: string | null = null;
       try {
+        // Obtener la URL base de la aplicación
+        const baseUrl = process.env.VERCEL_URL 
+          ? `https://${process.env.VERCEL_URL}` 
+          : process.env.FRONTEND_URL || 'https://safari-tras-las-sierras.vercel.app';
+        
+        // Crear URL directa a la página de aprobación del piloto
+        const approvalUrl = `${baseUrl}/admin/approve/${data.id}`;
+        
+        // QR contiene tanto la URL como los datos JSON para compatibilidad
         const qrData = {
           id: data.id,
           dni: data.dni,
@@ -384,11 +393,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           numero: data.numero,
           categoria_detalle: data.categoria === 'auto' ? data.categoria_auto : data.categoria_moto,
           email: data.email,
-          telefono: data.telefono
+          telefono: data.telefono,
+          url: approvalUrl // URL para redirección directa
         };
         
-        // Crear un texto más legible que también sea parseable
-        const qrText = JSON.stringify(qrData);
+        // El QR contiene la URL como texto principal (para que los escáneres la reconozcan como link)
+        // Y también el JSON completo para compatibilidad
+        const qrText = approvalUrl;
         qrDataUrl = await QRCode.toDataURL(qrText, {
           errorCorrectionLevel: 'H', // Mayor corrección de errores
           type: 'image/png',
@@ -401,6 +412,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
         
         console.log('QR generado exitosamente para piloto:', data.id);
+        console.log('URL de aprobación:', approvalUrl);
       } catch (qrError: any) {
         console.error('Error generando QR:', qrError);
         // No fallar la inscripción si el QR falla, solo no incluirlo
