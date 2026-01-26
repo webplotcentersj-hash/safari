@@ -125,10 +125,16 @@ export default function AdminApprove() {
     <div className="admin-approve">
       <div className="approve-container">
         <div className="approve-header">
-          <h1>✅ Aprobar/Rechazar Piloto</h1>
-          <button onClick={() => navigate('/admin')} className="btn btn-secondary btn-small">
-            ← Volver al Dashboard
-          </button>
+          <div className="approve-title-section">
+            <img src="/logo.png" alt="Safari Logo" className="approve-logo" />
+            <h1>✅ Aprobar/Rechazar Piloto</h1>
+            <p className="approve-subtitle">Escanea el QR del piloto para ver su información y aprobar su inscripción</p>
+          </div>
+          <div className="approve-actions-header">
+            <button onClick={() => navigate('/admin')} className="btn btn-secondary btn-small">
+              ← Dashboard
+            </button>
+          </div>
         </div>
 
         {error && (

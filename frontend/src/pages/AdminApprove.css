@@ -19,16 +19,42 @@
 .approve-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 24px;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.approve-title-section {
+  flex: 1;
+  min-width: 250px;
+}
+
+.approve-logo {
+  width: 60px;
+  height: auto;
+  margin-bottom: 12px;
+  display: block;
 }
 
 .approve-header h1 {
   color: #1a472a;
   font-size: 28px;
+  margin: 0 0 8px 0;
+}
+
+.approve-subtitle {
+  color: #666;
+  font-size: 14px;
   margin: 0;
+}
+
+.approve-actions-header {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
 }
 
 .approve-loading,
@@ -159,6 +185,13 @@
 }
 
 .pilot-actions-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.action-buttons-group {
   display: flex;
   flex-direction: column;
   gap: 12px;
