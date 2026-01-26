@@ -79,6 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log('=== GET /api/admin/pilots ===');
       console.log('Request URL:', url);
       console.log('Request path:', path);
+      console.log('Query params:', query);
       
       // Usar supabaseAdmin que tiene service_role_key (bypass RLS) o anon_key como fallback
       // Esto asegura que podamos leer los datos independientemente de las políticas RLS
@@ -87,12 +88,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log('Anon key configured:', !!supabaseAnonKey);
       console.log('Service role key configured:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
       
+      // Si hay un parámetro de número, buscar por número
+      const numeroParam = query.numero as string | undefined;
+      let queryBuilder = supabaseAdmin
+        .from('pilots')
+        .select('*');
+      
+      if (numeroParam) {
+        const numero = parseInt(numeroParam, 10);
+        console.log('Buscando piloto por número:', numero);
+        queryBuilder = queryBuilder.eq('numero', numero);
+      } else {
+        queryBuilder = queryBuilder.order('created_at', { ascending: false });
+      }
+      
       // Intentar consultar la tabla pilots usando supabaseAdmin
       console.log('Querying pilots table...');
-      const { data: pilots, error } = await supabaseAdmin
-        .from('pilots')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data: pilots, error } = await queryBuilder;
       
       console.log('Query result - error:', error);
       console.log('Query result - data:', pilots);

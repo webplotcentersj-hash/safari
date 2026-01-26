@@ -191,15 +191,71 @@ export default function AdminScan() {
 
   const handleScanSuccess = async (decodedText: string) => {
     try {
-      console.log('QR escaneado:', decodedText);
+      console.log('📱 QR escaneado (texto completo):', decodedText);
+      console.log('📱 Tipo:', typeof decodedText);
+      console.log('📱 Longitud:', decodedText.length);
       
-      // Parsear el JSON del QR
-      const qrData: PilotData = JSON.parse(decodedText);
-      console.log('QR parseado:', qrData);
-      setScannedData(qrData);
-      
-      // Detener el escáner
+      // Detener el escáner primero
       await stopScanning();
+      
+      let qrData: PilotData | null = null;
+      
+      // Intentar parsear como JSON
+      try {
+        qrData = JSON.parse(decodedText);
+        console.log('✅ QR parseado como JSON:', qrData);
+      } catch (parseError) {
+        // Si no es JSON, puede ser solo un número (QR antiguo) o formato diferente
+        console.log('⚠️ No es JSON válido, intentando otros formatos...');
+        
+        // Si es solo un número, buscar piloto por número
+        const numeroMatch = decodedText.match(/^\d+$/);
+        if (numeroMatch) {
+          const numero = parseInt(decodedText, 10);
+          console.log('🔢 QR contiene solo número:', numero);
+          setError(`QR contiene solo el número ${numero}. Buscando piloto por número...`);
+          
+          // Buscar piloto por número en la API
+          try {
+            const response = await axios.get(`/admin/pilots?numero=${numero}`);
+            if (response.data && response.data.length > 0) {
+              const pilot = response.data[0];
+              setPilotInfo({
+                id: pilot.id,
+                nombre: pilot.nombre,
+                apellido: pilot.apellido,
+                dni: pilot.dni,
+                email: pilot.email || 'No disponible',
+                telefono: pilot.telefono || 'No disponible',
+                categoria: pilot.categoria || '',
+                categoria_auto: pilot.categoria_auto,
+                categoria_moto: pilot.categoria_moto,
+                numero: pilot.numero,
+                estado: pilot.estado || 'pendiente',
+                comprobante_pago_url: pilot.comprobante_pago_url
+              });
+              setError(null);
+              return;
+            } else {
+              setError(`No se encontró ningún piloto con el número ${numero}.`);
+              return;
+            }
+          } catch (searchError: any) {
+            console.error('Error buscando por número:', searchError);
+            setError(`Error al buscar piloto con número ${numero}.`);
+            return;
+          }
+        } else {
+          throw new Error('Formato de QR no reconocido');
+        }
+      }
+      
+      if (!qrData) {
+        setError('No se pudo leer la información del QR.');
+        return;
+      }
+      
+      setScannedData(qrData);
       
       // Si el QR tiene toda la información, crear un objeto PilotInfo con los datos del QR
       if (qrData.nombre && qrData.apellido && qrData.dni) {
@@ -217,17 +273,23 @@ export default function AdminScan() {
           estado: 'pendiente', // Estado por defecto, se actualizará si se obtiene de la API
           comprobante_pago_url: undefined
         };
+        console.log('✅ Información del piloto desde QR:', pilotInfoFromQR);
         setPilotInfo(pilotInfoFromQR);
+      } else {
+        console.warn('⚠️ QR no tiene información completa:', qrData);
+        setError('El QR no contiene toda la información necesaria. Intentando buscar por ID...');
       }
       
       // Intentar obtener información completa del piloto desde la API (para estado actual y comprobante)
       if (qrData.id) {
         await fetchPilotInfo(qrData.id);
+      } else {
+        setError('El QR no contiene un ID válido del piloto.');
       }
     } catch (err: any) {
-      console.error('Error parseando QR:', err);
-      console.error('Texto del QR:', decodedText);
-      setError('QR inválido. Asegúrate de escanear el código de inscripción correcto.');
+      console.error('❌ Error procesando QR:', err);
+      console.error('❌ Texto del QR:', decodedText);
+      setError(`Error al procesar el QR: ${err.message || 'Error desconocido'}. Texto escaneado: ${decodedText.substring(0, 100)}`);
     }
   };
 
