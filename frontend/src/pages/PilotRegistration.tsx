@@ -27,9 +27,9 @@ async function generatePilotCardImage(
       return;
     }
 
-    // Dimensiones del canvas
+    // Dimensiones del canvas (más alto para evitar superposiciones)
     canvas.width = 1200;
-    canvas.height = 1600;
+    canvas.height = 2000;
 
     // Cargar logo
     const logo = new Image();
@@ -43,69 +43,78 @@ async function generatePilotCardImage(
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Variables de posición (espaciado mejorado)
+      let currentY = 50;
+      const padding = 40;
+      const spacing = 50;
+
       // Logo en la parte superior
-      const logoSize = 200;
+      const logoSize = 180;
       const logoX = (canvas.width - logoSize) / 2;
-      const logoY = 40;
-      ctx.drawImage(logo, logoX, logoY, logoSize, logoSize * (logo.height / logo.width));
+      const logoY = currentY;
+      const logoHeight = logoSize * (logo.height / logo.width);
+      ctx.drawImage(logo, logoX, logoY, logoSize, logoHeight);
+      currentY += logoHeight + spacing;
 
       // Título
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 48px Arial';
+      ctx.font = 'bold 44px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText('SAFARI TRAS LAS SIERRAS', canvas.width / 2, logoY + logoSize * (logo.height / logo.width) + 60);
+      ctx.textBaseline = 'top';
+      ctx.fillText('SAFARI TRAS LAS SIERRAS', canvas.width / 2, currentY);
+      currentY += 60;
       
-      ctx.font = '32px Arial';
-      ctx.fillText('Valle Fértil - San Juan', canvas.width / 2, logoY + logoSize * (logo.height / logo.width) + 100);
+      ctx.font = '28px Arial';
+      ctx.fillText('Valle Fértil - San Juan', canvas.width / 2, currentY);
+      currentY += spacing + 30;
 
-      // Sección del número (diseño tipo casco)
+      // Sección del número (diseño tipo casco) - solo si hay número
       if (numero) {
         const numberX = canvas.width / 2;
-        const numberY = logoY + logoSize * (logo.height / logo.width) + 200;
+        const numberY = currentY + 150; // Espacio para el casco
         
         // Sombra del casco
         ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.beginPath();
-        ctx.arc(numberX + 5, numberY + 5, 130, 0, Math.PI * 2);
+        ctx.arc(numberX + 5, numberY + 5, 140, 0, Math.PI * 2);
         ctx.fill();
         
         // Fondo circular tipo casco con gradiente
-        const helmetGradient = ctx.createRadialGradient(numberX, numberY, 0, numberX, numberY, 130);
+        const helmetGradient = ctx.createRadialGradient(numberX, numberY, 0, numberX, numberY, 140);
         helmetGradient.addColorStop(0, '#65b330');
         helmetGradient.addColorStop(0.7, '#5aa02a');
         helmetGradient.addColorStop(1, '#4a8a1f');
         ctx.fillStyle = helmetGradient;
         ctx.beginPath();
-        ctx.arc(numberX, numberY, 130, 0, Math.PI * 2);
+        ctx.arc(numberX, numberY, 140, 0, Math.PI * 2);
         ctx.fill();
         
         // Borde exterior del casco
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 10;
+        ctx.lineWidth = 12;
         ctx.stroke();
         
         // Borde interior
         ctx.strokeStyle = '#4a8a1f';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 5;
         ctx.beginPath();
-        ctx.arc(numberX, numberY, 120, 0, Math.PI * 2);
+        ctx.arc(numberX, numberY, 125, 0, Math.PI * 2);
         ctx.stroke();
         
         // Mini logo del Safari en la parte superior del casco
-        const miniLogoSize = 60;
+        const miniLogoSize = 50;
         const miniLogoX = numberX - miniLogoSize / 2;
-        const miniLogoY = numberY - 80;
+        const miniLogoY = numberY - 90;
         ctx.drawImage(logo, miniLogoX, miniLogoY, miniLogoSize, miniLogoSize * (logo.height / logo.width));
         
         // Número en el centro (grande y destacado)
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 140px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        ctx.font = 'bold 150px Arial';
         
         // Sombra del número
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillText(numero.toString().padStart(2, '0'), numberX + 3, numberY + 3);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillText(numero.toString().padStart(2, '0'), numberX + 4, numberY + 4);
         
         // Número principal
         ctx.fillStyle = '#ffffff';
@@ -113,62 +122,115 @@ async function generatePilotCardImage(
         
         // Texto "NÚMERO DE COMPETENCIA"
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px Arial';
-        ctx.fillText('NÚMERO DE COMPETENCIA', numberX, numberY + 100);
+        ctx.font = 'bold 22px Arial';
+        ctx.textBaseline = 'top';
+        ctx.fillText('NÚMERO DE COMPETENCIA', numberX, numberY + 160);
+        
+        currentY = numberY + 300; // Actualizar posición después del casco
+      } else {
+        currentY += 50;
       }
 
+      // Línea separadora
+      ctx.strokeStyle = '#65b330';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(padding, currentY);
+      ctx.lineTo(canvas.width - padding, currentY);
+      ctx.stroke();
+      currentY += spacing + 20;
+
       // Información del piloto
-      const infoY = logoY + logoSize * (logo.height / logo.width) + 400;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
       
       // Nombre
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 42px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(`${nombre} ${apellido}`, canvas.width / 2, infoY);
+      ctx.font = 'bold 40px Arial';
+      const fullName = `${nombre} ${apellido}`;
+      // Dividir nombre si es muy largo
+      if (fullName.length > 25) {
+        const words = fullName.split(' ');
+        const mid = Math.ceil(words.length / 2);
+        const line1 = words.slice(0, mid).join(' ');
+        const line2 = words.slice(mid).join(' ');
+        ctx.fillText(line1, canvas.width / 2, currentY);
+        currentY += 50;
+        ctx.fillText(line2, canvas.width / 2, currentY);
+      } else {
+        ctx.fillText(fullName, canvas.width / 2, currentY);
+      }
+      currentY += 60;
       
       // Categoría
       const categoriaTexto = categoria === 'auto' ? 'AUTO' : 'MOTO';
-      ctx.font = '36px Arial';
+      ctx.font = 'bold 36px Arial';
       ctx.fillStyle = '#65b330';
-      ctx.fillText(categoriaTexto, canvas.width / 2, infoY + 60);
+      ctx.fillText(categoriaTexto, canvas.width / 2, currentY);
+      currentY += 50;
       
       // Subcategoría
       if (categoriaDetalle) {
         ctx.font = '32px Arial';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(categoriaDetalle.toUpperCase(), canvas.width / 2, infoY + 110);
+        const subcat = categoriaDetalle.toUpperCase();
+        // Dividir si es muy largo
+        if (subcat.length > 30) {
+          const words = subcat.split(' ');
+          const mid = Math.ceil(words.length / 2);
+          const line1 = words.slice(0, mid).join(' ');
+          const line2 = words.slice(mid).join(' ');
+          ctx.fillText(line1, canvas.width / 2, currentY);
+          currentY += 45;
+          ctx.fillText(line2, canvas.width / 2, currentY);
+        } else {
+          ctx.fillText(subcat, canvas.width / 2, currentY);
+        }
+        currentY += 60;
       }
+
+      // Línea separadora antes del QR
+      ctx.strokeStyle = '#65b330';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(padding, currentY);
+      ctx.lineTo(canvas.width - padding, currentY);
+      ctx.stroke();
+      currentY += spacing + 20;
 
       // Cargar y dibujar QR
       const qrImage = new Image();
       qrImage.crossOrigin = 'anonymous';
       qrImage.onload = () => {
-        const qrSize = 500;
+        const qrSize = 450;
         const qrX = (canvas.width - qrSize) / 2;
-        const qrY = infoY + 180;
+        const qrY = currentY;
         
         // Fondo blanco para el QR
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+        ctx.fillRect(qrX - 25, qrY - 25, qrSize + 50, qrSize + 50);
         
         // Borde del QR
         ctx.strokeStyle = '#65b330';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+        ctx.lineWidth = 5;
+        ctx.strokeRect(qrX - 25, qrY - 25, qrSize + 50, qrSize + 50);
         
         // QR
         ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
         
+        currentY = qrY + qrSize + 50;
+        
         // Texto debajo del QR
         ctx.fillStyle = '#ffffff';
-        ctx.font = '28px Arial';
+        ctx.font = 'bold 26px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Presenta este código en la acreditación', canvas.width / 2, qrY + qrSize + 60);
+        ctx.fillText('Presenta este código en la acreditación', canvas.width / 2, currentY);
+        currentY += 40;
         
         // Footer
-        ctx.font = '24px Arial';
+        ctx.font = '20px Arial';
         ctx.fillStyle = '#cccccc';
-        ctx.fillText('Este documento es personal e intransferible', canvas.width / 2, canvas.height - 40);
+        ctx.fillText('Este documento es personal e intransferible', canvas.width / 2, canvas.height - 50);
         
         // Convertir a data URL
         resolve(canvas.toDataURL('image/png', 1.0));
