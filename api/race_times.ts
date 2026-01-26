@@ -102,9 +102,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       console.log('Insert data:', JSON.stringify(insertData, null, 2));
 
-      const { data, error } = await supabaseAdmin
+      // Primero insertar sin el select de relación para evitar problemas
+      const { data: insertedData, error: insertError } = await supabaseAdmin
         .from('race_times')
         .insert(insertData)
+        .select('*')
+        .single();
+
+      if (insertError) {
+        console.error('Error creando tiempo:', insertError);
+        console.error('Error details:', JSON.stringify(insertError, null, 2));
+        return res.status(500).json({ 
+          error: 'Error al crear el tiempo',
+          details: insertError.message || 'Error desconocido',
+          code: insertError.code
+        });
+      }
+
+      // Luego obtener el tiempo con la relación de piloto
+      const { data: fullData, error: selectError } = await supabaseAdmin
+        .from('race_times')
         .select(`
           *,
           pilots (
@@ -118,19 +135,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             categoria_moto
           )
         `)
+        .eq('id', insertedData.id)
         .single();
 
-      if (error) {
-        console.error('Error creando tiempo:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
-        return res.status(500).json({ 
-          error: 'Error al crear el tiempo',
-          details: error.message || 'Error desconocido',
-          code: error.code
-        });
+      if (selectError) {
+        console.error('Error obteniendo tiempo con relación:', selectError);
+        // Devolver al menos el tiempo sin la relación
+        return res.status(201).json(insertedData);
       }
 
-      return res.status(201).json(data);
+      return res.status(201).json(fullData);
     } catch (error: any) {
       console.error('Error en POST race-times:', error);
       return res.status(500).json({ error: 'Error al crear el tiempo' });
