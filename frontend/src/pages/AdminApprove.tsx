@@ -127,11 +127,6 @@ export default function AdminApprove() {
             <h1>✅ Aprobar/Rechazar Piloto</h1>
             <p className="approve-subtitle">Escanea el QR del piloto para ver su información y aprobar su inscripción</p>
           </div>
-          <div className="approve-actions-header">
-            <button onClick={() => navigate('/admin')} className="btn btn-secondary btn-small">
-              ← Dashboard
-            </button>
-          </div>
         </div>
 
         {error && (
@@ -209,24 +204,50 @@ export default function AdminApprove() {
             )}
 
             <div className="pilot-actions-main">
-              {pilotInfo.estado !== 'aprobado' && (
-                <button
-                  onClick={() => updatePilotStatus('aprobado')}
-                  className="btn btn-success btn-large"
-                  disabled={loading}
-                >
-                  ✓ Aprobar Piloto
-                </button>
+              <div className="action-buttons-group">
+                {pilotInfo.estado !== 'aprobado' && (
+                  <button
+                    onClick={() => updatePilotStatus('aprobado')}
+                    className="btn btn-success btn-large"
+                    disabled={loading}
+                  >
+                    ✓ APROBAR PILOTO
+                  </button>
+                )}
+                {pilotInfo.estado !== 'rechazado' && (
+                  <button
+                    onClick={() => updatePilotStatus('rechazado')}
+                    className="btn btn-danger btn-large"
+                    disabled={loading}
+                  >
+                    ✗ RECHAZAR PILOTO
+                  </button>
+                )}
+              </div>
+              
+              {success && (
+                <div className="success-actions">
+                  <button
+                    onClick={() => {
+                      setPilotInfo(null);
+                      setSuccess(null);
+                      setError(null);
+                      // Limpiar y permitir escanear otro QR o ingresar otro ID
+                    }}
+                    className="btn btn-primary"
+                  >
+                    🔄 Aprobar Otro Piloto
+                  </button>
+                </div>
               )}
-              {pilotInfo.estado !== 'rechazado' && (
-                <button
-                  onClick={() => updatePilotStatus('rechazado')}
-                  className="btn btn-danger btn-large"
-                  disabled={loading}
-                >
-                  ✗ Rechazar Piloto
-                </button>
-              )}
+              
+              <button
+                onClick={() => navigate('/admin')}
+                className="btn btn-secondary"
+                disabled={loading}
+              >
+                ← Ir al Dashboard
+              </button>
             </div>
           </div>
         )}
