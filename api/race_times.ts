@@ -64,6 +64,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (method === 'POST') {
     try {
+      // Verificar que estamos usando service role key
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const hasServiceKey = !!serviceKey;
+      console.log('Service role key available:', hasServiceKey);
+      if (!hasServiceKey) {
+        console.error('⚠️ WARNING: SUPABASE_SERVICE_ROLE_KEY no está configurada en Vercel!');
+      }
+
       const { pilot_id, categoria, categoria_detalle, tiempo_segundos, tiempo_formato, etapa } = body;
 
       if (!pilot_id || !categoria) {

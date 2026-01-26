@@ -8,11 +8,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables (SUPABASE_URL o SUPABASE_ANON_KEY)');
 }
 
-// Para operaciones de backend usamos la service_role si existe,
-// y si no, caemos a la anon key (no rompe la función, pero respetará RLS).
+// Para operaciones de backend SIEMPRE debemos usar la service_role key
+// Si no está disponible, lanzar error para evitar problemas de RLS
+if (!supabaseServiceKey) {
+  console.error('⚠️ CRITICAL: SUPABASE_SERVICE_ROLE_KEY no está configurada!');
+  console.error('Esto causará errores 401 en operaciones que requieren bypass de RLS');
+}
+
+// Cliente con service role key para operaciones del backend (bypass RLS automáticamente)
+// Si no hay service key, usar anon key pero esto causará problemas con RLS
 const adminKey = supabaseServiceKey || supabaseAnonKey;
 
-// Cliente con service role key para operaciones del backend (bypass RLS cuando esté configurada)
 export const supabaseAdmin = createClient(supabaseUrl, adminKey, {
   auth: {
     autoRefreshToken: false,
