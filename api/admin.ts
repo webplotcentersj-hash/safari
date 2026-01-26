@@ -227,23 +227,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Actualizar estado de piloto
     try {
       const client = supabaseWithAuth || supabaseAdmin;
-      const id = path.split('/admin/pilots/')[1]?.split('/status')[0] || query.id;
+      
+      // Extraer el ID del path - puede venir como /api/admin/pilots/:id/status o /admin/pilots/:id/status
+      let id = path.split('/admin/pilots/')[1];
+      if (id) {
+        id = id.split('/status')[0].split('?')[0]; // Remover /status y query params
+      }
+      if (!id) {
+        id = query.id as string;
+      }
+      
       const { estado } = body;
+
+      console.log('📤 Actualizando estado del piloto:', {
+        id: id,
+        estado: estado,
+        path: path,
+        method: method
+      });
+
+      if (!id) {
+        return res.status(400).json({ error: 'ID de piloto requerido' });
+      }
 
       if (!['pendiente', 'aprobado', 'rechazado'].includes(estado)) {
         return res.status(400).json({ error: 'Estado inválido' });
       }
 
-      const { error } = await client
+      const { data, error } = await client
         .from('pilots')
         .update({ estado })
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
-      if (error) throw error;
-      res.json({ message: 'Estado actualizado exitosamente' });
+      console.log('🔍 Resultado de actualización:', { data, error });
+
+      if (error) {
+        console.error('❌ Error de Supabase al actualizar:', error);
+        throw error;
+      }
+      
+      console.log('✅ Estado actualizado exitosamente');
+      res.json({ message: 'Estado actualizado exitosamente', pilot: data });
     } catch (error: any) {
-      console.error('Update status error:', error);
-      res.status(500).json({ error: 'Error al actualizar el estado' });
+      console.error('❌ Update status error (catch):', error);
+      res.status(500).json({ error: 'Error al actualizar el estado', details: error.message });
     }
   } else if (method === 'DELETE' && path.includes('/admin/pilots/') && !path.includes('/status')) {
     // Eliminar piloto

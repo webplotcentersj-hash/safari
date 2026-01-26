@@ -120,15 +120,31 @@ export default function AdminApprove() {
     setSuccess(null);
     
     try {
-      await axios.patch(`/admin/pilots/${pilotInfo.id}/status`, { estado: status });
-      setSuccess(`✅ Piloto ${pilotInfo.nombre} ${pilotInfo.apellido} ${status === 'aprobado' ? 'APROBADO' : 'RECHAZADO'} exitosamente.`);
+      console.log('📤 Actualizando estado del piloto:', {
+        id: pilotInfo.id,
+        status: status
+      });
+      
+      const response = await axios.patch(`/admin/pilots/${pilotInfo.id}/status`, { estado: status });
+      console.log('✅ Estado actualizado exitosamente:', response.data);
+      
+      setSuccess(`✅ Piloto ${pilotInfo.nombre || ''} ${pilotInfo.apellido || ''} ${status === 'aprobado' ? 'APROBADO' : 'RECHAZADO'} exitosamente.`);
       setPilotInfo(prev => prev ? { ...prev, estado: status } : null);
       setLoading(false);
       
       // NO redirigir automáticamente - dejar que el admin decida si quiere aprobar otro o ir al dashboard
     } catch (err: any) {
-      console.error('Error actualizando estado:', err);
-      setError('Error al actualizar el estado del piloto. Intenta nuevamente.');
+      console.error('❌ Error actualizando estado:', err);
+      console.error('❌ Error response:', err.response);
+      console.error('❌ Error status:', err.response?.status);
+      console.error('❌ Error data:', err.response?.data);
+      console.error('❌ URL intentada:', `/admin/pilots/${pilotInfo.id}/status`);
+      
+      const errorMessage = err.response?.data?.error 
+        || err.message 
+        || 'Error al actualizar el estado del piloto. Intenta nuevamente.';
+      
+      setError(errorMessage);
       setLoading(false);
     }
   };
