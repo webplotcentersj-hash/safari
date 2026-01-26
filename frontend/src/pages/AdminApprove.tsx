@@ -25,14 +25,23 @@ interface PilotInfo {
 export default function AdminApprove() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isRestoring } = useAuth();
   const [pilotInfo, setPilotInfo] = useState<PilotInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('🔍 AdminApprove useEffect:', { id, isAuthenticated, isRestoring });
+    
+    // Esperar a que termine de restaurar la sesión
+    if (isRestoring) {
+      console.log('⏳ Esperando a que termine la restauración de sesión...');
+      return;
+    }
+
     if (!isAuthenticated) {
+      console.log('❌ No autenticado, redirigiendo al login');
       // Guardar la URL actual para redirigir después del login
       const returnUrl = `/admin/approve/${id}`;
       // Redirigir al login con el returnUrl
@@ -41,23 +50,42 @@ export default function AdminApprove() {
     }
 
     if (id) {
+      console.log('✅ Autenticado, cargando información del piloto:', id);
       fetchPilotInfo(id);
     } else {
+      console.error('❌ ID de piloto no proporcionado');
       setError('ID de piloto no proporcionado');
       setLoading(false);
     }
-  }, [id, isAuthenticated, navigate]);
+  }, [id, isAuthenticated, isRestoring, navigate]);
 
   const fetchPilotInfo = async (pilotId: string) => {
+    console.log('📡 Iniciando fetchPilotInfo para:', pilotId);
     setLoading(true);
     setError(null);
     
     try {
+      console.log('📡 Haciendo petición a:', `/admin/pilots/${pilotId}`);
       const response = await axios.get(`/admin/pilots/${pilotId}`);
-      setPilotInfo(response.data);
+      console.log('✅ Respuesta recibida:', response.data);
+      
+      if (response.data) {
+        setPilotInfo(response.data);
+        console.log('✅ Información del piloto cargada exitosamente');
+      } else {
+        throw new Error('No se recibieron datos del piloto');
+      }
     } catch (err: any) {
-      console.error('Error obteniendo información del piloto:', err);
-      setError('No se pudo cargar la información del piloto. Verifica que el ID sea correcto.');
+      console.error('❌ Error obteniendo información del piloto:', err);
+      console.error('❌ Error response:', err.response);
+      console.error('❌ Error status:', err.response?.status);
+      console.error('❌ Error data:', err.response?.data);
+      
+      const errorMessage = err.response?.data?.error 
+        || err.message 
+        || 'No se pudo cargar la información del piloto. Verifica que el ID sea correcto.';
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
