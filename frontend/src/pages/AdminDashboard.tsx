@@ -930,9 +930,28 @@ export default function AdminDashboard() {
                   <form onSubmit={async (e) => {
                     e.preventDefault();
                     try {
+                      if (!timeForm.pilot_id || !timeForm.categoria) {
+                        alert('Por favor completa todos los campos requeridos');
+                        return;
+                      }
+
+                      if (!timeForm.tiempo_formato && !timeForm.tiempo_segundos) {
+                        alert('Debes ingresar un tiempo (formato o segundos)');
+                        return;
+                      }
+
                       const tiempoSegundos = timeForm.tiempo_formato 
                         ? parseTimeToSeconds(timeForm.tiempo_formato)
                         : parseFloat(timeForm.tiempo_segundos) || null;
+
+                      console.log('Enviando tiempo:', {
+                        pilot_id: timeForm.pilot_id,
+                        categoria: timeForm.categoria,
+                        categoria_detalle: timeForm.categoria_detalle,
+                        tiempo_segundos: tiempoSegundos,
+                        tiempo_formato: timeForm.tiempo_formato,
+                        etapa: timeForm.etapa
+                      });
 
                       const response = await axios.post('/api/race-times', {
                         pilot_id: timeForm.pilot_id,
@@ -943,6 +962,7 @@ export default function AdminDashboard() {
                         etapa: timeForm.etapa || null
                       });
 
+                      console.log('Tiempo guardado exitosamente:', response.data);
                       alert('Tiempo cargado exitosamente');
                       setTimeForm({
                         pilot_id: '',
@@ -952,10 +972,12 @@ export default function AdminDashboard() {
                         tiempo_segundos: '',
                         etapa: ''
                       });
-                      fetchData();
+                      // Recargar datos después de guardar
+                      await fetchData(false);
                     } catch (error: any) {
                       console.error('Error cargando tiempo:', error);
-                      alert(error.response?.data?.error || 'Error al cargar el tiempo');
+                      console.error('Error response:', error.response);
+                      alert(error.response?.data?.error || error.message || 'Error al cargar el tiempo');
                     }
                   }} className="ticket-form">
                     <div className="form-row">
