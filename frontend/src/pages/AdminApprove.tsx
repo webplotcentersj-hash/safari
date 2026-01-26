@@ -112,6 +112,17 @@ export default function AdminApprove() {
     }
   };
 
+  // Si está restaurando la sesión, mostrar loading
+  if (isRestoring) {
+    return (
+      <div className="admin-approve">
+        <div className="approve-loading">
+          <p>Verificando sesión...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="admin-approve">
