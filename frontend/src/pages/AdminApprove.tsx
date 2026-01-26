@@ -205,13 +205,36 @@ export default function AdminApprove() {
         {pilotInfo && (
           <div className="pilot-info-card">
             <div className="pilot-header">
-              <h2>{pilotInfo.nombre} {pilotInfo.apellido}</h2>
-              <span className={`status-badge status-${pilotInfo.estado}`}>
+              <h2>
+                {pilotInfo.nombre && pilotInfo.apellido 
+                  ? `${pilotInfo.nombre} ${pilotInfo.apellido}` 
+                  : pilotInfo.id 
+                    ? `Piloto ID: ${pilotInfo.id.substring(0, 8)}...` 
+                    : 'Piloto'}
+              </h2>
+              <span className={`status-badge status-${pilotInfo.estado || 'pendiente'}`}>
                 {pilotInfo.estado === 'aprobado' ? '✓ Aprobado' : 
                  pilotInfo.estado === 'rechazado' ? '✗ Rechazado' : 
                  '⏳ Pendiente'}
               </span>
             </div>
+            
+            {(!pilotInfo.nombre || !pilotInfo.dni) && (
+              <div className="approve-alert approve-alert-error" style={{ marginBottom: '16px' }}>
+                <p>⚠️ Los datos del piloto no se cargaron completamente. Verifica la consola para más detalles.</p>
+                <button 
+                  onClick={() => {
+                    if (id) {
+                      fetchPilotInfo(id);
+                    }
+                  }} 
+                  className="btn btn-secondary btn-small"
+                  style={{ marginTop: '8px' }}
+                >
+                  🔄 Reintentar Carga
+                </button>
+              </div>
+            )}
 
             <div className="pilot-details">
               <div className="detail-row">
