@@ -197,6 +197,12 @@
   gap: 12px;
 }
 
+.success-actions {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 2px solid #e0e0e0;
+}
+
 .btn {
   padding: 12px 24px;
   border: none;

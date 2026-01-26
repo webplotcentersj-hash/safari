@@ -72,17 +72,14 @@ export default function AdminApprove() {
     
     try {
       await axios.patch(`/admin/pilots/${pilotInfo.id}/status`, { estado: status });
-      setSuccess(`Piloto ${pilotInfo.nombre} ${pilotInfo.apellido} ${status === 'aprobado' ? 'aprobado' : 'rechazado'} exitosamente.`);
+      setSuccess(`✅ Piloto ${pilotInfo.nombre} ${pilotInfo.apellido} ${status === 'aprobado' ? 'APROBADO' : 'RECHAZADO'} exitosamente.`);
       setPilotInfo(prev => prev ? { ...prev, estado: status } : null);
+      setLoading(false);
       
-      // Limpiar después de 2 segundos y redirigir
-      setTimeout(() => {
-        navigate('/admin');
-      }, 2000);
+      // NO redirigir automáticamente - dejar que el admin decida si quiere aprobar otro o ir al dashboard
     } catch (err: any) {
       console.error('Error actualizando estado:', err);
       setError('Error al actualizar el estado del piloto. Intenta nuevamente.');
-    } finally {
       setLoading(false);
     }
   };
