@@ -176,7 +176,7 @@ export default function AdminDashboard() {
           const categoriaParam = filterTimeCategoria !== 'todos' ? filterTimeCategoria : undefined;
           const categoriaDetalleParam = filterTimeCategoriaDetalle !== 'todos' ? filterTimeCategoriaDetalle : undefined;
           
-          let url = '/api/race_times';
+          let url = '/race_times';
           const params = new URLSearchParams();
           if (categoriaParam) params.append('categoria', categoriaParam);
           if (categoriaDetalleParam) params.append('categoria_detalle', categoriaDetalleParam);
@@ -953,7 +953,7 @@ export default function AdminDashboard() {
                         etapa: timeForm.etapa
                       });
 
-                      const response = await axios.post('/api/race_times', {
+                      const response = await axios.post('/race_times', {
                         pilot_id: timeForm.pilot_id,
                         categoria: timeForm.categoria,
                         categoria_detalle: timeForm.categoria_detalle || null,
@@ -1160,7 +1160,7 @@ export default function AdminDashboard() {
                                 onClick={async () => {
                                   if (!confirm('¿Eliminar este tiempo?')) return;
                                   try {
-                                    await axios.delete(`/api/race_times?id=${time.id}`);
+                                    await axios.delete(`/race_times?id=${time.id}`);
                                     alert('Tiempo eliminado exitosamente');
                                     fetchData();
                                   } catch (error: any) {
