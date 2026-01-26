@@ -164,10 +164,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Obtener piloto por ID
     try {
       const client = supabaseWithAuth || supabaseAdmin;
-      const id = path.split('/admin/pilots/')[1]?.split('/')[0] || query.id;
+      
+      // Extraer el ID del path - puede venir como /api/admin/pilots/:id o /admin/pilots/:id
+      let id = path.split('/admin/pilots/')[1];
+      if (id) {
+        id = id.split('/')[0].split('?')[0]; // Remover query params y rutas adicionales
+      }
+      if (!id) {
+        id = query.id as string;
+      }
       
       console.log('🔍 Buscando piloto con ID:', id);
       console.log('🔍 Path completo:', path);
+      console.log('🔍 Query params:', query);
+      
+      if (!id) {
+        return res.status(400).json({ error: 'ID de piloto requerido' });
+      }
       
       const { data: pilot, error } = await client
         .from('pilots')
@@ -175,7 +188,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .eq('id', id)
         .single();
       
-      console.log('🔍 Resultado de la consulta:', { pilot, error });
+      console.log('🔍 Resultado de la consulta:', { 
+        hasPilot: !!pilot, 
+        pilotId: pilot?.id,
+        pilotNombre: pilot?.nombre,
+        pilotApellido: pilot?.apellido,
+        error: error?.message 
+      });
       
       if (error) {
         console.error('❌ Error de Supabase:', error);
@@ -187,12 +206,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(404).json({ error: 'Piloto no encontrado' });
       }
       
-      console.log('✅ Piloto encontrado:', {
+      console.log('✅ Piloto encontrado - Datos completos:', {
         id: pilot.id,
         nombre: pilot.nombre,
         apellido: pilot.apellido,
         dni: pilot.dni,
-        estado: pilot.estado
+        email: pilot.email,
+        telefono: pilot.telefono,
+        categoria: pilot.categoria,
+        estado: pilot.estado,
+        numero: pilot.numero
       });
       
       res.json(pilot);
