@@ -53,10 +53,30 @@ interface Stats {
   revenue: number;
 }
 
+interface RaceTime {
+  id: string;
+  pilot_id: string;
+  categoria: string;
+  categoria_detalle: string | null;
+  tiempo_segundos: number | null;
+  tiempo_formato: string | null;
+  etapa: string | null;
+  fecha: string;
+  pilots: {
+    nombre: string;
+    apellido: string;
+    dni: string;
+    numero: number | null;
+    categoria: string;
+    categoria_auto: string | null;
+    categoria_moto: string | null;
+  };
+}
+
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'pilots' | 'tickets' | 'stats'>('stats');
+  const [activeTab, setActiveTab] = useState<'pilots' | 'tickets' | 'stats' | 'times'>('stats');
   const [pilots, setPilots] = useState<Pilot[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -77,6 +97,17 @@ export default function AdminDashboard() {
   const [filterEstado, setFilterEstado] = useState<string>('todos');
   const [filterCategoria, setFilterCategoria] = useState<string>('todos');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [raceTimes, setRaceTimes] = useState<RaceTime[]>([]);
+  const [timeForm, setTimeForm] = useState({
+    pilot_id: '',
+    categoria: '',
+    categoria_detalle: '',
+    tiempo_formato: '',
+    tiempo_segundos: '',
+    etapa: ''
+  });
+  const [filterTimeCategoria, setFilterTimeCategoria] = useState<string>('todos');
+  const [filterTimeCategoriaDetalle, setFilterTimeCategoriaDetalle] = useState<string>('todos');
 
   const fetchData = useCallback(async (silent = false) => {
     // Si es una actualización silenciosa (polling), no mostrar loading
@@ -121,6 +152,30 @@ export default function AdminDashboard() {
         }
         
         setPilots(pilotsArray);
+      } else if (activeTab === 'times') {
+        // Cargar pilotos aprobados para el selector (si no están cargados)
+        if (pilots.length === 0) {
+          if (!supabase) {
+            throw new Error('Supabase client no está configurado');
+          }
+          const { data: pilotsData } = await supabase
+            .from('pilots')
+            .select('*')
+            .eq('estado', 'aprobado')
+            .order('created_at', { ascending: false });
+          setPilots(Array.isArray(pilotsData) ? pilotsData : []);
+        }
+        
+        // Cargar tiempos de carrera
+        const categoriaParam = filterTimeCategoria !== 'todos' ? filterTimeCategoria : undefined;
+        const categoriaDetalleParam = filterTimeCategoriaDetalle !== 'todos' ? filterTimeCategoriaDetalle : undefined;
+        
+        let url = '/api/race-times?';
+        if (categoriaParam) url += `categoria=${categoriaParam}&`;
+        if (categoriaDetalleParam) url += `categoria_detalle=${categoriaDetalleParam}&`;
+        
+        const response = await axios.get(url);
+        setRaceTimes(response.data || []);
       } else if (activeTab === 'tickets') {
         // Consultar tickets desde Supabase directamente
         if (!supabase) {
@@ -377,6 +432,12 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('tickets')}
           >
             Tickets
+          </button>
+          <button
+            className={activeTab === 'times' ? 'active' : ''}
+            onClick={() => setActiveTab('times')}
+          >
+            Tiempos
           </button>
         </div>
 
@@ -842,10 +903,270 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+
+            {activeTab === 'times' && (
+              <div className="admin-content">
+                <div className="card" style={{ marginBottom: '2rem' }}>
+                  <h2>Cargar Tiempo de Carrera</h2>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    try {
+                      const tiempoSegundos = timeForm.tiempo_formato 
+                        ? parseTimeToSeconds(timeForm.tiempo_formato)
+                        : parseFloat(timeForm.tiempo_segundos) || null;
+
+                      const response = await axios.post('/api/race-times', {
+                        pilot_id: timeForm.pilot_id,
+                        categoria: timeForm.categoria,
+                        categoria_detalle: timeForm.categoria_detalle || null,
+                        tiempo_segundos: tiempoSegundos,
+                        tiempo_formato: timeForm.tiempo_formato || null,
+                        etapa: timeForm.etapa || null
+                      });
+
+                      alert('Tiempo cargado exitosamente');
+                      setTimeForm({
+                        pilot_id: '',
+                        categoria: '',
+                        categoria_detalle: '',
+                        tiempo_formato: '',
+                        tiempo_segundos: '',
+                        etapa: ''
+                      });
+                      fetchData();
+                    } catch (error: any) {
+                      console.error('Error cargando tiempo:', error);
+                      alert(error.response?.data?.error || 'Error al cargar el tiempo');
+                    }
+                  }} className="ticket-form">
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Piloto *</label>
+                        <select
+                          value={timeForm.pilot_id}
+                          onChange={(e) => {
+                            const selectedPilot = pilots.find(p => p.id === e.target.value);
+                            setTimeForm({
+                              ...timeForm,
+                              pilot_id: e.target.value,
+                              categoria: selectedPilot?.categoria || '',
+                              categoria_detalle: selectedPilot?.categoria === 'auto' 
+                                ? selectedPilot?.categoria_auto || ''
+                                : selectedPilot?.categoria_moto || ''
+                            });
+                          }}
+                          required
+                        >
+                          <option value="">Seleccione un piloto</option>
+                          {pilots.filter(p => p.estado === 'aprobado').map((pilot) => (
+                            <option key={pilot.id} value={pilot.id}>
+                              {pilot.nombre} {pilot.apellido} - {pilot.dni} 
+                              {pilot.numero && ` (#${pilot.numero})`}
+                              {pilot.categoria === 'auto' && pilot.categoria_auto && ` - ${pilot.categoria_auto}`}
+                              {pilot.categoria === 'moto' && pilot.categoria_moto && ` - ${pilot.categoria_moto}`}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Categoría *</label>
+                        <select
+                          value={timeForm.categoria}
+                          onChange={(e) => setTimeForm({ ...timeForm, categoria: e.target.value })}
+                          required
+                        >
+                          <option value="">Seleccione categoría</option>
+                          <option value="auto">Auto</option>
+                          <option value="moto">Moto</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Categoría Detalle</label>
+                      <input
+                        type="text"
+                        value={timeForm.categoria_detalle}
+                        onChange={(e) => setTimeForm({ ...timeForm, categoria_detalle: e.target.value })}
+                        placeholder="Ej: 1 A libres, SENIOR, etc."
+                      />
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Tiempo (formato: mm:ss.mmm o hh:mm:ss.mmm) *</label>
+                        <input
+                          type="text"
+                          value={timeForm.tiempo_formato}
+                          onChange={(e) => setTimeForm({ ...timeForm, tiempo_formato: e.target.value })}
+                          placeholder="Ej: 1:23.456 o 1:23:45.678"
+                          required
+                        />
+                        <small style={{ color: '#666' }}>Formato: minutos:segundos.milisegundos</small>
+                      </div>
+
+                      <div className="form-group">
+                        <label>O Tiempo en Segundos</label>
+                        <input
+                          type="number"
+                          step="0.001"
+                          value={timeForm.tiempo_segundos}
+                          onChange={(e) => setTimeForm({ ...timeForm, tiempo_segundos: e.target.value })}
+                          placeholder="Ej: 83.456"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Etapa (opcional)</label>
+                      <input
+                        type="text"
+                        value={timeForm.etapa}
+                        onChange={(e) => setTimeForm({ ...timeForm, etapa: e.target.value })}
+                        placeholder="Ej: Etapa 1, Clasificación, etc."
+                      />
+                    </div>
+
+                    <button type="submit" className="btn btn-primary">
+                      Cargar Tiempo
+                    </button>
+                  </form>
+                </div>
+
+                <div className="table-header">
+                  <h3>Total de tiempos: {raceTimes.length}</h3>
+                  <div className="filters-container">
+                    <div className="filter-group">
+                      <select
+                        value={filterTimeCategoria}
+                        onChange={(e) => {
+                          setFilterTimeCategoria(e.target.value);
+                          fetchData();
+                        }}
+                        className="filter-select"
+                      >
+                        <option value="todos">Todas las categorías</option>
+                        <option value="auto">Auto</option>
+                        <option value="moto">Moto</option>
+                      </select>
+                    </div>
+                    <div className="filter-group">
+                      <select
+                        value={filterTimeCategoriaDetalle}
+                        onChange={(e) => {
+                          setFilterTimeCategoriaDetalle(e.target.value);
+                          fetchData();
+                        }}
+                        className="filter-select"
+                      >
+                        <option value="todos">Todas las subcategorías</option>
+                        {Array.from(new Set(raceTimes.map(rt => rt.categoria_detalle).filter(Boolean))).map(cat => (
+                          <option key={cat} value={cat || ''}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {raceTimes.length === 0 ? (
+                  <div className="empty-state">
+                    <p>No hay tiempos cargados aún.</p>
+                  </div>
+                ) : (
+                  <div className="table-container">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Piloto</th>
+                          <th>Número</th>
+                          <th>Categoría</th>
+                          <th>Categoría Detalle</th>
+                          <th>Tiempo</th>
+                          <th>Tiempo (seg)</th>
+                          <th>Etapa</th>
+                          <th>Fecha</th>
+                          <th>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {raceTimes.map((time) => (
+                          <tr key={time.id}>
+                            <td>
+                              {time.pilots?.nombre} {time.pilots?.apellido}
+                              <br />
+                              <small style={{ color: '#666' }}>{time.pilots?.dni}</small>
+                            </td>
+                            <td>
+                              {time.pilots?.numero ? (
+                                <span className="number-badge">{time.pilots.numero.toString().padStart(2, '0')}</span>
+                              ) : (
+                                '-'
+                              )}
+                            </td>
+                            <td>
+                              <span className="category-badge">{time.categoria}</span>
+                            </td>
+                            <td>{time.categoria_detalle || '-'}</td>
+                            <td>
+                              <strong>{time.tiempo_formato || '-'}</strong>
+                            </td>
+                            <td>{time.tiempo_segundos ? time.tiempo_segundos.toFixed(3) : '-'}</td>
+                            <td>{time.etapa || '-'}</td>
+                            <td>{new Date(time.fecha).toLocaleString('es-AR')}</td>
+                            <td>
+                              <button
+                                onClick={async () => {
+                                  if (!confirm('¿Eliminar este tiempo?')) return;
+                                  try {
+                                    await axios.delete(`/api/race-times?id=${time.id}`);
+                                    alert('Tiempo eliminado exitosamente');
+                                    fetchData();
+                                  } catch (error: any) {
+                                    console.error('Error eliminando tiempo:', error);
+                                    alert(error.response?.data?.error || 'Error al eliminar el tiempo');
+                                  }
+                                }}
+                                className="btn btn-danger btn-sm"
+                              >
+                                Eliminar
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
     </div>
   );
+}
+
+// Función auxiliar para convertir tiempo en formato mm:ss.mmm a segundos
+function parseTimeToSeconds(timeString: string): number {
+  // Formato: mm:ss.mmm o hh:mm:ss.mmm
+  const parts = timeString.split(':');
+  if (parts.length === 2) {
+    // mm:ss.mmm
+    const minutes = parseInt(parts[0]) || 0;
+    const secondsParts = parts[1].split('.');
+    const seconds = parseInt(secondsParts[0]) || 0;
+    const milliseconds = parseInt(secondsParts[1] || '0') || 0;
+    return minutes * 60 + seconds + milliseconds / 1000;
+  } else if (parts.length === 3) {
+    // hh:mm:ss.mmm
+    const hours = parseInt(parts[0]) || 0;
+    const minutes = parseInt(parts[1]) || 0;
+    const secondsParts = parts[2].split('.');
+    const seconds = parseInt(secondsParts[0]) || 0;
+    const milliseconds = parseInt(secondsParts[1] || '0') || 0;
+    return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
+  }
+  return 0;
 }
 
