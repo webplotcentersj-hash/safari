@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabaseAdmin } from '../_utils/supabase';
+import { supabaseAdmin } from './_utils/supabase';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Configurar CORS
@@ -197,3 +197,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   res.status(405).json({ error: 'Method not allowed' });
 }
+
