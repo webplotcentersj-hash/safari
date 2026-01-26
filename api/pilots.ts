@@ -24,8 +24,17 @@ async function sendEmailWithQR(
   categoriaDetalle: string | null,
   qrDataUrl: string
 ): Promise<void> {
+  console.log('📧 Iniciando envío de email...');
+  console.log('📧 RESEND_API_KEY configurada:', !!resendApiKey);
+  console.log('📧 Email destino:', email);
+  
   if (!resend) {
     console.warn('⚠️ RESEND_API_KEY no configurada, no se enviará email');
+    return;
+  }
+
+  if (!email || !email.includes('@')) {
+    console.error('❌ Email inválido:', email);
     return;
   }
 
@@ -33,6 +42,7 @@ async function sendEmailWithQR(
     // Convertir base64 data URL a buffer
     const base64Data = qrDataUrl.replace(/^data:image\/png;base64,/, '');
     const qrBuffer = Buffer.from(base64Data, 'base64');
+    console.log('📧 QR convertido a buffer, tamaño:', qrBuffer.length, 'bytes');
 
     const categoriaTexto = categoria === 'auto' ? 'Auto' : 'Moto';
     const numeroTexto = numero ? `#${numero.toString().padStart(2, '0')}` : 'Sin número';
@@ -40,10 +50,12 @@ async function sendEmailWithQR(
 
     // Email "from" configurable, por defecto usar el dominio de Resend para pruebas
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'Safari Tras las Sierras <onboarding@resend.dev>';
+    console.log('📧 Email from:', fromEmail);
     
-    const { error } = await resend.emails.send({
+    console.log('📧 Enviando email con Resend...');
+    const { data, error } = await resend.emails.send({
       from: fromEmail,
-      to: email,
+      to: [email], // Resend espera un array
       subject: `✅ Inscripción Confirmada - Safari Tras las Sierras`,
       html: `
         <!DOCTYPE html>
@@ -168,13 +180,18 @@ async function sendEmailWithQR(
     });
 
     if (error) {
-      console.error('Error enviando email:', error);
+      console.error('❌ Error enviando email:', JSON.stringify(error, null, 2));
+      console.error('❌ Error type:', typeof error);
+      console.error('❌ Error message:', error?.message);
       throw error;
     }
 
     console.log('✅ Email enviado exitosamente a:', email);
+    console.log('✅ Resend response data:', JSON.stringify(data, null, 2));
   } catch (error: any) {
-    console.error('Error en sendEmailWithQR:', error);
+    console.error('❌ Error en sendEmailWithQR:', error);
+    console.error('❌ Error stack:', error?.stack);
+    console.error('❌ Error details:', JSON.stringify(error, null, 2));
     // No lanzar error para no fallar la inscripción si el email falla
   }
 }
@@ -388,6 +405,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Enviar email con QR (no bloquea la respuesta si falla)
       if (qrDataUrl && email) {
+        console.log('📧 Preparando envío de email con QR...');
         sendEmailWithQR(
           email,
           nombre,
@@ -398,8 +416,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           categoria === 'auto' ? categoria_auto : categoria_moto,
           qrDataUrl
         ).catch((emailError) => {
-          console.error('Error enviando email (no crítico):', emailError);
+          console.error('❌ Error enviando email (no crítico):', emailError);
+          console.error('❌ Error details:', JSON.stringify(emailError, null, 2));
         });
+      } else {
+        console.warn('⚠️ No se enviará email - QR o email faltante:', { hasQr: !!qrDataUrl, hasEmail: !!email });
       }
 
       res.status(201).json({
