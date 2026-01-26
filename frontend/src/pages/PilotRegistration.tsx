@@ -241,7 +241,7 @@ export default function PilotRegistration() {
         setQrDataUrl(qrFromApi);
         setMessage({
           type: 'success',
-          text: '¡Inscripción realizada exitosamente! Te enviamos un email con tu QR y también podés descargarlo desde aquí.'
+          text: '¡Inscripción realizada exitosamente! Podés descargar tu QR desde aquí.'
         });
       } else {
         setMessage({
