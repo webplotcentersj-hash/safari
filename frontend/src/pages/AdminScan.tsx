@@ -18,6 +18,7 @@ interface PilotData {
   categoria_detalle: string | null;
   email?: string;
   telefono?: string;
+  url?: string; // URL opcional para redirección directa
 }
 
 interface PilotInfo {
@@ -216,7 +217,7 @@ export default function AdminScan() {
         console.log('✅ QR parseado como JSON:', qrData);
         
         // Si el JSON tiene una URL, redirigir
-        if (qrData.url && qrData.url.includes('/admin/approve/')) {
+        if (qrData && qrData.url && qrData.url.includes('/admin/approve/')) {
           const pilotId = qrData.id || qrData.url.split('/admin/approve/')[1]?.split('?')[0]?.split('#')[0];
           if (pilotId) {
             navigate(`/admin/approve/${pilotId}`);
