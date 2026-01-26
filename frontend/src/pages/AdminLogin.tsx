@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 
@@ -15,6 +15,8 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl') || '/admin';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +25,8 @@ export default function AdminLogin() {
 
     try {
       await login(email, password);
-      navigate('/admin');
+      // Redirigir a la URL de retorno (página de aprobación) o al dashboard
+      navigate(returnUrl);
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
     } finally {

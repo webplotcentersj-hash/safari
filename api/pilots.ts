@@ -376,12 +376,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       let qrDataUrl: string | null = null;
       try {
         // Obtener la URL base de la aplicación
+        // En Vercel, VERCEL_URL ya incluye el protocolo https://
         const baseUrl = process.env.VERCEL_URL 
-          ? `https://${process.env.VERCEL_URL}` 
+          ? (process.env.VERCEL_URL.startsWith('http') ? process.env.VERCEL_URL : `https://${process.env.VERCEL_URL}`)
           : process.env.FRONTEND_URL || 'https://safari-tras-las-sierras.vercel.app';
         
         // Crear URL directa a la página de aprobación del piloto
+        // Cada inscrito tiene su propia URL única con su ID
         const approvalUrl = `${baseUrl}/admin/approve/${data.id}`;
+        
+        console.log('🔗 Generando QR con URL única para piloto:', data.id);
+        console.log('🔗 URL de aprobación:', approvalUrl);
         
         // QR contiene tanto la URL como los datos JSON para compatibilidad
         const qrData = {
@@ -398,7 +403,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
         
         // El QR contiene la URL como texto principal (para que los escáneres la reconozcan como link)
-        // Y también el JSON completo para compatibilidad
+        // Cuando se escanea, si el usuario está logueado, va directamente a aprobar
+        // Si no está logueado, se redirige al login y luego a esta URL
         const qrText = approvalUrl;
         qrDataUrl = await QRCode.toDataURL(qrText, {
           errorCorrectionLevel: 'H', // Mayor corrección de errores

@@ -33,8 +33,10 @@ export default function AdminApprove() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      // Redirigir al login
-      navigate('/admin/login');
+      // Guardar la URL actual para redirigir después del login
+      const returnUrl = `/admin/approve/${id}`;
+      // Redirigir al login con el returnUrl
+      navigate(`/admin/login?returnUrl=${encodeURIComponent(returnUrl)}`);
       return;
     }
 
