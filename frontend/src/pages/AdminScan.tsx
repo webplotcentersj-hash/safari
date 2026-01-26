@@ -68,51 +68,124 @@ export default function AdminScan() {
       setPilotInfo(null);
       setSuccess(null);
       
+      // Verificar si hay soporte para getUserMedia
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError('Tu navegador no soporta acceso a la cámara. Por favor, usa un navegador moderno como Chrome o Safari.');
+        return;
+      }
+
       // Solicitar permisos de cámara explícitamente primero
+      let stream: MediaStream | null = null;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment' } 
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          } 
         });
         // Detener el stream temporal para que Html5Qrcode lo maneje
         stream.getTracks().forEach(track => track.stop());
       } catch (permError: any) {
         console.error('Error de permisos:', permError);
+        let errorMsg = 'Error al acceder a la cámara.';
+        
         if (permError.name === 'NotAllowedError' || permError.name === 'PermissionDeniedError') {
-          setError('Se necesitan permisos de cámara. Por favor, permite el acceso a la cámara en la configuración del navegador.');
-        } else if (permError.name === 'NotFoundError') {
-          setError('No se encontró ninguna cámara en el dispositivo.');
+          errorMsg = 'Se necesitan permisos de cámara. Por favor, permite el acceso a la cámara en la configuración del navegador y recarga la página.';
+        } else if (permError.name === 'NotFoundError' || permError.name === 'DevicesNotFoundError') {
+          errorMsg = 'No se encontró ninguna cámara en el dispositivo.';
+        } else if (permError.name === 'NotReadableError' || permError.name === 'TrackStartError') {
+          errorMsg = 'La cámara está siendo usada por otra aplicación. Cierra otras apps que usen la cámara e intenta nuevamente.';
+        } else if (permError.name === 'OverconstrainedError' || permError.name === 'ConstraintNotSatisfiedError') {
+          errorMsg = 'La cámara no soporta las características requeridas. Intentando con configuración alternativa...';
+          // Intentar sin restricciones específicas
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream.getTracks().forEach(track => track.stop());
+          } catch (retryError: any) {
+            setError(errorMsg);
+            return;
+          }
         } else {
-          setError('Error al acceder a la cámara: ' + permError.message);
+          errorMsg = `Error al acceder a la cámara: ${permError.message || permError.name || 'Error desconocido'}`;
         }
+        
+        setError(errorMsg);
         return;
       }
       
       const scanner = new Html5Qrcode(qrCodeRegionId);
       scannerRef.current = scanner;
 
-      await scanner.start(
-        { facingMode: 'environment' }, // Cámara trasera
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-        },
-        (decodedText) => {
-          handleScanSuccess(decodedText);
-        },
-        (errorMessage) => {
-          // Ignorar errores de escaneo continuo
+      // Intentar con cámara trasera primero, si falla usar cualquier cámara
+      try {
+        await scanner.start(
+          { facingMode: 'environment' },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+          },
+          (decodedText) => {
+            handleScanSuccess(decodedText);
+          },
+          (errorMessage) => {
+            // Ignorar errores de escaneo continuo
+          }
+        );
+      } catch (startError: any) {
+        // Si falla con cámara trasera, intentar con cualquier cámara
+        console.log('Intentando con cámara frontal...');
+        try {
+          await scanner.start(
+            { facingMode: 'user' },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+              aspectRatio: 1.0,
+            },
+            (decodedText) => {
+              handleScanSuccess(decodedText);
+            },
+            (errorMessage) => {
+              // Ignorar errores de escaneo continuo
+            }
+          );
+        } catch (retryError: any) {
+          // Si también falla, intentar sin especificar facingMode
+          await scanner.start(
+            { video: true },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+              aspectRatio: 1.0,
+            },
+            (decodedText) => {
+              handleScanSuccess(decodedText);
+            },
+            (errorMessage) => {
+              // Ignorar errores de escaneo continuo
+            }
+          );
         }
-      );
+      }
 
       setScanning(true);
     } catch (err: any) {
       console.error('Error iniciando escáner:', err);
+      let errorMsg = 'Error al acceder a la cámara.';
+      
       if (err.message?.includes('Permission') || err.message?.includes('permission')) {
-        setError('Se necesitan permisos de cámara. Por favor, permite el acceso a la cámara en la configuración del navegador.');
+        errorMsg = 'Se necesitan permisos de cámara. Por favor, permite el acceso a la cámara en la configuración del navegador.';
+      } else if (err.message?.includes('NotAllowed')) {
+        errorMsg = 'Permisos de cámara denegados. Por favor, permite el acceso en la configuración del navegador.';
+      } else if (err.message?.includes('NotFound')) {
+        errorMsg = 'No se encontró ninguna cámara en el dispositivo.';
       } else {
-        setError('Error al acceder a la cámara: ' + (err.message || 'Error desconocido'));
+        errorMsg = `Error: ${err.message || err.name || 'Error desconocido'}. Por favor, recarga la página e intenta nuevamente.`;
       }
+      
+      setError(errorMsg);
     }
   };
 
