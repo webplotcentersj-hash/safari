@@ -86,14 +86,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'La categoría no coincide con el piloto' });
       }
 
+      // Convertir tiempo_segundos a número si viene como string
+      const tiempoSegundosNum = tiempo_segundos 
+        ? (typeof tiempo_segundos === 'string' ? parseFloat(tiempo_segundos) : tiempo_segundos)
+        : null;
+
       const insertData: any = {
         pilot_id,
         categoria,
         categoria_detalle: categoria_detalle || (categoria === 'auto' ? pilot.categoria_auto : pilot.categoria_moto),
-        tiempo_segundos: tiempo_segundos || null,
+        tiempo_segundos: tiempoSegundosNum,
         tiempo_formato: tiempo_formato || null,
         etapa: etapa || null
       };
+
+      console.log('Insert data:', JSON.stringify(insertData, null, 2));
 
       const { data, error } = await supabaseAdmin
         .from('race_times')
@@ -115,7 +122,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (error) {
         console.error('Error creando tiempo:', error);
-        return res.status(500).json({ error: 'Error al crear el tiempo' });
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        return res.status(500).json({ 
+          error: 'Error al crear el tiempo',
+          details: error.message || 'Error desconocido',
+          code: error.code
+        });
       }
 
       return res.status(201).json(data);
