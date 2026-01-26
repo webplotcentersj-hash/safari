@@ -629,7 +629,6 @@ export default function AdminDashboard() {
                               <th>Número</th>
                               <th>Estado</th>
                               <th>Comprobante</th>
-                              <th>Certificado Médico</th>
                               <th>Acciones</th>
                             </tr>
                           </thead>
@@ -711,21 +710,6 @@ export default function AdminDashboard() {
                                         title="Ver comprobante de pago"
                                       >
                                         📄 Ver
-                                      </a>
-                                    ) : (
-                                      <span className="text-muted">-</span>
-                                    )}
-                                  </td>
-                                  <td>
-                                    {pilot.certificado_medico_url ? (
-                                      <a
-                                        href={pilot.certificado_medico_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="btn btn-secondary btn-sm"
-                                        title="Ver certificado médico"
-                                      >
-                                        🏥 Ver
                                       </a>
                                     ) : (
                                       <span className="text-muted">-</span>
