@@ -74,68 +74,65 @@ export default function AdminScan() {
         return;
       }
 
-      // Solicitar permisos de cámara explícitamente primero
-      let stream: MediaStream | null = null;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            facingMode: 'environment',
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          } 
-        });
-        // Detener el stream temporal para que Html5Qrcode lo maneje
-        stream.getTracks().forEach(track => track.stop());
-      } catch (permError: any) {
-        console.error('Error de permisos:', permError);
-        let errorMsg = 'Error al acceder a la cámara.';
-        
-        if (permError.name === 'NotAllowedError' || permError.name === 'PermissionDeniedError') {
-          errorMsg = 'Se necesitan permisos de cámara. Por favor, permite el acceso a la cámara en la configuración del navegador y recarga la página.';
-        } else if (permError.name === 'NotFoundError' || permError.name === 'DevicesNotFoundError') {
-          errorMsg = 'No se encontró ninguna cámara en el dispositivo.';
-        } else if (permError.name === 'NotReadableError' || permError.name === 'TrackStartError') {
-          errorMsg = 'La cámara está siendo usada por otra aplicación. Cierra otras apps que usen la cámara e intenta nuevamente.';
-        } else if (permError.name === 'OverconstrainedError' || permError.name === 'ConstraintNotSatisfiedError') {
-          errorMsg = 'La cámara no soporta las características requeridas. Intentando con configuración alternativa...';
-          // Intentar sin restricciones específicas
-          try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            stream.getTracks().forEach(track => track.stop());
-          } catch (retryError: any) {
-            setError(errorMsg);
-            return;
-          }
-        } else {
-          errorMsg = `Error al acceder a la cámara: ${permError.message || permError.name || 'Error desconocido'}`;
-        }
-        
-        setError(errorMsg);
-        return;
-      }
-      
       const scanner = new Html5Qrcode(qrCodeRegionId);
       scannerRef.current = scanner;
 
-      // Intentar con cámara trasera primero, si falla usar cualquier cámara
+      // Intentar obtener cámaras disponibles
+      let cameraId: string | null = null;
       try {
-        await scanner.start(
-          { facingMode: 'environment' },
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0,
-          },
-          (decodedText) => {
-            handleScanSuccess(decodedText);
-          },
-          (errorMessage) => {
-            // Ignorar errores de escaneo continuo
-          }
-        );
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length > 0) {
+          // Buscar cámara trasera primero
+          const backCamera = cameras.find(cam => 
+            cam.label.toLowerCase().includes('back') || 
+            cam.label.toLowerCase().includes('rear') ||
+            cam.label.toLowerCase().includes('environment')
+          );
+          cameraId = backCamera ? backCamera.id : cameras[0].id;
+        }
+      } catch (camError: any) {
+        console.log('No se pudieron obtener las cámaras, usando configuración por defecto:', camError);
+      }
+
+      // Intentar iniciar el escáner
+      try {
+        if (cameraId) {
+          // Usar ID de cámara específico
+          await scanner.start(
+            cameraId,
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+              aspectRatio: 1.0,
+            },
+            (decodedText) => {
+              handleScanSuccess(decodedText);
+            },
+            (errorMessage) => {
+              // Ignorar errores de escaneo continuo
+            }
+          );
+        } else {
+          // Usar facingMode como fallback
+          await scanner.start(
+            { facingMode: 'environment' },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 },
+              aspectRatio: 1.0,
+            },
+            (decodedText) => {
+              handleScanSuccess(decodedText);
+            },
+            (errorMessage) => {
+              // Ignorar errores de escaneo continuo
+            }
+          );
+        }
+        setScanning(true);
       } catch (startError: any) {
-        // Si falla con cámara trasera, intentar con cualquier cámara
-        console.log('Intentando con cámara frontal...');
+        // Si falla, intentar con cámara frontal
+        console.log('Intentando con cámara frontal...', startError);
         try {
           await scanner.start(
             { facingMode: 'user' },
@@ -151,43 +148,26 @@ export default function AdminScan() {
               // Ignorar errores de escaneo continuo
             }
           );
+          setScanning(true);
         } catch (retryError: any) {
-          // Si también falla, intentar con cualquier cámara disponible
-          const cameras = await Html5Qrcode.getCameras();
-          if (cameras && cameras.length > 0) {
-            await scanner.start(
-              cameras[0].id,
-              {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0,
-              },
-              (decodedText) => {
-                handleScanSuccess(decodedText);
-              },
-              (errorMessage) => {
-                // Ignorar errores de escaneo continuo
-              }
-            );
-          } else {
-            throw new Error('No se encontraron cámaras disponibles');
-          }
+          throw retryError;
         }
       }
-
-      setScanning(true);
     } catch (err: any) {
       console.error('Error iniciando escáner:', err);
       let errorMsg = 'Error al acceder a la cámara.';
       
-      if (err.message?.includes('Permission') || err.message?.includes('permission')) {
-        errorMsg = 'Se necesitan permisos de cámara. Por favor, permite el acceso a la cámara en la configuración del navegador.';
-      } else if (err.message?.includes('NotAllowed')) {
-        errorMsg = 'Permisos de cámara denegados. Por favor, permite el acceso en la configuración del navegador.';
-      } else if (err.message?.includes('NotFound')) {
+      const errorName = err.name || '';
+      const errorMessage = err.message || '';
+      
+      if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError' || errorMessage.includes('Permission') || errorMessage.includes('permission')) {
+        errorMsg = 'Se necesitan permisos de cámara. Por favor, permite el acceso a la cámara en la configuración del navegador y recarga la página.';
+      } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError' || errorMessage.includes('NotFound') || errorMessage.includes('not found')) {
         errorMsg = 'No se encontró ninguna cámara en el dispositivo.';
+      } else if (errorName === 'NotReadableError' || errorMessage.includes('NotReadable') || errorMessage.includes('in use')) {
+        errorMsg = 'La cámara está siendo usada por otra aplicación. Cierra otras apps que usen la cámara e intenta nuevamente.';
       } else {
-        errorMsg = `Error: ${err.message || err.name || 'Error desconocido'}. Por favor, recarga la página e intenta nuevamente.`;
+        errorMsg = `Error: ${errorMessage || errorName || 'Error desconocido'}. Por favor, recarga la página e intenta nuevamente.`;
       }
       
       setError(errorMsg);
