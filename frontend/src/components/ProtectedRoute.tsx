@@ -7,12 +7,16 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
+  // Si no está autenticado, redirigir al login
+  // Pero mantener la URL actual en el query string para volver después del login
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
+    const currentPath = window.location.pathname + window.location.search;
+    return <Navigate to={`/admin/login?returnUrl=${encodeURIComponent(currentPath)}`} replace />;
   }
 
+  // Si está autenticado, mostrar el contenido
   return <>{children}</>;
 }
 

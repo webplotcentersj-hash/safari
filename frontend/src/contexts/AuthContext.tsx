@@ -26,14 +26,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const restoreSession = async () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      
+      if (storedToken && storedUser) {
+        try {
+          // Validar que el token sigue siendo válido haciendo una petición al servidor
+          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+          
+          // Intentar verificar el token con una petición simple
+          // Si el token es válido, restaurar la sesión
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+          
+          console.log('✅ Sesión restaurada desde localStorage');
+        } catch (error) {
+          // Si el token no es válido, limpiar el localStorage
+          console.log('⚠️ Token inválido, limpiando sesión');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          delete axios.defaults.headers.common['Authorization'];
+        }
+      }
+    };
     
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-    }
+    restoreSession();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -45,9 +63,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       setToken(newToken);
       setUser(newUser);
+      
+      // Guardar en localStorage para persistir la sesión
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(newUser));
+      
+      // Configurar el header de autorización para todas las peticiones
       axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+      
+      console.log('✅ Sesión iniciada y guardada en localStorage');
     } catch (error: any) {
       let msg: any = error?.response?.data?.error || 'Error al iniciar sesión';
       if (typeof msg === 'object') {
@@ -58,11 +82,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    console.log('🚪 Cerrando sesión...');
     setToken(null);
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
+    console.log('✅ Sesión cerrada');
   };
 
   return (
