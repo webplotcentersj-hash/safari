@@ -218,7 +218,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         numero: pilot.numero
       });
       
-      res.json(pilot);
+      // Asegurar que la respuesta sea JSON
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).json(pilot);
     } catch (error: any) {
       console.error('❌ Get pilot error (catch):', error);
       res.status(500).json({ error: 'Error al obtener el piloto', details: error.message });

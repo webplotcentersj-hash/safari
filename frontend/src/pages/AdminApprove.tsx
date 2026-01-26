@@ -66,41 +66,71 @@ export default function AdminApprove() {
     
     try {
       console.log('📡 Haciendo petición a:', `/admin/pilots/${pilotId}`);
-      const response = await axios.get(`/admin/pilots/${pilotId}`);
-      console.log('✅ Respuesta recibida:', response.data);
-      console.log('✅ Tipo de respuesta:', typeof response.data);
-      console.log('✅ Keys de respuesta:', response.data ? Object.keys(response.data) : 'No data');
+      const response = await axios.get(`/admin/pilots/${pilotId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
       
-      if (response.data) {
-        const pilotData = response.data;
-        
-        // Mapear los datos correctamente
-        const mappedPilotInfo: PilotInfo = {
-          id: pilotData.id || '',
-          nombre: pilotData.nombre || '',
-          apellido: pilotData.apellido || '',
-          dni: pilotData.dni || '',
-          email: pilotData.email || '',
-          telefono: pilotData.telefono || '',
-          categoria: pilotData.categoria || '',
-          categoria_auto: pilotData.categoria_auto,
-          categoria_moto: pilotData.categoria_moto,
-          numero: pilotData.numero,
-          estado: pilotData.estado || 'pendiente',
-          comprobante_pago_url: pilotData.comprobante_pago_url
-        };
-        
-        console.log('✅ Datos mapeados:', mappedPilotInfo);
-        setPilotInfo(mappedPilotInfo);
-        console.log('✅ Información del piloto cargada exitosamente');
-      } else {
-        throw new Error('No se recibieron datos del piloto');
+      console.log('✅ Respuesta completa:', response);
+      console.log('✅ Respuesta data:', response.data);
+      console.log('✅ Tipo de respuesta data:', typeof response.data);
+      
+      // Si la respuesta es un string, intentar parsearlo como JSON
+      let pilotData = response.data;
+      if (typeof pilotData === 'string') {
+        console.log('⚠️ La respuesta es un string, intentando parsear como JSON...');
+        try {
+          pilotData = JSON.parse(pilotData);
+          console.log('✅ String parseado exitosamente:', pilotData);
+        } catch (parseError) {
+          console.error('❌ Error parseando string como JSON:', parseError);
+          console.error('❌ Contenido del string:', pilotData.substring(0, 200));
+          throw new Error('La respuesta del servidor no es un JSON válido');
+        }
       }
+      
+      // Verificar que pilotData es un objeto
+      if (typeof pilotData !== 'object' || pilotData === null) {
+        console.error('❌ pilotData no es un objeto:', pilotData);
+        throw new Error('La respuesta del servidor no contiene datos válidos');
+      }
+      
+      console.log('✅ Keys de pilotData:', Object.keys(pilotData));
+      
+      // Mapear los datos correctamente
+      const mappedPilotInfo: PilotInfo = {
+        id: pilotData.id || '',
+        nombre: pilotData.nombre || '',
+        apellido: pilotData.apellido || '',
+        dni: pilotData.dni || '',
+        email: pilotData.email || '',
+        telefono: pilotData.telefono || '',
+        categoria: pilotData.categoria || '',
+        categoria_auto: pilotData.categoria_auto,
+        categoria_moto: pilotData.categoria_moto,
+        numero: pilotData.numero,
+        estado: pilotData.estado || 'pendiente',
+        comprobante_pago_url: pilotData.comprobante_pago_url
+      };
+      
+      console.log('✅ Datos mapeados:', mappedPilotInfo);
+      
+      // Validar que al menos el ID y nombre estén presentes
+      if (!mappedPilotInfo.id || (!mappedPilotInfo.nombre && !mappedPilotInfo.apellido)) {
+        console.warn('⚠️ Datos incompletos en la respuesta');
+        throw new Error('Los datos del piloto están incompletos');
+      }
+      
+      setPilotInfo(mappedPilotInfo);
+      console.log('✅ Información del piloto cargada exitosamente');
     } catch (err: any) {
       console.error('❌ Error obteniendo información del piloto:', err);
       console.error('❌ Error response:', err.response);
       console.error('❌ Error status:', err.response?.status);
       console.error('❌ Error data:', err.response?.data);
+      console.error('❌ Error headers:', err.response?.headers);
       
       const errorMessage = err.response?.data?.error 
         || err.message 
