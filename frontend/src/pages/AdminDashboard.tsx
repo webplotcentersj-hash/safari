@@ -424,6 +424,13 @@ export default function AdminDashboard() {
             <h1>Panel de Administración</h1>
           </div>
           <div className="admin-header-actions">
+            <button 
+              onClick={() => navigate('/admin/scan')} 
+              className="btn btn-primary"
+              style={{ marginRight: '10px' }}
+            >
+              📱 Escanear QR
+            </button>
             <span className="admin-user">Bienvenido, {user?.email}</span>
             <button onClick={handleLogout} className="btn btn-secondary">
               Cerrar Sesión

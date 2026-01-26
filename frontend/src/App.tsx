@@ -6,6 +6,7 @@ import TicketGenerator from './pages/TicketGenerator';
 import PilotsList from './pages/PilotsList';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminScan from './pages/AdminScan';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -23,6 +24,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/scan"
+          element={
+            <ProtectedRoute>
+              <AdminScan />
             </ProtectedRoute>
           }
         />
