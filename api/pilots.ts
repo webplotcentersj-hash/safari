@@ -382,12 +382,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           apellido: data.apellido,
           categoria: data.categoria,
           numero: data.numero,
-          categoria_detalle: data.categoria === 'auto' ? data.categoria_auto : data.categoria_moto
+          categoria_detalle: data.categoria === 'auto' ? data.categoria_auto : data.categoria_moto,
+          email: data.email,
+          telefono: data.telefono
         };
         
+        // Crear un texto más legible que también sea parseable
         const qrText = JSON.stringify(qrData);
         qrDataUrl = await QRCode.toDataURL(qrText, {
-          errorCorrectionLevel: 'M',
+          errorCorrectionLevel: 'H', // Mayor corrección de errores
           type: 'image/png',
           width: 400,
           margin: 2,

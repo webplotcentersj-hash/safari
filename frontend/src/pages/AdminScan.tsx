@@ -16,6 +16,8 @@ interface PilotData {
   categoria: string;
   numero: number | null;
   categoria_detalle: string | null;
+  email?: string;
+  telefono?: string;
 }
 
 interface PilotInfo {
