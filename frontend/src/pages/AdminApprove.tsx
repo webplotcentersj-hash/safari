@@ -68,9 +68,30 @@ export default function AdminApprove() {
       console.log('📡 Haciendo petición a:', `/admin/pilots/${pilotId}`);
       const response = await axios.get(`/admin/pilots/${pilotId}`);
       console.log('✅ Respuesta recibida:', response.data);
+      console.log('✅ Tipo de respuesta:', typeof response.data);
+      console.log('✅ Keys de respuesta:', response.data ? Object.keys(response.data) : 'No data');
       
       if (response.data) {
-        setPilotInfo(response.data);
+        const pilotData = response.data;
+        
+        // Mapear los datos correctamente
+        const mappedPilotInfo: PilotInfo = {
+          id: pilotData.id || '',
+          nombre: pilotData.nombre || '',
+          apellido: pilotData.apellido || '',
+          dni: pilotData.dni || '',
+          email: pilotData.email || '',
+          telefono: pilotData.telefono || '',
+          categoria: pilotData.categoria || '',
+          categoria_auto: pilotData.categoria_auto,
+          categoria_moto: pilotData.categoria_moto,
+          numero: pilotData.numero,
+          estado: pilotData.estado || 'pendiente',
+          comprobante_pago_url: pilotData.comprobante_pago_url
+        };
+        
+        console.log('✅ Datos mapeados:', mappedPilotInfo);
+        setPilotInfo(mappedPilotInfo);
         console.log('✅ Información del piloto cargada exitosamente');
       } else {
         throw new Error('No se recibieron datos del piloto');

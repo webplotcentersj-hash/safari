@@ -165,19 +165,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const client = supabaseWithAuth || supabaseAdmin;
       const id = path.split('/admin/pilots/')[1]?.split('/')[0] || query.id;
+      
+      console.log('🔍 Buscando piloto con ID:', id);
+      console.log('🔍 Path completo:', path);
+      
       const { data: pilot, error } = await client
         .from('pilots')
         .select('*')
         .eq('id', id)
         .single();
       
-      if (error || !pilot) {
+      console.log('🔍 Resultado de la consulta:', { pilot, error });
+      
+      if (error) {
+        console.error('❌ Error de Supabase:', error);
+        return res.status(404).json({ error: 'Piloto no encontrado', details: error.message });
+      }
+      
+      if (!pilot) {
+        console.error('❌ Piloto no encontrado en la base de datos');
         return res.status(404).json({ error: 'Piloto no encontrado' });
       }
+      
+      console.log('✅ Piloto encontrado:', {
+        id: pilot.id,
+        nombre: pilot.nombre,
+        apellido: pilot.apellido,
+        dni: pilot.dni,
+        estado: pilot.estado
+      });
+      
       res.json(pilot);
     } catch (error: any) {
-      console.error('Get pilot error:', error);
-      res.status(500).json({ error: 'Error al obtener el piloto' });
+      console.error('❌ Get pilot error (catch):', error);
+      res.status(500).json({ error: 'Error al obtener el piloto', details: error.message });
     }
   } else if (method === 'PATCH' && path.includes('/admin/pilots/') && path.includes('/status')) {
     // Actualizar estado de piloto
