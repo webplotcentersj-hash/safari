@@ -176,7 +176,7 @@ export default function AdminDashboard() {
           const categoriaParam = filterTimeCategoria !== 'todos' ? filterTimeCategoria : undefined;
           const categoriaDetalleParam = filterTimeCategoriaDetalle !== 'todos' ? filterTimeCategoriaDetalle : undefined;
           
-          let url = '/race_times';
+          let url = '/api/race_times';
           const params = new URLSearchParams();
           if (categoriaParam) params.append('categoria', categoriaParam);
           if (categoriaDetalleParam) params.append('categoria_detalle', categoriaDetalleParam);
@@ -393,7 +393,7 @@ export default function AdminDashboard() {
 
   const downloadTicketPDF = async (codigo: string) => {
     try {
-      const response = await axios.get(`/admin/tickets/${codigo}/pdf`, {
+      const response = await axios.get(`/api/admin/tickets/${codigo}/pdf`, {
         responseType: 'blob'
       });
       
@@ -1151,7 +1151,7 @@ export default function AdminDashboard() {
                                 onClick={async () => {
                                   if (!confirm('¿Eliminar este tiempo?')) return;
                                   try {
-                                    await axios.delete(`/race_times?id=${time.id}`);
+                                    await axios.delete(`/api/race_times?id=${time.id}`);
                                     alert('Tiempo eliminado exitosamente');
                                     fetchData();
                                   } catch (error: any) {

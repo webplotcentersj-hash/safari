@@ -65,8 +65,8 @@ export default function AdminApprove() {
     setError(null);
     
     try {
-      console.log('📡 Haciendo petición a:', `/admin/pilots/${pilotId}`);
-      const response = await axios.get(`/admin/pilots/${pilotId}`, {
+      console.log('📡 Haciendo petición a:', `/api/admin/pilots/${pilotId}`);
+      const response = await axios.get(`/api/admin/pilots/${pilotId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -155,7 +155,7 @@ export default function AdminApprove() {
         status: status
       });
       
-      const response = await axios.patch(`/admin/pilots/${pilotInfo.id}/status`, { estado: status });
+      const response = await axios.patch(`/api/admin/pilots/${pilotInfo.id}/status`, { estado: status });
       console.log('✅ Estado actualizado exitosamente:', response.data);
       
       setSuccess(`✅ Piloto ${pilotInfo.nombre || ''} ${pilotInfo.apellido || ''} ${status === 'aprobado' ? 'APROBADO' : 'RECHAZADO'} exitosamente.`);
