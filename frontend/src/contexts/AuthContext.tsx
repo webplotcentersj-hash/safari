@@ -17,6 +17,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  isRestoring: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,31 +25,36 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [isRestoring, setIsRestoring] = useState(true);
 
   useEffect(() => {
-    const restoreSession = async () => {
+    const restoreSession = () => {
       const storedToken = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
       
       if (storedToken && storedUser) {
         try {
-          // Validar que el token sigue siendo válido haciendo una petición al servidor
-          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+          // Restaurar la sesión desde localStorage
+          const parsedUser = JSON.parse(storedUser);
           
-          // Intentar verificar el token con una petición simple
-          // Si el token es válido, restaurar la sesión
           setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+          setUser(parsedUser);
+          
+          // Configurar el header de autorización
+          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
           
           console.log('✅ Sesión restaurada desde localStorage');
         } catch (error) {
-          // Si el token no es válido, limpiar el localStorage
-          console.log('⚠️ Token inválido, limpiando sesión');
+          // Si hay error al parsear, limpiar el localStorage
+          console.log('⚠️ Error al restaurar sesión, limpiando localStorage');
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           delete axios.defaults.headers.common['Authorization'];
         }
       }
+      
+      // Marcar que terminamos de restaurar la sesión
+      setIsRestoring(false);
     };
     
     restoreSession();
@@ -92,7 +98,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      login, 
+      logout, 
+      isAuthenticated: !!user,
+      isRestoring 
+    }}>
       {children}
     </AuthContext.Provider>
   );

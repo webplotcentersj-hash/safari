@@ -7,9 +7,14 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isRestoring } = useAuth();
 
-  // Si no está autenticado, redirigir al login
+  // Si estamos restaurando la sesión, no redirigir todavía
+  if (isRestoring) {
+    return null; // O un spinner de carga
+  }
+
+  // Si no está autenticado después de restaurar, redirigir al login
   // Pero mantener la URL actual en el query string para volver después del login
   if (!isAuthenticated) {
     const currentPath = window.location.pathname + window.location.search;
