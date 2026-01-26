@@ -152,21 +152,26 @@ export default function AdminScan() {
             }
           );
         } catch (retryError: any) {
-          // Si también falla, intentar sin especificar facingMode
-          await scanner.start(
-            { video: true },
-            {
-              fps: 10,
-              qrbox: { width: 250, height: 250 },
-              aspectRatio: 1.0,
-            },
-            (decodedText) => {
-              handleScanSuccess(decodedText);
-            },
-            (errorMessage) => {
-              // Ignorar errores de escaneo continuo
-            }
-          );
+          // Si también falla, intentar con cualquier cámara disponible
+          const cameras = await Html5Qrcode.getCameras();
+          if (cameras && cameras.length > 0) {
+            await scanner.start(
+              cameras[0].id,
+              {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+              },
+              (decodedText) => {
+                handleScanSuccess(decodedText);
+              },
+              (errorMessage) => {
+                // Ignorar errores de escaneo continuo
+              }
+            );
+          } else {
+            throw new Error('No se encontraron cámaras disponibles');
+          }
         }
       }
 
