@@ -10,6 +10,179 @@ import { Link } from 'react-router-dom';
 import './PilotRegistration.css';
 import NumberSelector from '../components/NumberSelector';
 
+// Función para generar imagen completa con QR y datos del piloto
+async function generatePilotCardImage(
+  qrDataUrl: string,
+  nombre: string,
+  apellido: string,
+  numero: number | null,
+  categoria: string,
+  categoriaDetalle: string | null
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      reject(new Error('No se pudo obtener contexto del canvas'));
+      return;
+    }
+
+    // Dimensiones del canvas
+    canvas.width = 1200;
+    canvas.height = 1600;
+
+    // Cargar logo
+    const logo = new Image();
+    logo.crossOrigin = 'anonymous';
+    logo.onload = () => {
+      // Fondo con gradiente
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, '#1a472a');
+      gradient.addColorStop(0.5, '#2d5a3d');
+      gradient.addColorStop(1, '#1a472a');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Logo en la parte superior
+      const logoSize = 200;
+      const logoX = (canvas.width - logoSize) / 2;
+      const logoY = 40;
+      ctx.drawImage(logo, logoX, logoY, logoSize, logoSize * (logo.height / logo.width));
+
+      // Título
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 48px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('SAFARI TRAS LAS SIERRAS', canvas.width / 2, logoY + logoSize * (logo.height / logo.width) + 60);
+      
+      ctx.font = '32px Arial';
+      ctx.fillText('Valle Fértil - San Juan', canvas.width / 2, logoY + logoSize * (logo.height / logo.width) + 100);
+
+      // Sección del número (diseño tipo casco)
+      if (numero) {
+        const numberX = canvas.width / 2;
+        const numberY = logoY + logoSize * (logo.height / logo.width) + 200;
+        
+        // Sombra del casco
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.arc(numberX + 5, numberY + 5, 130, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Fondo circular tipo casco con gradiente
+        const helmetGradient = ctx.createRadialGradient(numberX, numberY, 0, numberX, numberY, 130);
+        helmetGradient.addColorStop(0, '#65b330');
+        helmetGradient.addColorStop(0.7, '#5aa02a');
+        helmetGradient.addColorStop(1, '#4a8a1f');
+        ctx.fillStyle = helmetGradient;
+        ctx.beginPath();
+        ctx.arc(numberX, numberY, 130, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Borde exterior del casco
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 10;
+        ctx.stroke();
+        
+        // Borde interior
+        ctx.strokeStyle = '#4a8a1f';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(numberX, numberY, 120, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Mini logo del Safari en la parte superior del casco
+        const miniLogoSize = 60;
+        const miniLogoX = numberX - miniLogoSize / 2;
+        const miniLogoY = numberY - 80;
+        ctx.drawImage(logo, miniLogoX, miniLogoY, miniLogoSize, miniLogoSize * (logo.height / logo.width));
+        
+        // Número en el centro (grande y destacado)
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 140px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Sombra del número
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillText(numero.toString().padStart(2, '0'), numberX + 3, numberY + 3);
+        
+        // Número principal
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(numero.toString().padStart(2, '0'), numberX, numberY);
+        
+        // Texto "NÚMERO DE COMPETENCIA"
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText('NÚMERO DE COMPETENCIA', numberX, numberY + 100);
+      }
+
+      // Información del piloto
+      const infoY = logoY + logoSize * (logo.height / logo.width) + 400;
+      
+      // Nombre
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 42px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${nombre} ${apellido}`, canvas.width / 2, infoY);
+      
+      // Categoría
+      const categoriaTexto = categoria === 'auto' ? 'AUTO' : 'MOTO';
+      ctx.font = '36px Arial';
+      ctx.fillStyle = '#65b330';
+      ctx.fillText(categoriaTexto, canvas.width / 2, infoY + 60);
+      
+      // Subcategoría
+      if (categoriaDetalle) {
+        ctx.font = '32px Arial';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(categoriaDetalle.toUpperCase(), canvas.width / 2, infoY + 110);
+      }
+
+      // Cargar y dibujar QR
+      const qrImage = new Image();
+      qrImage.crossOrigin = 'anonymous';
+      qrImage.onload = () => {
+        const qrSize = 500;
+        const qrX = (canvas.width - qrSize) / 2;
+        const qrY = infoY + 180;
+        
+        // Fondo blanco para el QR
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+        
+        // Borde del QR
+        ctx.strokeStyle = '#65b330';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
+        
+        // QR
+        ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+        
+        // Texto debajo del QR
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '28px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Presenta este código en la acreditación', canvas.width / 2, qrY + qrSize + 60);
+        
+        // Footer
+        ctx.font = '24px Arial';
+        ctx.fillStyle = '#cccccc';
+        ctx.fillText('Este documento es personal e intransferible', canvas.width / 2, canvas.height - 40);
+        
+        // Convertir a data URL
+        resolve(canvas.toDataURL('image/png', 1.0));
+      };
+      
+      qrImage.onerror = () => reject(new Error('Error cargando QR'));
+      qrImage.src = qrDataUrl;
+    };
+    
+    logo.onerror = () => reject(new Error('Error cargando logo'));
+    logo.src = '/logo.png';
+  });
+}
+
 interface PilotFormData {
   nombre: string;
   apellido: string;
@@ -530,17 +703,46 @@ export default function PilotRegistration() {
                 </div>
                 <div className="qr-actions">
                   <button
-                    onClick={() => {
-                      const link = document.createElement('a');
-                      link.href = qrDataUrl!;
-                      link.download = `qr-inscripcion-${watchDni || 'safari'}-${Date.now()}.png`;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
+                    onClick={async () => {
+                      try {
+                        const nombre = watch('nombre') || '';
+                        const apellido = watch('apellido') || '';
+                        const numero = watch('numero');
+                        const categoria = watch('categoria') || '';
+                        const categoriaDetalle = categoria === 'auto' 
+                          ? watch('categoria_auto') || ''
+                          : watch('categoria_moto') || '';
+                        
+                        const fullImage = await generatePilotCardImage(
+                          qrDataUrl!,
+                          nombre,
+                          apellido,
+                          numero || null,
+                          categoria,
+                          categoriaDetalle || null
+                        );
+                        
+                        const link = document.createElement('a');
+                        link.href = fullImage;
+                        link.download = `safari-inscripcion-${nombre}-${apellido}-${numero?.toString().padStart(2, '0') || 'sin-numero'}-${Date.now()}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      } catch (error) {
+                        console.error('Error generando imagen:', error);
+                        alert('Error al generar la imagen. Descargando solo el QR.');
+                        // Fallback: descargar solo el QR
+                        const link = document.createElement('a');
+                        link.href = qrDataUrl!;
+                        link.download = `qr-inscripcion-${watchDni || 'safari'}-${Date.now()}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }
                     }}
                     className="btn btn-primary"
                   >
-                    📥 Descargar QR
+                    📥 Descargar Tarjeta Completa
                   </button>
                   <button
                     onClick={() => {
