@@ -2,11 +2,182 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabaseAdmin } from './_utils/supabase';
 import { createClient } from '@supabase/supabase-js';
 import QRCode from 'qrcode';
+import { Resend } from 'resend';
 
 // Cliente público para inscripciones (permite insert sin auth)
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
 const supabasePublic = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+
+// Inicializar Resend para envío de emails
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
+
+// Función para enviar email con QR
+async function sendEmailWithQR(
+  email: string,
+  nombre: string,
+  apellido: string,
+  dni: string,
+  categoria: string,
+  numero: number | null,
+  categoriaDetalle: string | null,
+  qrDataUrl: string
+): Promise<void> {
+  if (!resend) {
+    console.warn('⚠️ RESEND_API_KEY no configurada, no se enviará email');
+    return;
+  }
+
+  try {
+    // Convertir base64 data URL a buffer
+    const base64Data = qrDataUrl.replace(/^data:image\/png;base64,/, '');
+    const qrBuffer = Buffer.from(base64Data, 'base64');
+
+    const categoriaTexto = categoria === 'auto' ? 'Auto' : 'Moto';
+    const numeroTexto = numero ? `#${numero.toString().padStart(2, '0')}` : 'Sin número';
+    const categoriaDetalleTexto = categoriaDetalle || 'N/A';
+
+    // Email "from" configurable, por defecto usar el dominio de Resend para pruebas
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'Safari Tras las Sierras <onboarding@resend.dev>';
+    
+    const { error } = await resend.emails.send({
+      from: fromEmail,
+      to: email,
+      subject: `✅ Inscripción Confirmada - Safari Tras las Sierras`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+            }
+            .header {
+              background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
+              color: white;
+              padding: 30px;
+              text-align: center;
+              border-radius: 8px 8px 0 0;
+            }
+            .content {
+              background: #f8f9fa;
+              padding: 30px;
+              border-radius: 0 0 8px 8px;
+            }
+            .qr-container {
+              text-align: center;
+              margin: 30px 0;
+              padding: 20px;
+              background: white;
+              border-radius: 8px;
+              border: 2px solid #65b330;
+            }
+            .qr-image {
+              max-width: 300px;
+              height: auto;
+            }
+            .info-box {
+              background: white;
+              padding: 20px;
+              border-radius: 8px;
+              margin: 20px 0;
+              border-left: 4px solid #65b330;
+            }
+            .info-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 0;
+              border-bottom: 1px solid #eee;
+            }
+            .info-row:last-child {
+              border-bottom: none;
+            }
+            .info-label {
+              font-weight: bold;
+              color: #65b330;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #ddd;
+              color: #666;
+              font-size: 14px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>✅ Inscripción Confirmada</h1>
+            <p>Safari Tras las Sierras - Valle Fértil, San Juan</p>
+          </div>
+          <div class="content">
+            <p>Hola <strong>${nombre} ${apellido}</strong>,</p>
+            <p>Tu inscripción ha sido registrada exitosamente. Adjuntamos tu código QR que deberás presentar en la acreditación del evento.</p>
+            
+            <div class="info-box">
+              <h3 style="margin-top: 0; color: #65b330;">Datos de tu Inscripción</h3>
+              <div class="info-row">
+                <span class="info-label">DNI:</span>
+                <span>${dni}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Categoría:</span>
+                <span>${categoriaTexto} - ${categoriaDetalleTexto}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Número de Competencia:</span>
+                <span>${numeroTexto}</span>
+              </div>
+            </div>
+
+            <div class="qr-container">
+              <h3 style="color: #65b330; margin-top: 0;">Tu Código QR</h3>
+              <p>Presenta este código QR en la acreditación del evento</p>
+              <img src="${qrDataUrl}" alt="QR de Inscripción" class="qr-image" />
+            </div>
+
+            <p><strong>Importante:</strong></p>
+            <ul>
+              <li>Guarda este email y el código QR</li>
+              <li>Presenta el QR en la acreditación del evento</li>
+              <li>También puedes descargar el QR desde la página de inscripción</li>
+            </ul>
+
+            <div class="footer">
+              <p>¡Te esperamos en el Safari Tras las Sierras!</p>
+              <p style="font-size: 12px; color: #999;">Este es un email automático, por favor no respondas.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      attachments: [
+        {
+          filename: `qr-inscripcion-${dni}-${numero?.toString().padStart(2, '0') || 'sin-numero'}.png`,
+          content: qrBuffer,
+        },
+      ],
+    });
+
+    if (error) {
+      console.error('Error enviando email:', error);
+      throw error;
+    }
+
+    console.log('✅ Email enviado exitosamente a:', email);
+  } catch (error: any) {
+    console.error('Error en sendEmailWithQR:', error);
+    // No lanzar error para no fallar la inscripción si el email falla
+  }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { method, url, query } = req;
@@ -213,6 +384,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } catch (qrError: any) {
         console.error('Error generando QR:', qrError);
         // No fallar la inscripción si el QR falla, solo no incluirlo
+      }
+
+      // Enviar email con QR (no bloquea la respuesta si falla)
+      if (qrDataUrl && email) {
+        sendEmailWithQR(
+          email,
+          nombre,
+          apellido,
+          dni,
+          categoria,
+          numero || null,
+          categoria === 'auto' ? categoria_auto : categoria_moto,
+          qrDataUrl
+        ).catch((emailError) => {
+          console.error('Error enviando email (no crítico):', emailError);
+        });
       }
 
       res.status(201).json({

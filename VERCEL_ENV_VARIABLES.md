@@ -21,6 +21,25 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3b2pnZmd
 - Settings > API
 - Copia la `service_role` key
 
+### 4. RESEND_API_KEY (Opcional - para envío de emails)
+📧 **OBTENER DESDE RESEND**
+- Ve a: https://resend.com/api-keys
+- Crea una cuenta o inicia sesión (tiene plan gratuito con 100 emails/día)
+- Crea un nuevo API Key
+- Copia la clave (comienza con `re_`)
+- **IMPORTANTE**: Para producción, verifica un dominio en Resend
+  - Ve a: https://resend.com/domains
+  - Agrega y verifica tu dominio
+  - Configura la variable `RESEND_FROM_EMAIL` con tu dominio verificado
+  - Ejemplo: `Safari Tras las Sierras <noreply@tudominio.com>`
+
+### 5. RESEND_FROM_EMAIL (Opcional)
+📧 **Email remitente para Resend**
+- Solo necesario si quieres usar tu propio dominio
+- Formato: `Nombre <email@tudominio.com>`
+- Ejemplo: `Safari Tras las Sierras <noreply@safari-tras-las-sierras.com>`
+- Si no se configura, usa `onboarding@resend.dev` (solo para pruebas)
+
 ---
 
 ## Cómo Configurar en Vercel
@@ -90,6 +109,7 @@ vercel --prod
 | `SUPABASE_URL` | `https://ywojgfgrekeulalkxlex.supabase.co` |
 | `SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3b2pnZmdyZWtldWxhbGt4bGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NDcwNzQsImV4cCI6MjA4NDQyMzA3NH0.Es0qPlBihbrJ_t7m9FVIL_kR43Q2gZCCCuF_bO6eEmo` |
 | `SUPABASE_SERVICE_ROLE_KEY` | ⚠️ Obtener desde Supabase Dashboard |
+| `RESEND_API_KEY` | ⚠️ Obtener desde Resend Dashboard (opcional, para envío de emails) |
 
 ---
 
