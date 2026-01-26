@@ -85,3 +85,11 @@ SUPABASE_SERVICE_ROLE_KEY=TU_SERVICE_ROLE_KEY_AQUI
 - ✅ La `service_role` key solo debe usarse en el backend
 - ✅ Mantén las claves seguras y no las subas a Git
 
+
+
+
+
+
+
+
+

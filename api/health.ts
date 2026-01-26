@@ -4,3 +4,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.json({ status: 'ok', message: 'Safari API is running' });
 }
 
+
+
+
+
+
+
+
+

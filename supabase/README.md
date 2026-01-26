@@ -38,3 +38,11 @@ SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
 Puedes encontrar estas claves en:
 - Supabase Dashboard > Settings > API
 
+
+
+
+
+
+
+
+

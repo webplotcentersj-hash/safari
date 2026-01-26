@@ -8,3 +8,4 @@ CREATE INDEX IF NOT EXISTS idx_pilots_certificado_medico_url
   WHERE certificado_medico_url IS NOT NULL;
 
 
+

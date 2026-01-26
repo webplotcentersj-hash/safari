@@ -138,3 +138,11 @@ Después de ejecutar las migraciones, tendrás:
 
 Todas las tablas tienen Row Level Security (RLS) habilitado con políticas apropiadas.
 
+
+
+
+
+
+
+
+

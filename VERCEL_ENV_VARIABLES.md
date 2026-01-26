@@ -111,3 +111,11 @@ Después de configurar las variables:
 - ❌ NUNCA exponerla en el frontend
 - ✅ Mantenerla segura y no compartirla públicamente
 
+
+
+
+
+
+
+
+

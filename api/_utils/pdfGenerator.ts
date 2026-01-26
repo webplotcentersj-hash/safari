@@ -86,3 +86,11 @@ export async function generateTicketPDF(ticket: any): Promise<Buffer> {
   });
 }
 
+
+
+
+
+
+
+
+
