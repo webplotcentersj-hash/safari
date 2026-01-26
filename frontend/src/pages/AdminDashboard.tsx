@@ -158,24 +158,43 @@ export default function AdminDashboard() {
           if (!supabase) {
             throw new Error('Supabase client no está configurado');
           }
-          const { data: pilotsData } = await supabase
+          const { data: pilotsData, error: pilotsError } = await supabase
             .from('pilots')
             .select('*')
             .eq('estado', 'aprobado')
             .order('created_at', { ascending: false });
-          setPilots(Array.isArray(pilotsData) ? pilotsData : []);
+          
+          if (pilotsError) {
+            console.error('Error cargando pilotos:', pilotsError);
+          } else {
+            setPilots(Array.isArray(pilotsData) ? pilotsData : []);
+          }
         }
         
         // Cargar tiempos de carrera
-        const categoriaParam = filterTimeCategoria !== 'todos' ? filterTimeCategoria : undefined;
-        const categoriaDetalleParam = filterTimeCategoriaDetalle !== 'todos' ? filterTimeCategoriaDetalle : undefined;
-        
-        let url = '/api/race-times?';
-        if (categoriaParam) url += `categoria=${categoriaParam}&`;
-        if (categoriaDetalleParam) url += `categoria_detalle=${categoriaDetalleParam}&`;
-        
-        const response = await axios.get(url);
-        setRaceTimes(response.data || []);
+        try {
+          const categoriaParam = filterTimeCategoria !== 'todos' ? filterTimeCategoria : undefined;
+          const categoriaDetalleParam = filterTimeCategoriaDetalle !== 'todos' ? filterTimeCategoriaDetalle : undefined;
+          
+          let url = '/api/race-times';
+          const params = new URLSearchParams();
+          if (categoriaParam) params.append('categoria', categoriaParam);
+          if (categoriaDetalleParam) params.append('categoria_detalle', categoriaDetalleParam);
+          
+          if (params.toString()) {
+            url += '?' + params.toString();
+          }
+          
+          console.log('Fetching race times from:', url);
+          const response = await axios.get(url);
+          console.log('Race times response:', response.data);
+          setRaceTimes(Array.isArray(response.data) ? response.data : []);
+        } catch (error: any) {
+          console.error('Error cargando tiempos:', error);
+          console.error('Error response:', error.response);
+          setErrorMessage(error.response?.data?.error || error.message || 'Error al cargar los tiempos');
+          setRaceTimes([]);
+        }
       } else if (activeTab === 'tickets') {
         // Consultar tickets desde Supabase directamente
         if (!supabase) {
