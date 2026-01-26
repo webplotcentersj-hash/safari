@@ -268,5 +268,156 @@
   }
 }
 
+/* QR Section Styles */
+.qr-section {
+  margin-top: 2rem;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.qr-container {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px solid #65b330;
+  border-radius: 16px;
+  padding: 2.5rem;
+  text-align: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.qr-container h3 {
+  color: #65b330;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.qr-description {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.qr-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 3px solid #65b330;
+}
+
+.qr-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+}
+
+.qr-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.qr-actions .btn {
+  min-width: 180px;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.qr-actions .btn-primary {
+  background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(101, 179, 48, 0.4);
+}
+
+.qr-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(101, 179, 48, 0.5);
+}
+
+.qr-actions .btn-secondary {
+  background: white;
+  color: #65b330;
+  border: 2px solid #65b330;
+}
+
+.qr-actions .btn-secondary:hover {
+  background: #65b330;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.qr-info {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  text-align: left;
+  border: 1px solid #e0e0e0;
+}
+
+.qr-info p {
+  margin: 0.5rem 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.qr-info strong {
+  color: #65b330;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .qr-container {
+    padding: 1.5rem;
+  }
+
+  .qr-container h3 {
+    font-size: 1.5rem;
+  }
+
+  .qr-description {
+    font-size: 1rem;
+  }
+
+  .qr-preview {
+    padding: 1rem;
+  }
+
+  .qr-actions {
+    flex-direction: column;
+  }
+
+  .qr-actions .btn {
+    width: 100%;
+  }
+
+  .qr-info {
+    padding: 1rem;
+  }
+}
+
 
 

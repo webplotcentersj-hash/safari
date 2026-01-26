@@ -520,19 +520,44 @@ export default function PilotRegistration() {
 
           {qrDataUrl && (
             <div className="qr-section" style={{ marginTop: '2rem' }}>
-              <h3>Tu código QR de inscripción</h3>
-              <p>Guardalo en tu teléfono o descargalo para presentarlo en la acreditación.</p>
-              <div className="qr-preview">
-                <img src={qrDataUrl} alt="QR de inscripción" />
+              <div className="qr-container">
+                <h3>✅ Tu código QR de inscripción</h3>
+                <p className="qr-description">
+                  Guardalo en tu teléfono o descargalo para presentarlo en la acreditación del evento.
+                </p>
+                <div className="qr-preview">
+                  <img src={qrDataUrl} alt="QR de inscripción" className="qr-image" />
+                </div>
+                <div className="qr-actions">
+                  <button
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = qrDataUrl!;
+                      link.download = `qr-inscripcion-${watchDni || 'safari'}-${Date.now()}.png`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="btn btn-primary"
+                  >
+                    📥 Descargar QR
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(qrDataUrl!);
+                      alert('QR copiado al portapapeles');
+                    }}
+                    className="btn btn-secondary"
+                  >
+                    📋 Copiar QR
+                  </button>
+                </div>
+                <div className="qr-info">
+                  <p><strong>DNI:</strong> {watchDni}</p>
+                  <p><strong>Nombre:</strong> {watch('nombre')} {watch('apellido')}</p>
+                  {watch('numero') && <p><strong>Número de competencia:</strong> {watch('numero')?.toString().padStart(2, '0')}</p>}
+                </div>
               </div>
-              <a
-                href={qrDataUrl}
-                download={`qr-inscripcion-${watchDni || 'safari'}.png`}
-                className="btn btn-secondary"
-                style={{ marginTop: '1rem' }}
-              >
-                Descargar QR
-              </a>
             </div>
           )}
         </div>

@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabaseAdmin } from './_utils/supabase';
 import { createClient } from '@supabase/supabase-js';
+import QRCode from 'qrcode';
 
 // Cliente público para inscripciones (permite insert sin auth)
 const supabaseUrl = process.env.SUPABASE_URL || '';
@@ -183,9 +184,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ error: 'Error al procesar la inscripción: no se recibieron datos' });
       }
 
+      // Generar QR code con información del piloto
+      let qrDataUrl: string | null = null;
+      try {
+        const qrData = {
+          id: data.id,
+          dni: data.dni,
+          nombre: data.nombre,
+          apellido: data.apellido,
+          categoria: data.categoria,
+          numero: data.numero,
+          categoria_detalle: data.categoria === 'auto' ? data.categoria_auto : data.categoria_moto
+        };
+        
+        const qrText = JSON.stringify(qrData);
+        qrDataUrl = await QRCode.toDataURL(qrText, {
+          errorCorrectionLevel: 'M',
+          type: 'image/png',
+          width: 400,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        });
+        
+        console.log('QR generado exitosamente para piloto:', data.id);
+      } catch (qrError: any) {
+        console.error('Error generando QR:', qrError);
+        // No fallar la inscripción si el QR falla, solo no incluirlo
+      }
+
       res.status(201).json({
         message: 'Inscripción realizada exitosamente',
-        data
+        data,
+        qrDataUrl
       });
     } catch (error: any) {
       console.error('Registration error:', error);
