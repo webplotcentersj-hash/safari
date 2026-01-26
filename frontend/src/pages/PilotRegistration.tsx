@@ -458,7 +458,7 @@ export default function PilotRegistration() {
 
       // Usamos la baseURL configurada (/api) y acá solo la ruta relativa.
       // La función de Vercel es `api/pilots.ts`, cuya ruta real es `/api/pilots`.
-      const response = await axios.post('/api/pilots', {
+      const response = await axios.post('/pilots', {
         ...data,
         numero: (data.categoria === 'auto' || data.categoria === 'moto') ? data.numero : null,
         categoria_auto: data.categoria === 'auto' ? data.categoria_auto : null,
