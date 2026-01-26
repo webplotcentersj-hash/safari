@@ -134,6 +134,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.warn('No pilots found in database');
       }
       
+      // Si se buscó por número y hay resultados, devolver el primer piloto (objeto único)
+      if (numeroParam && pilots && pilots.length > 0) {
+        console.log(`Piloto encontrado por número ${numeroParam}:`, pilots[0]);
+        return res.status(200).json(pilots[0]);
+      }
+      
       // Asegurarse de devolver un array siempre
       const pilotsArray = Array.isArray(pilots) ? pilots : [];
       console.log(`Returning ${pilotsArray.length} pilots to frontend`);
