@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import axios from 'axios';
 import './AdminScan.css';
@@ -34,6 +35,7 @@ interface PilotInfo {
 
 export default function AdminScan() {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [scanning, setScanning] = useState(false);
   const [scannedData, setScannedData] = useState<PilotData | null>(null);
   const [pilotInfo, setPilotInfo] = useState<PilotInfo | null>(null);
@@ -45,7 +47,11 @@ export default function AdminScan() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      return;
+      // Redirigir al login después de un breve delay
+      const timer = setTimeout(() => {
+        navigate('/admin/login');
+      }, 2000);
+      return () => clearTimeout(timer);
     }
 
     return () => {
@@ -53,7 +59,7 @@ export default function AdminScan() {
         scannerRef.current.stop().catch(() => {});
       }
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate]);
 
   const startScanning = async () => {
     try {
@@ -61,6 +67,25 @@ export default function AdminScan() {
       setScannedData(null);
       setPilotInfo(null);
       setSuccess(null);
+      
+      // Solicitar permisos de cámara explícitamente primero
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        });
+        // Detener el stream temporal para que Html5Qrcode lo maneje
+        stream.getTracks().forEach(track => track.stop());
+      } catch (permError: any) {
+        console.error('Error de permisos:', permError);
+        if (permError.name === 'NotAllowedError' || permError.name === 'PermissionDeniedError') {
+          setError('Se necesitan permisos de cámara. Por favor, permite el acceso a la cámara en la configuración del navegador.');
+        } else if (permError.name === 'NotFoundError') {
+          setError('No se encontró ninguna cámara en el dispositivo.');
+        } else {
+          setError('Error al acceder a la cámara: ' + permError.message);
+        }
+        return;
+      }
       
       const scanner = new Html5Qrcode(qrCodeRegionId);
       scannerRef.current = scanner;
@@ -83,7 +108,11 @@ export default function AdminScan() {
       setScanning(true);
     } catch (err: any) {
       console.error('Error iniciando escáner:', err);
-      setError('Error al acceder a la cámara. Asegúrate de dar permisos de cámara.');
+      if (err.message?.includes('Permission') || err.message?.includes('permission')) {
+        setError('Se necesitan permisos de cámara. Por favor, permite el acceso a la cámara en la configuración del navegador.');
+      } else {
+        setError('Error al acceder a la cámara: ' + (err.message || 'Error desconocido'));
+      }
     }
   };
 
@@ -167,11 +196,22 @@ export default function AdminScan() {
     setSuccess(null);
   };
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      // Redirigir al login después de un breve delay
+      const timer = setTimeout(() => {
+        navigate('/admin/login');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, navigate]);
+
   if (!isAuthenticated) {
     return (
       <div className="admin-scan">
         <div className="scan-error">
           <p>Debes iniciar sesión para usar el escáner</p>
+          <p>Redirigiendo al login...</p>
         </div>
       </div>
     );
