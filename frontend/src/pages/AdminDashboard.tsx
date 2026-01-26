@@ -944,7 +944,7 @@ export default function AdminDashboard() {
                         etapa: timeForm.etapa
                       });
 
-                      const response = await axios.post('/race_times', {
+                      const response = await axios.post('/api/race_times', {
                         pilot_id: timeForm.pilot_id,
                         categoria: timeForm.categoria,
                         categoria_detalle: timeForm.categoria_detalle || null,
