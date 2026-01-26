@@ -257,28 +257,36 @@ export default function AdminScan() {
       
       setScannedData(qrData);
       
-      // Si el QR tiene toda la información, crear un objeto PilotInfo con los datos del QR
-      if (qrData.nombre && qrData.apellido && qrData.dni) {
-        const pilotInfoFromQR: PilotInfo = {
-          id: qrData.id,
-          nombre: qrData.nombre,
-          apellido: qrData.apellido,
-          dni: qrData.dni,
-          email: qrData.email || 'No disponible',
-          telefono: qrData.telefono || 'No disponible',
-          categoria: qrData.categoria,
-          categoria_auto: qrData.categoria === 'auto' ? qrData.categoria_detalle || undefined : undefined,
-          categoria_moto: qrData.categoria === 'moto' ? qrData.categoria_detalle || undefined : undefined,
-          numero: qrData.numero || undefined,
-          estado: 'pendiente', // Estado por defecto, se actualizará si se obtiene de la API
-          comprobante_pago_url: undefined
-        };
-        console.log('✅ Información del piloto desde QR:', pilotInfoFromQR);
-        setPilotInfo(pilotInfoFromQR);
-      } else {
-        console.warn('⚠️ QR no tiene información completa:', qrData);
-        setError('El QR no contiene toda la información necesaria. Intentando buscar por ID...');
-      }
+      // Crear objeto PilotInfo con los datos del QR (mostrar todo lo que esté disponible)
+      const pilotInfoFromQR: PilotInfo = {
+        id: qrData.id || '',
+        nombre: qrData.nombre || 'No disponible',
+        apellido: qrData.apellido || 'No disponible',
+        dni: qrData.dni || 'No disponible',
+        email: qrData.email || 'No disponible',
+        telefono: qrData.telefono || 'No disponible',
+        categoria: qrData.categoria || '',
+        categoria_auto: qrData.categoria === 'auto' ? (qrData.categoria_detalle || undefined) : undefined,
+        categoria_moto: qrData.categoria === 'moto' ? (qrData.categoria_detalle || undefined) : undefined,
+        numero: qrData.numero || undefined,
+        estado: 'pendiente', // Estado por defecto, se actualizará si se obtiene de la API
+        comprobante_pago_url: undefined
+      };
+      
+      console.log('✅ Información del piloto desde QR:', pilotInfoFromQR);
+      console.log('✅ Campos del QR original:', {
+        id: qrData.id,
+        nombre: qrData.nombre,
+        apellido: qrData.apellido,
+        dni: qrData.dni,
+        email: qrData.email,
+        telefono: qrData.telefono,
+        categoria: qrData.categoria,
+        categoria_detalle: qrData.categoria_detalle,
+        numero: qrData.numero
+      });
+      
+      setPilotInfo(pilotInfoFromQR);
       
       // Intentar obtener información completa del piloto desde la API (para estado actual y comprobante)
       if (qrData.id) {
@@ -421,6 +429,10 @@ export default function AdminScan() {
 
             <div className="pilot-details">
               <div className="detail-row">
+                <span className="detail-label">Nombre Completo:</span>
+                <span className="detail-value">{pilotInfo.nombre} {pilotInfo.apellido}</span>
+              </div>
+              <div className="detail-row">
                 <span className="detail-label">DNI:</span>
                 <span className="detail-value">{pilotInfo.dni}</span>
               </div>
@@ -435,14 +447,14 @@ export default function AdminScan() {
               <div className="detail-row">
                 <span className="detail-label">Categoría:</span>
                 <span className="detail-value">
-                  {pilotInfo.categoria === 'auto' ? 'AUTO' : 'MOTO'}
+                  {pilotInfo.categoria ? (pilotInfo.categoria === 'auto' ? 'AUTO' : 'MOTO') : 'No disponible'}
                   {pilotInfo.categoria === 'auto' && pilotInfo.categoria_auto && ` - ${pilotInfo.categoria_auto}`}
                   {pilotInfo.categoria === 'moto' && pilotInfo.categoria_moto && ` - ${pilotInfo.categoria_moto}`}
                 </span>
               </div>
               {pilotInfo.numero && (
                 <div className="detail-row">
-                  <span className="detail-label">Número:</span>
+                  <span className="detail-label">Número de Competencia:</span>
                   <span className="detail-value">#{pilotInfo.numero.toString().padStart(2, '0')}</span>
                 </div>
               )}
