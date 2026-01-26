@@ -302,8 +302,8 @@ export default function PilotRegistration() {
       console.log('🔍 Cargando números usados para categoría:', categoria);
       console.log('🔍 URL completa:', `/pilots/used-numbers?categoria=${categoria}`);
       
-      // La baseURL ya incluye /api, así que solo necesitamos /api/pilots/used-numbers
-      const endpointUrl = `/api/pilots/used-numbers?categoria=${categoria}`;
+      // La baseURL ya incluye /api, así que solo necesitamos /pilots/used-numbers
+      const endpointUrl = `/pilots/used-numbers?categoria=${categoria}`;
       console.log('🔍 URL completa del endpoint:', endpointUrl);
       console.log('🔍 BaseURL configurada:', axios.defaults.baseURL);
       console.log('🔍 URL final será:', axios.defaults.baseURL + endpointUrl);
