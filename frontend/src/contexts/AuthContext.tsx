@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Usar el endpoint del backend que maneja la autenticación con Supabase
       // BaseURL ya es /api, así que aquí solo usamos la ruta relativa
-      const response = await axios.post('/api/auth/login', { email, password });
+      const response = await axios.post('/auth/login', { email, password });
       const { token: newToken, user: newUser } = response.data;
       
       setToken(newToken);
