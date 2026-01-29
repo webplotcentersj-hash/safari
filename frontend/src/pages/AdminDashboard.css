@@ -517,17 +517,26 @@
   color: #666;
 }
 
+/* Bloque único: barra + tabla de pilotos */
+.pilots-table-block {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
 /* Barra de navegación arriba de la tabla de pilotos (sticky) */
 .pilots-table-nav {
   position: sticky;
   top: 0;
   z-index: 100;
   background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   margin-bottom: 0;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-bottom: none;
+  border: none;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.08);
 }
 
 .pilots-table-nav-inner {
@@ -618,9 +627,17 @@
   border-color: white !important;
 }
 
-.admin-content-pilots .table-container.pilots-table-wrap {
-  border-radius: 0 0 12px 12px;
-  border-top: none;
+.admin-content-pilots .pilots-table-block .pilots-table-wrap {
+  border-radius: 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: none;
+}
+
+.pilots-table-block .empty-state {
+  border-radius: 0;
+  margin: 0;
+  border-top: 1px solid #e5e7eb;
 }
 
 .table-header {

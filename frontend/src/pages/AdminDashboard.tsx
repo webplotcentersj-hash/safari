@@ -589,51 +589,52 @@ export default function AdminDashboard() {
                     </button>
                       </div>
                     )}
-                    <nav className="pilots-table-nav" aria-label="Navegación tabla de pilotos">
-                      <div className="pilots-table-nav-inner">
-                        <div className="pilots-nav-title">
-                          <h2 className="pilots-nav-heading">Pilotos</h2>
-                          <span className="pilots-nav-count">{pilots.length} inscritos</span>
-                        </div>
-                        <div className="pilots-nav-tools">
-                          <div className="search-box pilots-nav-search">
-                            <input
-                              type="text"
-                              placeholder="Buscar nombre, DNI, email..."
-                              value={searchTerm}
-                              onChange={(e) => setSearchTerm(e.target.value)}
-                              className="search-input"
-                            />
+                    <div className="pilots-table-block">
+                      <nav className="pilots-table-nav" aria-label="Navegación tabla de pilotos">
+                        <div className="pilots-table-nav-inner">
+                          <div className="pilots-nav-title">
+                            <h2 className="pilots-nav-heading">Pilotos</h2>
+                            <span className="pilots-nav-count">{pilots.length} inscritos</span>
                           </div>
-                          <select
-                            value={filterEstado}
-                            onChange={(e) => setFilterEstado(e.target.value)}
-                            className="filter-select pilots-nav-filter"
-                          >
-                            <option value="todos">Todos los estados</option>
-                            <option value="pendiente">Pendiente</option>
-                            <option value="aprobado">Aprobado</option>
-                            <option value="rechazado">Rechazado</option>
-                          </select>
-                          <select
-                            value={filterCategoria}
-                            onChange={(e) => setFilterCategoria(e.target.value)}
-                            className="filter-select pilots-nav-filter"
-                          >
-                            <option value="todos">Todas las categorías</option>
-                            <option value="auto">Auto</option>
-                            <option value="moto">Moto</option>
-                          </select>
-                          <button
-                            type="button"
-                            onClick={() => navigate('/admin/scan')}
-                            className="btn btn-primary pilots-nav-btn-scan"
-                          >
-                            📱 Escanear QR
-                          </button>
+                          <div className="pilots-nav-tools">
+                            <div className="search-box pilots-nav-search">
+                              <input
+                                type="text"
+                                placeholder="Buscar nombre, DNI, email..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="search-input"
+                              />
+                            </div>
+                            <select
+                              value={filterEstado}
+                              onChange={(e) => setFilterEstado(e.target.value)}
+                              className="filter-select pilots-nav-filter"
+                            >
+                              <option value="todos">Todos los estados</option>
+                              <option value="pendiente">Pendiente</option>
+                              <option value="aprobado">Aprobado</option>
+                              <option value="rechazado">Rechazado</option>
+                            </select>
+                            <select
+                              value={filterCategoria}
+                              onChange={(e) => setFilterCategoria(e.target.value)}
+                              className="filter-select pilots-nav-filter"
+                            >
+                              <option value="todos">Todas las categorías</option>
+                              <option value="auto">Auto</option>
+                              <option value="moto">Moto</option>
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => navigate('/admin/scan')}
+                              className="btn btn-primary pilots-nav-btn-scan"
+                            >
+                              📱 Escanear QR
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </nav>
+                      </nav>
                     {pilots.length === 0 && !errorMessage ? (
                       <div className="empty-state">
                         <p>No hay pilotos inscritos aún.</p>
@@ -824,6 +825,7 @@ export default function AdminDashboard() {
                         })()}
                       </>
                     ) : null}
+                    </div>
                   </>
                 )}
               </div>
