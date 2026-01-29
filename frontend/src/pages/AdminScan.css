@@ -40,6 +40,7 @@
 
 .scan-viewer {
   margin: 24px 0;
+  min-height: 320px;
 }
 
 .qr-scanner {
@@ -49,6 +50,13 @@
   overflow: hidden;
   background: #000;
   margin-bottom: 16px;
+}
+
+/* Asegurar que el video inyectado por html5-qrcode se vea */
+.qr-scanner video {
+  width: 100% !important;
+  max-height: 400px;
+  display: block;
 }
 
 .btn {

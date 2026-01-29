@@ -46,17 +46,18 @@ export default function AdminScan() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const handleScanSuccessRef = useRef<(text: string) => void>(() => {});
   const qrCodeRegionId = 'qr-reader';
 
   useEffect(() => {
+    handleScanSuccessRef.current = handleScanSuccess;
+  });
+
+  useEffect(() => {
     if (!isAuthenticated) {
-      // Redirigir al login después de un breve delay
-      const timer = setTimeout(() => {
-        navigate('/admin/login');
-      }, 2000);
+      const timer = setTimeout(() => navigate('/admin/login'), 2000);
       return () => clearTimeout(timer);
     }
-
     return () => {
       if (scannerRef.current) {
         scannerRef.current.stop().catch(() => {});
@@ -64,117 +65,91 @@ export default function AdminScan() {
     };
   }, [isAuthenticated, navigate]);
 
-  const startScanning = async () => {
-    try {
-      setError(null);
-      setScannedData(null);
-      setPilotInfo(null);
-      setSuccess(null);
-      
-      // Verificar si hay soporte para getUserMedia
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setError('Tu navegador no soporta acceso a la cámara. Por favor, usa un navegador moderno como Chrome o Safari.');
+  // Iniciar cámara solo cuando el contenedor ya está visible (display: block)
+  useEffect(() => {
+    if (!scanning || !isAuthenticated) return;
+
+    let mounted = true;
+    const onDecode = (decodedText: string) => {
+      handleScanSuccessRef.current(decodedText);
+    };
+    const noop = () => {};
+
+    const startCamera = async () => {
+      await new Promise(r => requestAnimationFrame(r));
+      await new Promise(r => setTimeout(r, 100));
+      if (!mounted) return;
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setError('Tu navegador no soporta acceso a la cámara. Usa Chrome o Safari.');
+        setScanning(false);
         return;
       }
 
-      const scanner = new Html5Qrcode(qrCodeRegionId);
-      scannerRef.current = scanner;
-
-      // Intentar obtener cámaras disponibles
-      let cameraId: string | null = null;
       try {
-        const cameras = await Html5Qrcode.getCameras();
-        if (cameras && cameras.length > 0) {
-          // Buscar cámara trasera primero
-          const backCamera = cameras.find(cam => 
-            cam.label.toLowerCase().includes('back') || 
-            cam.label.toLowerCase().includes('rear') ||
-            cam.label.toLowerCase().includes('environment')
-          );
-          cameraId = backCamera ? backCamera.id : cameras[0].id;
-        }
-      } catch (camError: any) {
-        console.log('No se pudieron obtener las cámaras, usando configuración por defecto:', camError);
-      }
+        const scanner = new Html5Qrcode(qrCodeRegionId);
+        scannerRef.current = scanner;
 
-      // Intentar iniciar el escáner
-      try {
-        if (cameraId) {
-          // Usar ID de cámara específico
-          await scanner.start(
-            cameraId,
-            {
-              fps: 10,
-              qrbox: { width: 250, height: 250 },
-              aspectRatio: 1.0,
-            },
-            (decodedText) => {
-              handleScanSuccess(decodedText);
-            },
-            (errorMessage) => {
-              // Ignorar errores de escaneo continuo
-            }
-          );
-        } else {
-          // Usar facingMode como fallback
-          await scanner.start(
-            { facingMode: 'environment' },
-            {
-              fps: 10,
-              qrbox: { width: 250, height: 250 },
-              aspectRatio: 1.0,
-            },
-            (decodedText) => {
-              handleScanSuccess(decodedText);
-            },
-            (errorMessage) => {
-              // Ignorar errores de escaneo continuo
-            }
-          );
-        }
-        setScanning(true);
-      } catch (startError: any) {
-        // Si falla, intentar con cámara frontal
-        console.log('Intentando con cámara frontal...', startError);
+        let cameraId: string | null = null;
         try {
-          await scanner.start(
-            { facingMode: 'user' },
-            {
-              fps: 10,
-              qrbox: { width: 250, height: 250 },
-              aspectRatio: 1.0,
-            },
-            (decodedText) => {
-              handleScanSuccess(decodedText);
-            },
-            (errorMessage) => {
-              // Ignorar errores de escaneo continuo
-            }
-          );
-          setScanning(true);
-        } catch (retryError: any) {
-          throw retryError;
+          const cameras = await Html5Qrcode.getCameras();
+          if (cameras?.length > 0) {
+            const back = cameras.find(c => /back|rear|environment/i.test(c.label));
+            cameraId = back ? back.id : cameras[0].id;
+          }
+        } catch (_) {}
+
+        const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+        try {
+          if (cameraId) {
+            await scanner.start(cameraId, config, onDecode, noop);
+          } else {
+            await scanner.start({ facingMode: 'environment' }, config, onDecode, noop);
+          }
+        } catch (e1: any) {
+          if (!mounted) return;
+          try {
+            await scanner.start({ facingMode: 'user' }, config, onDecode, noop);
+          } catch (e2: any) {
+            throw e2;
+          }
         }
+      } catch (err: any) {
+        if (!mounted) return;
+        const name = err?.name || '';
+        const msg = err?.message || '';
+        if (/NotAllowed|Permission/i.test(name) || /permission/i.test(msg)) {
+          setError('Se necesitan permisos de cámara. Permití el acceso y recargá.');
+        } else if (/NotFound|not found/i.test(name + msg)) {
+          setError('No se encontró ninguna cámara.');
+        } else if (/NotReadable|in use/i.test(msg)) {
+          setError('La cámara está en uso por otra aplicación.');
+        } else {
+          setError(`Error: ${msg || name || 'desconocido'}. Recargá e intentá de nuevo.`);
+        }
+        setScanning(false);
       }
-    } catch (err: any) {
-      console.error('Error iniciando escáner:', err);
-      let errorMsg = 'Error al acceder a la cámara.';
-      
-      const errorName = err.name || '';
-      const errorMessage = err.message || '';
-      
-      if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError' || errorMessage.includes('Permission') || errorMessage.includes('permission')) {
-        errorMsg = 'Se necesitan permisos de cámara. Por favor, permite el acceso a la cámara en la configuración del navegador y recarga la página.';
-      } else if (errorName === 'NotFoundError' || errorName === 'DevicesNotFoundError' || errorMessage.includes('NotFound') || errorMessage.includes('not found')) {
-        errorMsg = 'No se encontró ninguna cámara en el dispositivo.';
-      } else if (errorName === 'NotReadableError' || errorMessage.includes('NotReadable') || errorMessage.includes('in use')) {
-        errorMsg = 'La cámara está siendo usada por otra aplicación. Cierra otras apps que usen la cámara e intenta nuevamente.';
-      } else {
-        errorMsg = `Error: ${errorMessage || errorName || 'Error desconocido'}. Por favor, recarga la página e intenta nuevamente.`;
+    };
+
+    startCamera();
+    return () => {
+      mounted = false;
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {});
+        try {
+          scannerRef.current.clear();
+        } catch (_) {}
+        scannerRef.current = null;
       }
-      
-      setError(errorMsg);
-    }
+    };
+  }, [scanning, isAuthenticated]);
+
+  const startScanning = () => {
+    setError(null);
+    setScannedData(null);
+    setPilotInfo(null);
+    setSuccess(null);
+    setScanning(true);
   };
 
   const stopScanning = async () => {
