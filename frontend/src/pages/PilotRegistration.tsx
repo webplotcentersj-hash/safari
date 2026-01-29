@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import { supabase } from '../config/supabase';
@@ -275,19 +275,22 @@ export default function PilotRegistration() {
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [usedNumbers, setUsedNumbers] = useState<number[]>([]);
   const [loadingNumbers, setLoadingNumbers] = useState(false);
+  const categoryRequestedRef = useRef<string | null>(null);
 
   const watchDni = watch('dni');
   const watchCategoria = watch('categoria');
 
+  // Autos y motos usan números distintos: la API devuelve solo los usados para la categoría indicada.
   const loadUsedNumbers = async (categoria: 'auto' | 'moto') => {
+    categoryRequestedRef.current = categoria;
     setLoadingNumbers(true);
     setUsedNumbers([]);
     setSelectedNumber(null);
     setValue('numero', undefined);
     try {
       const base = typeof window !== 'undefined' ? `${window.location.origin}/api` : (axios.defaults.baseURL || '/api');
-      const url = `${base}/pilots/used-numbers?categoria=${categoria}`;
-      const response = await axios.get(url, { timeout: 10000 });
+      const response = await axios.get(`${base}/pilots/used-numbers?categoria=${categoria}`, { timeout: 10000 });
+      if (categoryRequestedRef.current !== categoria) return;
       let data = response.data;
       if (typeof data === 'string') {
         if (data.trim().startsWith('<')) {
@@ -302,25 +305,26 @@ export default function PilotRegistration() {
         }
       }
       const raw = Array.isArray(data) ? data : (data?.numbers ? data.numbers : []);
-      const used = raw
+      const used: number[] = raw
         .map((n: any) => {
           const num = typeof n === 'string' ? parseInt(n, 10) : Number(n);
           return !isNaN(num) && num >= 1 && num <= 250 ? num : null;
         })
-        .filter((n: number | null): n is number => n !== null) as number[];
+        .filter((n: number | null): n is number => n !== null);
+      if (categoryRequestedRef.current !== categoria) return;
       setUsedNumbers([...new Set(used)].sort((a, b) => a - b));
     } catch (_) {
-      setUsedNumbers([]);
+      if (categoryRequestedRef.current === categoria) setUsedNumbers([]);
     } finally {
-      setLoadingNumbers(false);
+      if (categoryRequestedRef.current === categoria) setLoadingNumbers(false);
     }
   };
 
-  // Cargar números ya usados cuando se selecciona una categoría
   useEffect(() => {
     if (watchCategoria === 'auto' || watchCategoria === 'moto') {
       loadUsedNumbers(watchCategoria);
     } else {
+      categoryRequestedRef.current = null;
       setSelectedNumber(null);
       setValue('numero', undefined);
       setUsedNumbers([]);
@@ -615,6 +619,7 @@ export default function PilotRegistration() {
                   </div>
 
                   <div className="form-group">
+                    <p className="form-hint">Los números de Auto son independientes de los de Moto (puede haber mismo número en cada categoría).</p>
                     {loadingNumbers ? (
                       <div style={{ textAlign: 'center', padding: '2rem' }}>
                         <p>Cargando números disponibles...</p>
@@ -663,6 +668,7 @@ export default function PilotRegistration() {
                   </div>
 
                   <div className="form-group">
+                    <p className="form-hint">Los números de Moto son independientes de los de Auto (puede haber mismo número en cada categoría).</p>
                     {loadingNumbers ? (
                       <div style={{ textAlign: 'center', padding: '2rem' }}>
                         <p>Cargando números disponibles...</p>

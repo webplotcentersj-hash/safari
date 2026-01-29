@@ -478,22 +478,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(500).json({ error: 'Error al consultar la inscripción' });
     }
   } else if (method === 'GET' && path === '/api/pilots/used-numbers') {
-    // Endpoint público para obtener números usados por categoría
-    // Los números son únicos solo dentro de cada categoría (autos y motos tienen numeración separada)
+    // Autos y motos usan números distintos: categoria es obligatoria para no mezclar listas.
     try {
-      const categoria = query.categoria as string | undefined;
-      
-      let queryBuilder = supabaseAdmin
+      const categoria = (query.categoria as string)?.toLowerCase();
+      if (categoria !== 'auto' && categoria !== 'moto') {
+        return res.status(400).json({ error: 'categoria es obligatoria y debe ser "auto" o "moto"' });
+      }
+
+      const { data: pilots, error } = await supabaseAdmin
         .from('pilots')
         .select('numero')
-        .not('numero', 'is', null);
-      
-      // Si se especifica categoría, filtrar por ella
-      if (categoria && (categoria === 'auto' || categoria === 'moto')) {
-        queryBuilder = queryBuilder.eq('categoria', categoria);
-      }
-      
-      const { data: pilots, error } = await queryBuilder;
+        .not('numero', 'is', null)
+        .eq('categoria', categoria)
+        .in('estado', ['aprobado', 'pendiente']);
       
       if (error) {
         console.error('Error obteniendo números usados:', error);

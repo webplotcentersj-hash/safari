@@ -60,6 +60,12 @@
   border-bottom: none;
 }
 
+.form-hint {
+  font-size: 0.9rem;
+  color: #666;
+  margin: -0.25rem 0 0.75rem;
+}
+
 .form-section h2 {
   color: #65b330;
   margin-bottom: 20px;
