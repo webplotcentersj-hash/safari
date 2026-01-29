@@ -437,11 +437,28 @@ export default function PilotRegistration() {
         }
       }
 
+      // Asegurar que el número enviado sea el seleccionado (auto/moto usan números distintos).
+      const numeroToSend = (data.categoria === 'auto' || data.categoria === 'moto')
+        ? (typeof data.numero === 'number' && data.numero >= 1 && data.numero <= 250
+            ? data.numero
+            : selectedNumber != null && selectedNumber >= 1 && selectedNumber <= 250
+              ? selectedNumber
+              : null)
+        : null;
+
+      if ((data.categoria === 'auto' || data.categoria === 'moto') && (numeroToSend == null || numeroToSend < 1 || numeroToSend > 250)) {
+        setMessage({
+          type: 'error',
+          text: 'Debes seleccionar tu número de competencia (01-250).'
+        });
+        setLoading(false);
+        return;
+      }
+
       // Usamos la baseURL configurada (/api) y acá solo la ruta relativa.
-      // La función de Vercel es `api/pilots.ts`, cuya ruta real es `/api/pilots`.
       const response = await axios.post('/pilots', {
         ...data,
-        numero: (data.categoria === 'auto' || data.categoria === 'moto') ? data.numero : null,
+        numero: numeroToSend,
         categoria_auto: data.categoria === 'auto' ? data.categoria_auto : null,
         categoria_moto: data.categoria === 'moto' ? data.categoria_moto : null,
         comprobante_pago_url: comprobanteUrl
@@ -449,8 +466,8 @@ export default function PilotRegistration() {
       const qrFromApi = response.data?.qrDataUrl as string | undefined;
 
       // Actualizar la lista de números usados después de una inscripción exitosa
-      if ((data.categoria === 'auto' || data.categoria === 'moto') && data.numero) {
-        setUsedNumbers(prev => [...prev, data.numero!].sort((a, b) => a - b));
+      if ((data.categoria === 'auto' || data.categoria === 'moto') && numeroToSend != null) {
+        setUsedNumbers(prev => [...prev, numeroToSend].sort((a, b) => a - b));
       }
 
       if (qrFromApi) {

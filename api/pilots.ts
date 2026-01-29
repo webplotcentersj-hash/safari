@@ -218,10 +218,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         categoria,
         categoria_auto,
         categoria_moto,
-        numero,
+        numero: numeroRaw,
         comprobante_pago_url,
         certificado_medico_url
       } = req.body;
+
+      // Normalizar número (puede llegar como string desde el JSON)
+      const numero = numeroRaw != null && numeroRaw !== ''
+        ? (typeof numeroRaw === 'number' ? numeroRaw : parseInt(String(numeroRaw), 10))
+        : undefined;
+      const numeroValid = typeof numero === 'number' && !isNaN(numero) && numero >= 1 && numero <= 250;
 
       if (!nombre || !apellido || !dni || !email || !telefono || !fecha_nacimiento) {
         return res.status(400).json({ error: 'Campos requeridos faltantes' });
@@ -237,7 +243,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Validar campos requeridos para autos
       if (categoria === 'auto') {
-        if (!numero || numero < 1 || numero > 250) {
+        if (!numeroValid) {
           return res.status(400).json({ error: 'Para autos, debes seleccionar un número entre 01 y 250' });
         }
         if (!categoria_auto) {
@@ -266,7 +272,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Validar campos requeridos para motos
       if (categoria === 'moto') {
-        if (!numero || numero < 1 || numero > 250) {
+        if (!numeroValid) {
           return res.status(400).json({ error: 'Para motos, debes seleccionar un número entre 01 y 250' });
         }
         if (!categoria_moto) {
