@@ -336,6 +336,13 @@ export default function PilotRegistration() {
     setValue('numero', num, { shouldValidate: true });
   };
 
+  // Mantener el número seleccionado en el formulario (evita que se pierda al enviar)
+  useEffect(() => {
+    if ((watchCategoria === 'auto' || watchCategoria === 'moto') && selectedNumber != null) {
+      setValue('numero', selectedNumber, { shouldValidate: false });
+    }
+  }, [watchCategoria, selectedNumber, setValue]);
+
   const onSubmit = async (data: PilotFormData) => {
     setLoading(true);
     setMessage(null);
@@ -649,18 +656,6 @@ export default function PilotRegistration() {
                       />
                     )}
                     {errors.numero && <span className="error">{errors.numero.message}</span>}
-                    <input
-                      type="hidden"
-                      {...register('numero', { 
-                        required: watchCategoria === 'auto' ? 'Debes seleccionar un número' : false,
-                        validate: (value) => {
-                          if (watchCategoria === 'auto' && (!value || value < 1 || value > 250)) {
-                            return 'El número debe estar entre 01 y 250';
-                          }
-                          return true;
-                        }
-                      })}
-                    />
                   </div>
                 </>
               )}
@@ -698,20 +693,25 @@ export default function PilotRegistration() {
                       />
                     )}
                     {errors.numero && <span className="error">{errors.numero.message}</span>}
-                    <input
-                      type="hidden"
-                      {...register('numero', { 
-                        required: watchCategoria === 'moto' ? 'Debes seleccionar un número' : false,
-                        validate: (value) => {
-                          if (watchCategoria === 'moto' && (!value || value < 1 || value > 250)) {
-                            return 'El número debe estar entre 01 y 250';
-                          }
-                          return true;
-                        }
-                      })}
-                    />
                   </div>
                 </>
+              )}
+
+              {/* Un solo input oculto para numero (auto y moto) — evita que se pierda el valor al enviar */}
+              {(watchCategoria === 'auto' || watchCategoria === 'moto') && (
+                <input
+                  type="hidden"
+                  {...register('numero', {
+                    required: (watchCategoria === 'auto' || watchCategoria === 'moto') ? 'Debes seleccionar un número' : false,
+                    validate: (value) => {
+                      const n = value != null ? Number(value) : NaN;
+                      if ((watchCategoria === 'auto' || watchCategoria === 'moto') && (!value || isNaN(n) || n < 1 || n > 250)) {
+                        return 'El número debe estar entre 01 y 250';
+                      }
+                      return true;
+                    }
+                  })}
+                />
               )}
             </div>
 
