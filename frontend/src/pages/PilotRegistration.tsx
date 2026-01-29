@@ -279,76 +279,53 @@ export default function PilotRegistration() {
   const watchDni = watch('dni');
   const watchCategoria = watch('categoria');
 
-  // Cargar números ya usados cuando se selecciona una categoría
-  useEffect(() => {
-    console.log('🔄 useEffect ejecutado. watchCategoria:', watchCategoria);
-    if (watchCategoria === 'auto' || watchCategoria === 'moto') {
-      console.log('✅ Categoría válida detectada, cargando números...');
-      loadUsedNumbers();
-    } else {
-      console.log('⚠️ Categoría no válida o no seleccionada');
-      setSelectedNumber(null);
-      setValue('numero', undefined);
-      setUsedNumbers([]);
-    }
-  }, [watchCategoria, setValue]);
-
-  const loadUsedNumbers = async () => {
+  const loadUsedNumbers = async (categoria: 'auto' | 'moto') => {
     setLoadingNumbers(true);
+    setUsedNumbers([]);
+    setSelectedNumber(null);
+    setValue('numero', undefined);
     try {
-      // Usar endpoint público específico para números usados
-      // Pasar la categoría para obtener solo números usados de esa categoría
-      const categoria = watchCategoria === 'auto' ? 'auto' : 'moto';
-      console.log('🔍 Cargando números usados para categoría:', categoria);
-      console.log('🔍 URL completa:', `/pilots/used-numbers?categoria=${categoria}`);
-      
-      // La baseURL ya incluye /api, así que solo necesitamos /pilots/used-numbers
-      const endpointUrl = `/pilots/used-numbers?categoria=${categoria}`;
-      console.log('🔍 URL completa del endpoint:', endpointUrl);
-      console.log('🔍 BaseURL configurada:', axios.defaults.baseURL);
-      console.log('🔍 URL final será:', axios.defaults.baseURL + endpointUrl);
-      
-      const response = await axios.get(endpointUrl);
-      
-      console.log('📊 Respuesta completa:', response);
-      console.log('📊 Respuesta status:', response.status);
-      console.log('📊 Respuesta data:', response.data);
-      console.log('📊 Tipo de data:', typeof response.data);
-      console.log('📊 ¿Es array?', Array.isArray(response.data));
-      
-      if (!response.data) {
-        console.error('❌ La respuesta está vacía o es null');
-        setUsedNumbers([]);
-        return;
+      const base = typeof window !== 'undefined' ? `${window.location.origin}/api` : (axios.defaults.baseURL || '/api');
+      const url = `${base}/pilots/used-numbers?categoria=${categoria}`;
+      const response = await axios.get(url, { timeout: 10000 });
+      let data = response.data;
+      if (typeof data === 'string') {
+        if (data.trim().startsWith('<')) {
+          setUsedNumbers([]);
+          return;
+        }
+        try {
+          data = JSON.parse(data);
+        } catch {
+          setUsedNumbers([]);
+          return;
+        }
       }
-      
-      const used = Array.isArray(response.data) ? response.data.map((n: any) => {
-        // Asegurar que todos los números sean enteros
-        const num = typeof n === 'string' ? parseInt(n, 10) : Number(n);
-        console.log('🔢 Procesando:', n, '->', num, '(tipo original:', typeof n, ')');
-        return !isNaN(num) && num >= 1 && num <= 250 ? num : null;
-      }).filter((n: number | null) => n !== null) as number[] : [];
-      
-      console.log('✅ Números usados procesados (enteros):', used);
-      console.log('✅ Cantidad final:', used.length);
-      
-      if (used.length === 0) {
-        console.warn('⚠️ ADVERTENCIA: No se encontraron números usados, pero debería haber algunos');
-      }
-      
-      setUsedNumbers(used);
-    } catch (error: any) {
-      console.error('❌ Error cargando números usados:', error);
-      console.error('❌ Error message:', error.message);
-      console.error('❌ Error response:', error.response);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error data:', error.response?.data);
-      // Si falla, continuar sin restricciones (pero el backend validará)
+      const raw = Array.isArray(data) ? data : (data?.numbers ? data.numbers : []);
+      const used = raw
+        .map((n: any) => {
+          const num = typeof n === 'string' ? parseInt(n, 10) : Number(n);
+          return !isNaN(num) && num >= 1 && num <= 250 ? num : null;
+        })
+        .filter((n: number | null): n is number => n !== null) as number[];
+      setUsedNumbers([...new Set(used)].sort((a, b) => a - b));
+    } catch (_) {
       setUsedNumbers([]);
     } finally {
       setLoadingNumbers(false);
     }
   };
+
+  // Cargar números ya usados cuando se selecciona una categoría
+  useEffect(() => {
+    if (watchCategoria === 'auto' || watchCategoria === 'moto') {
+      loadUsedNumbers(watchCategoria);
+    } else {
+      setSelectedNumber(null);
+      setValue('numero', undefined);
+      setUsedNumbers([]);
+    }
+  }, [watchCategoria, setValue]);
 
   const handleNumberSelect = (num: number) => {
     setSelectedNumber(num);

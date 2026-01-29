@@ -5,11 +5,8 @@ import { Html5Qrcode } from 'html5-qrcode';
 import axios from 'axios';
 import './AdminScan.css';
 
-function getApiBaseUrl(): string {
-  if (typeof window !== 'undefined') return `${window.location.origin}/api`;
-  return import.meta.env.VITE_API_URL || '/api';
-}
-axios.defaults.baseURL = getApiBaseUrl();
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+axios.defaults.baseURL = API_BASE;
 
 interface PilotData {
   id: string;
@@ -156,32 +153,38 @@ export default function AdminScan() {
   };
 
   const fetchPilotById = async (pilotId: string): Promise<PilotInfo | null> => {
-    const headers: Record<string, string> = { Accept: 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await axios.get(`${getApiBaseUrl()}/admin/pilots/${pilotId}`, { headers });
-    const data = res.data;
-    if (typeof data === 'string' && data.trim().startsWith('<')) return null;
-    const d = typeof data === 'string' ? (() => { try { return JSON.parse(data); } catch { return null; } })() : data;
-    if (!d || typeof d !== 'object') return null;
-    return {
-      id: d.id || pilotId,
-      nombre: d.nombre || '',
-      apellido: d.apellido || '',
-      dni: d.dni || '',
-      email: d.email || '',
-      telefono: d.telefono || '',
-      categoria: d.categoria || '',
-      categoria_auto: d.categoria_auto,
-      categoria_moto: d.categoria_moto,
-      numero: d.numero,
-      estado: d.estado || 'pendiente',
-      comprobante_pago_url: d.comprobante_pago_url
-    };
+    try {
+      const res = await axios.get(`/admin/pilots/${pilotId}`, {
+        headers: { Accept: 'application/json' },
+        timeout: 15000
+      });
+      const data = res.data;
+      if (typeof data === 'string' && data.trim().startsWith('<')) return null;
+      const d = typeof data === 'string' ? (() => { try { return JSON.parse(data); } catch { return null; } })() : data;
+      if (!d || typeof d !== 'object') return null;
+      return {
+        id: d.id || pilotId,
+        nombre: d.nombre || '',
+        apellido: d.apellido || '',
+        dni: d.dni || '',
+        email: d.email || '',
+        telefono: d.telefono || '',
+        categoria: d.categoria || '',
+        categoria_auto: d.categoria_auto,
+        categoria_moto: d.categoria_moto,
+        numero: d.numero,
+        estado: d.estado || 'pendiente',
+        comprobante_pago_url: d.comprobante_pago_url
+      };
+    } catch {
+      return null;
+    }
   };
 
   const loadPilotById = async (pilotId: string) => {
     setLoading(true);
     setError(null);
+    setSuccess(null);
     setPilotInfo(null);
     setScannedData(null);
     const maxRetries = 3;
@@ -393,7 +396,10 @@ export default function AdminScan() {
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      await axios.patch(`${getApiBaseUrl()}/admin/pilots/${pilotInfo.id}/status`, { estado: status }, { headers });
+      await axios.patch(`/admin/pilots/${pilotInfo.id}/status`, { estado: status }, {
+        headers,
+        timeout: 15000
+      });
       setSuccess(`Piloto ${status === 'aprobado' ? 'aprobado' : 'rechazado'} exitosamente`);
       
       // Actualizar estado local
@@ -407,7 +413,13 @@ export default function AdminScan() {
       }, 2000);
     } catch (err: any) {
       console.error('Error actualizando estado:', err);
-      setError(err.response?.data?.error || 'Error al actualizar el estado del piloto');
+      const status = err.response?.status;
+      const data = err.response?.data;
+      let msg = 'Error al actualizar el estado del piloto.';
+      if (status === 403) msg = 'Sesión expirada. Volvé a iniciar sesión y probá de nuevo.';
+      else if (status === 404) msg = 'Piloto no encontrado.';
+      else if (data && typeof data === 'object' && data.error) msg = typeof data.error === 'string' ? data.error : msg;
+      setError(msg);
     } finally {
       setLoading(false);
     }

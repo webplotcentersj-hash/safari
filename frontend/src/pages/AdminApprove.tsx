@@ -4,11 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import './AdminApprove.css';
 
-function getApiBaseUrl(): string {
-  if (typeof window !== 'undefined') return `${window.location.origin}/api`;
-  return import.meta.env.VITE_API_URL || '/api';
-}
-axios.defaults.baseURL = getApiBaseUrl();
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+axios.defaults.baseURL = API_BASE;
 
 interface PilotInfo {
   id: string;
@@ -52,31 +49,27 @@ export default function AdminApprove() {
       return;
     }
 
-    if (id && token) {
-      console.log('✅ Autenticado, cargando información del piloto:', id);
+    if (id) {
       fetchPilotInfo(id);
-    } else if (id && !token) {
-      setLoading(false);
-      setError('Sesión no disponible. Volvé a iniciar sesión.');
     } else {
       console.error('❌ ID de piloto no proporcionado');
       setError('ID de piloto no proporcionado');
       setLoading(false);
     }
-  }, [id, isAuthenticated, isRestoring, token, navigate]);
+  }, [id, isAuthenticated, isRestoring, navigate]);
 
   const fetchPilotInfo = async (pilotId: string) => {
     setLoading(true);
     setError(null);
-    const baseUrl = getApiBaseUrl();
-    const headers: Record<string, string> = { Accept: 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
     const maxRetries = 3;
     const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const response = await axios.get(`${baseUrl}/admin/pilots/${pilotId}`, { headers });
+        const response = await axios.get(`/admin/pilots/${pilotId}`, {
+          headers: { Accept: 'application/json' },
+          timeout: 15000
+        });
         let pilotData = response.data;
         if (typeof pilotData === 'string') {
           if (pilotData.trim().startsWith('<')) {
@@ -154,11 +147,10 @@ export default function AdminApprove() {
       
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const response = await axios.patch(
-        `${getApiBaseUrl()}/admin/pilots/${pilotInfo.id}/status`,
-        { estado: status },
-        { headers }
-      );
+      const response = await axios.patch(`/admin/pilots/${pilotInfo.id}/status`, { estado: status }, {
+        headers,
+        timeout: 15000
+      });
       console.log('✅ Estado actualizado exitosamente:', response.data);
       
       setSuccess(`✅ Piloto ${pilotInfo.nombre || ''} ${pilotInfo.apellido || ''} ${status === 'aprobado' ? 'APROBADO' : 'RECHAZADO'} exitosamente.`);
