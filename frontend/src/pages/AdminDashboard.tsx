@@ -108,6 +108,11 @@ export default function AdminDashboard() {
   });
   const [filterTimeCategoria, setFilterTimeCategoria] = useState<string>('todos');
   const [filterTimeCategoriaDetalle, setFilterTimeCategoriaDetalle] = useState<string>('todos');
+  // Tabla pilotos: orden y paginación
+  type PilotSortField = 'nombre' | 'apellido' | 'estado' | 'created_at' | 'numero' | 'categoria';
+  const [pilotsSort, setPilotsSort] = useState<{ field: PilotSortField; dir: 'asc' | 'desc' }>({ field: 'created_at', dir: 'desc' });
+  const [pilotsPage, setPilotsPage] = useState(1);
+  const [pilotsPerPage, setPilotsPerPage] = useState(15);
 
   const fetchData = useCallback(async (silent = false) => {
     // Si es una actualización silenciosa (polling), no mostrar loading
@@ -291,6 +296,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchData(false); // Primera carga con loading
   }, [fetchData]);
+
+  useEffect(() => {
+    setPilotsPage(1);
+  }, [searchTerm, filterEstado, filterCategoria]);
 
   // Actualización en tiempo real cada 10 segundos cuando está en la pestaña de pilotos
   // Usar modo silencioso para evitar parpadeos
@@ -622,131 +631,190 @@ export default function AdminDashboard() {
                         <p>No hay pilotos inscritos aún.</p>
                       </div>
                     ) : pilots.length > 0 ? (
-                      <div className="table-container">
-                        <table className="data-table">
-                          <thead>
-                            <tr>
-                              <th>Nombre</th>
-                              <th>Apellido</th>
-                              <th>DNI</th>
-                              <th>Email</th>
-                              <th>Teléfono</th>
-                              <th>Tipo</th>
-                              <th>Categoría</th>
-                              <th>Número</th>
-                              <th>Estado</th>
-                              <th>Comprobante</th>
-                              <th>Acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {pilots
-                              .filter((pilot) => {
-                                // Filtro por búsqueda de texto
-                                if (searchTerm) {
-                                  const search = searchTerm.toLowerCase();
-                                  const matchesSearch = (
-                                    pilot.nombre?.toLowerCase().includes(search) ||
-                                    pilot.apellido?.toLowerCase().includes(search) ||
-                                    pilot.dni?.toLowerCase().includes(search) ||
-                                    pilot.email?.toLowerCase().includes(search) ||
-                                    pilot.telefono?.toLowerCase().includes(search) ||
-                                    pilot.categoria_auto?.toLowerCase().includes(search) ||
-                                    pilot.categoria_moto?.toLowerCase().includes(search) ||
-                                    pilot.numero?.toString().includes(search)
-                                  );
-                                  if (!matchesSearch) return false;
-                                }
-                                
-                                // Filtro por estado
-                                if (filterEstado !== 'todos' && pilot.estado !== filterEstado) {
-                                  return false;
-                                }
-                                
-                                // Filtro por categoría
-                                if (filterCategoria !== 'todos' && pilot.categoria !== filterCategoria) {
-                                  return false;
-                                }
-                                
-                                return true;
-                              })
-                              .map((pilot) => (
-                                <tr key={pilot.id}>
-                                  <td>{pilot.nombre}</td>
-                                  <td>{pilot.apellido}</td>
-                                  <td>{pilot.dni}</td>
-                                  <td>{pilot.email}</td>
-                                  <td>{pilot.telefono}</td>
-                                  <td>
-                                    {pilot.categoria === 'auto' && (
-                                      <span className="vehicle-type-badge vehicle-auto">🚗 Auto</span>
-                                    )}
-                                    {pilot.categoria === 'moto' && (
-                                      <span className="vehicle-type-badge vehicle-moto">🏍️ Moto</span>
-                                    )}
-                                    {!pilot.categoria && '-'}
-                                  </td>
-                                  <td>
-                                    {pilot.categoria === 'auto' && pilot.categoria_auto && (
-                                      <span className="category-badge">{pilot.categoria_auto}</span>
-                                    )}
-                                    {pilot.categoria === 'moto' && pilot.categoria_moto && (
-                                      <span className="category-badge">{pilot.categoria_moto}</span>
-                                    )}
-                                    {!pilot.categoria && '-'}
-                                  </td>
-                                  <td>
-                                    {pilot.numero ? (
-                                      <span className="number-badge">{pilot.numero.toString().padStart(2, '0')}</span>
-                                    ) : (
-                                      '-'
-                                    )}
-                                  </td>
-                                  <td>
-                                    <span className={`status-badge status-${pilot.estado}`}>
-                                      {pilot.estado}
-                                    </span>
-                                  </td>
-                                  <td>
-                                    {pilot.comprobante_pago_url ? (
-                                      <a
-                                        href={pilot.comprobante_pago_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="btn btn-secondary btn-sm"
-                                        title="Ver comprobante de pago"
-                                      >
-                                        📄 Ver
-                                      </a>
-                                    ) : (
-                                      <span className="text-muted">-</span>
-                                    )}
-                                  </td>
-                                  <td>
-                                    <div className="action-buttons">
+                      <>
+                        {(() => {
+                          const filtered = pilots.filter((pilot) => {
+                            if (searchTerm) {
+                              const search = searchTerm.toLowerCase();
+                              if (!(pilot.nombre?.toLowerCase().includes(search) || pilot.apellido?.toLowerCase().includes(search) || pilot.dni?.toLowerCase().includes(search) || pilot.email?.toLowerCase().includes(search) || pilot.telefono?.toLowerCase().includes(search) || pilot.categoria_auto?.toLowerCase().includes(search) || pilot.categoria_moto?.toLowerCase().includes(search) || pilot.numero?.toString().includes(search))) return false;
+                            }
+                            if (filterEstado !== 'todos' && pilot.estado !== filterEstado) return false;
+                            if (filterCategoria !== 'todos' && pilot.categoria !== filterCategoria) return false;
+                            return true;
+                          });
+                          const sorted = [...filtered].sort((a, b) => {
+                            let va: string | number | undefined = a[pilotsSort.field as keyof Pilot];
+                            let vb: string | number | undefined = b[pilotsSort.field as keyof Pilot];
+                            if (pilotsSort.field === 'created_at') {
+                              va = a.created_at ? new Date(a.created_at).getTime() : 0;
+                              vb = b.created_at ? new Date(b.created_at).getTime() : 0;
+                            }
+                            if (va === undefined || va === null) va = '';
+                            if (vb === undefined || vb === null) vb = '';
+                            const cmp = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb), 'es');
+                            return pilotsSort.dir === 'asc' ? cmp : -cmp;
+                          });
+                          const totalPages = Math.max(1, Math.ceil(sorted.length / pilotsPerPage));
+                          const page = Math.min(pilotsPage, totalPages);
+                          const start = (page - 1) * pilotsPerPage;
+                          const pagePilots = sorted.slice(start, start + pilotsPerPage);
+
+                          const ThSort = ({ field, label, sticky }: { field: PilotSortField; label: string; sticky?: boolean }) => (
+                            <th
+                              className={`th-sortable ${sticky ? 'col-sticky' : ''}`}
+                              onClick={() => setPilotsSort((s) => ({ field, dir: s.field === field && s.dir === 'asc' ? 'desc' : 'asc' }))}
+                            >
+                              {label}
+                              <span className="sort-icon">{pilotsSort.field === field ? (pilotsSort.dir === 'asc' ? ' ↑' : ' ↓') : ''}</span>
+                            </th>
+                          );
+
+                          return (
+                            <>
+                              <div className="table-container pilots-table-wrap">
+                                <table className="data-table data-table-pilots">
+                                  <thead>
+                                    <tr>
+                                      <ThSort field="nombre" label="Nombre" sticky />
+                                      <th>Apellido</th>
+                                      <th>DNI</th>
+                                      <th>Email</th>
+                                      <th>Teléfono</th>
+                                      <th>Tipo</th>
+                                      <th>Categoría</th>
+                                      <th>Nº</th>
+                                      <ThSort field="estado" label="Estado" />
+                                      <ThSort field="created_at" label="Fecha" />
+                                      <th>Comprobante</th>
+                                      <th>Acciones</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {pagePilots.map((pilot) => (
+                                      <tr key={pilot.id} className={`row-estado-${pilot.estado}`}>
+                                        <td className="col-sticky" data-label="Nombre">{pilot.nombre}</td>
+                                        <td>{pilot.apellido}</td>
+                                        <td>{pilot.dni}</td>
+                                        <td><span className="cell-email" title={pilot.email}>{pilot.email}</span></td>
+                                        <td>{pilot.telefono}</td>
+                                        <td>
+                                          {pilot.categoria === 'auto' && <span className="vehicle-type-badge vehicle-auto">🚗 Auto</span>}
+                                          {pilot.categoria === 'moto' && <span className="vehicle-type-badge vehicle-moto">🏍️ Moto</span>}
+                                          {!pilot.categoria && '-'}
+                                        </td>
+                                        <td>
+                                          {pilot.categoria === 'auto' && pilot.categoria_auto && <span className="category-badge">{pilot.categoria_auto}</span>}
+                                          {pilot.categoria === 'moto' && pilot.categoria_moto && <span className="category-badge">{pilot.categoria_moto}</span>}
+                                          {!pilot.categoria && '-'}
+                                        </td>
+                                        <td>
+                                          {pilot.numero != null ? <span className="number-badge">{pilot.numero.toString().padStart(2, '0')}</span> : '-'}
+                                        </td>
+                                        <td>
+                                          <span className={`status-badge status-${pilot.estado}`}>{pilot.estado}</span>
+                                        </td>
+                                        <td className="cell-date">
+                                          {pilot.created_at ? new Date(pilot.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
+                                        </td>
+                                        <td>
+                                          {pilot.comprobante_pago_url ? (
+                                            <a href={pilot.comprobante_pago_url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm" title="Ver comprobante">📄 Ver</a>
+                                          ) : (
+                                            <span className="text-muted">-</span>
+                                          )}
+                                        </td>
+                                        <td>
+                                          <div className="action-buttons">
+                                            {pilot.estado !== 'aprobado' && (
+                                              <button onClick={() => updatePilotStatus(pilot.id, 'aprobado')} className="btn btn-success btn-sm">Aprobar</button>
+                                            )}
+                                            {pilot.estado !== 'rechazado' && (
+                                              <button onClick={() => updatePilotStatus(pilot.id, 'rechazado')} className="btn btn-danger btn-sm">Rechazar</button>
+                                            )}
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              <div className="pilots-cards-mobile">
+                                {pagePilots.map((pilot) => (
+                                  <div key={pilot.id} className={`pilot-card-mobile row-estado-${pilot.estado}`}>
+                                    <div className="pilot-card-mobile-header">
+                                      <span className="pilot-card-mobile-name">{pilot.nombre} {pilot.apellido}</span>
+                                      <span className={`status-badge status-${pilot.estado}`}>{pilot.estado}</span>
+                                    </div>
+                                    <div className="pilot-card-mobile-body">
+                                      <p><strong>DNI:</strong> {pilot.dni}</p>
+                                      <p><strong>Email:</strong> {pilot.email}</p>
+                                      <p><strong>Tel:</strong> {pilot.telefono}</p>
+                                      <p>
+                                        {pilot.categoria === 'auto' && <span className="vehicle-type-badge vehicle-auto">🚗 {pilot.categoria_auto || 'Auto'}</span>}
+                                        {pilot.categoria === 'moto' && <span className="vehicle-type-badge vehicle-moto">🏍️ {pilot.categoria_moto || 'Moto'}</span>}
+                                        {pilot.numero != null && <span className="number-badge">#{pilot.numero}</span>}
+                                      </p>
+                                      <p className="pilot-card-mobile-date">
+                                        {pilot.created_at ? new Date(pilot.created_at).toLocaleDateString('es-AR') : '-'}
+                                      </p>
+                                    </div>
+                                    <div className="pilot-card-mobile-actions">
+                                      {pilot.comprobante_pago_url && (
+                                        <a href={pilot.comprobante_pago_url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm">📄 Comprobante</a>
+                                      )}
                                       {pilot.estado !== 'aprobado' && (
-                                        <button
-                                          onClick={() => updatePilotStatus(pilot.id, 'aprobado')}
-                                          className="btn btn-success btn-sm"
-                                        >
-                                          Aprobar
-                                        </button>
+                                        <button onClick={() => updatePilotStatus(pilot.id, 'aprobado')} className="btn btn-success btn-sm">Aprobar</button>
                                       )}
                                       {pilot.estado !== 'rechazado' && (
-                                        <button
-                                          onClick={() => updatePilotStatus(pilot.id, 'rechazado')}
-                                          className="btn btn-danger btn-sm"
-                                        >
-                                          Rechazar
-                                        </button>
+                                        <button onClick={() => updatePilotStatus(pilot.id, 'rechazado')} className="btn btn-danger btn-sm">Rechazar</button>
                                       )}
                                     </div>
-                                  </td>
-                                </tr>
-                              ))}
-                          </tbody>
-                        </table>
-                      </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div className="pagination-bar">
+                                <div className="pagination-info">
+                                  Mostrando {start + 1}-{Math.min(start + pilotsPerPage, sorted.length)} de {sorted.length}
+                                </div>
+                                <div className="pagination-per-page">
+                                  <label>Por página:</label>
+                                  <select
+                                    value={pilotsPerPage}
+                                    onChange={(e) => { setPilotsPerPage(Number(e.target.value)); setPilotsPage(1); }}
+                                  >
+                                    <option value={10}>10</option>
+                                    <option value={15}>15</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                  </select>
+                                </div>
+                                <div className="pagination-controls">
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary btn-sm"
+                                    disabled={page <= 1}
+                                    onClick={() => setPilotsPage((p) => Math.max(1, p - 1))}
+                                  >
+                                    Anterior
+                                  </button>
+                                  <span className="pagination-page">Página {page} de {totalPages}</span>
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary btn-sm"
+                                    disabled={page >= totalPages}
+                                    onClick={() => setPilotsPage((p) => Math.min(totalPages, p + 1))}
+                                  >
+                                    Siguiente
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </>
                     ) : null}
                   </>
                 )}

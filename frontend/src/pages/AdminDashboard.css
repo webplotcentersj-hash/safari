@@ -164,11 +164,181 @@
   border: 1px solid #e5e7eb;
 }
 
+.pilots-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.admin-content .pilots-table-wrap {
+  padding: 20px;
+}
+
+.data-table-pilots .col-sticky {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: inherit;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06);
+}
+
+.data-table-pilots thead .col-sticky {
+  background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
+  z-index: 11;
+}
+
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.th-sortable:hover {
+  opacity: 0.95;
+}
+
+.sort-icon {
+  margin-left: 4px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.cell-email {
+  max-width: 180px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.cell-date {
+  white-space: nowrap;
+}
+
+/* Tarjetas en móvil (reemplazan la tabla) */
+.pilots-cards-mobile {
+  display: none;
+}
+
+.pilot-card-mobile {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #65b330;
+}
+
+.pilot-card-mobile.row-estado-pendiente { border-left-color: #f59e0b; }
+.pilot-card-mobile.row-estado-aprobado { border-left-color: #16a34a; }
+.pilot-card-mobile.row-estado-rechazado { border-left-color: #dc2626; }
+
+.pilot-card-mobile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.pilot-card-mobile-name {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.pilot-card-mobile-body p {
+  margin: 8px 0;
+  font-size: 1rem;
+  color: #374151;
+  line-height: 1.45;
+}
+
+.pilot-card-mobile-body .number-badge,
+.pilot-card-mobile-body .vehicle-type-badge {
+  margin-right: 6px;
+}
+
+.pilot-card-mobile-date {
+  color: #9ca3af !important;
+  font-size: 0.85rem !important;
+}
+
+.pilot-card-mobile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+/* Paginación */
+.pagination-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 16px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.pagination-info {
+  font-size: 1rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.pagination-per-page {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-per-page label {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.pagination-per-page select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pagination-page {
+  font-size: 1rem;
+  color: #374151;
+  min-width: 120px;
+  text-align: center;
+  font-weight: 500;
+}
+
 .data-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   min-width: 1200px;
+  font-size: 1rem;
 }
 
 .data-table thead {
@@ -180,14 +350,15 @@
 }
 
 .data-table th {
-  padding: 16px 20px;
+  padding: 18px 20px;
   text-align: left;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
   white-space: nowrap;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  line-height: 1.3;
 }
 
 .data-table th:last-child {
@@ -195,7 +366,7 @@
 }
 
 .data-table tbody tr {
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -204,29 +375,67 @@
 }
 
 .data-table tbody tr:hover {
-  background-color: #f8f9fa;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: #eef5eb !important;
 }
 
 .data-table td {
-  padding: 16px 20px;
-  border-right: 1px solid #f0f0f0;
+  padding: 18px 20px;
+  border-right: 1px solid #eee;
   vertical-align: middle;
-  font-size: 0.95rem;
-  color: #374151;
+  font-size: 1rem;
+  color: #1f2937;
+  line-height: 1.4;
 }
 
 .data-table td:last-child {
   border-right: none;
 }
 
-.data-table tbody tr:nth-child(even) {
-  background-color: #fafafa;
+/* Filas alternadas más visibles para seguir con la vista */
+.data-table-pilots tbody tr:nth-child(even) {
+  background-color: #f5f9f3;
 }
 
-.data-table tbody tr:nth-child(even):hover {
-  background-color: #f0f4f8;
+.data-table-pilots tbody tr:nth-child(odd) {
+  background-color: #fff;
+}
+
+.data-table-pilots tbody tr:nth-child(even):hover {
+  background-color: #eef5eb !important;
+}
+
+.data-table-pilots tbody tr:nth-child(odd):hover {
+  background-color: #eef5eb !important;
+}
+
+/* Nombre en negrita para escaneo rápido */
+.data-table-pilots td.col-sticky {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #111827;
+}
+
+.data-table-pilots tbody tr .col-sticky {
+  background: white;
+}
+
+.data-table-pilots tbody tr:nth-child(even) .col-sticky {
+  background: #f5f9f3;
+}
+
+.data-table-pilots tbody tr:hover .col-sticky {
+  background: #eef5eb !important;
+}
+
+/* Borde izquierdo por estado para lectura rápida */
+.data-table-pilots tbody tr.row-estado-pendiente {
+  border-left: 4px solid #f59e0b;
+}
+.data-table-pilots tbody tr.row-estado-aprobado {
+  border-left: 4px solid #16a34a;
+}
+.data-table-pilots tbody tr.row-estado-rechazado {
+  border-left: 4px solid #dc2626;
 }
 
 .status-badge {
@@ -269,6 +478,12 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.data-table-pilots .action-buttons .btn-sm {
+  min-width: 90px;
+  text-align: center;
 }
 
 .btn-sm {
@@ -303,28 +518,26 @@
 }
 
 .table-header {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #eee;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .table-header h3 {
   margin: 0;
-  color: #65b330;
-  font-size: 1.3rem;
+  color: #166534;
+  font-size: 1.35rem;
+  font-weight: 700;
   flex: 1;
   min-width: 200px;
-}
-
-.table-header h3 {
-  margin: 0;
-  color: #65b330;
-  font-size: 1.3rem;
 }
 
 .filters-container {
@@ -345,17 +558,21 @@
 
 .search-input {
   width: 100%;
-  padding: 10px 15px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
   font-size: 1rem;
-  transition: border-color 0.3s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
 }
 
 .search-input:focus {
   outline: none;
   border-color: #65b330;
-  box-shadow: 0 0 0 3px rgba(101, 179, 48, 0.1);
+  box-shadow: 0 0 0 4px rgba(101, 179, 48, 0.15);
 }
 
 .filter-group {
@@ -364,21 +581,22 @@
 }
 
 .filter-select {
-  padding: 10px 15px;
-  border: 2px solid #ddd;
-  border-radius: 5px;
-  font-size: 0.95rem;
+  padding: 12px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 1rem;
   background-color: white;
-  color: #333;
+  color: #1f2937;
   cursor: pointer;
-  transition: border-color 0.3s;
-  min-width: 180px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 200px;
+  font-weight: 500;
 }
 
 .filter-select:focus {
   outline: none;
   border-color: #65b330;
-  box-shadow: 0 0 0 3px rgba(101, 179, 48, 0.1);
+  box-shadow: 0 0 0 4px rgba(101, 179, 48, 0.15);
 }
 
 .filter-select:hover {
@@ -559,6 +777,29 @@
   .table-container {
     overflow-x: auto;
     padding: 10px;
+  }
+
+  /* En móvil: ocultar tabla de pilotos y mostrar tarjetas */
+  .pilots-table-wrap {
+    display: none !important;
+  }
+
+  .pilots-cards-mobile {
+    display: block !important;
+  }
+
+  .pagination-bar {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .pagination-per-page {
+    justify-content: center;
+  }
+
+  .pagination-controls {
+    justify-content: center;
   }
 
   .data-table {
