@@ -421,14 +421,15 @@ export default function AdminScan() {
           </div>
         )}
 
-        {scanning && (
-          <div className="scan-viewer">
-            <div id={qrCodeRegionId} className="qr-scanner"></div>
+        {/* El div qr-reader debe existir en el DOM antes de iniciar el escáner */}
+        <div className="scan-viewer" style={{ display: scanning ? 'block' : 'none' }}>
+          <div id={qrCodeRegionId} className="qr-scanner"></div>
+          {scanning && (
             <button onClick={stopScanning} className="btn btn-secondary btn-stop">
               ⏹ Detener Escáner
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {loading && (
           <div className="scan-loading">
