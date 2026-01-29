@@ -146,3 +146,4 @@ Todas las tablas tienen Row Level Security (RLS) habilitado con políticas aprop
 
 
 
+
