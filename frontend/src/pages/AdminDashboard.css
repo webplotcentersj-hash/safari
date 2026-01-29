@@ -517,6 +517,112 @@
   color: #666;
 }
 
+/* Barra de navegación arriba de la tabla de pilotos (sticky) */
+.pilots-table-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #65b330 0%, #5aa02a 100%);
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 0;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: none;
+}
+
+.pilots-table-nav-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.pilots-nav-title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.pilots-nav-heading {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.pilots-nav-count {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.pilots-nav-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 280px;
+  justify-content: flex-end;
+}
+
+.pilots-nav-search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+}
+
+.pilots-table-nav .search-input {
+  background: white;
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #1f2937;
+}
+
+.pilots-table-nav .search-input::placeholder {
+  color: #6b7280;
+}
+
+.pilots-table-nav .search-input:focus {
+  border-color: white;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.pilots-nav-filter {
+  min-width: 160px;
+  background: white;
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #1f2937;
+}
+
+.pilots-nav-filter:hover,
+.pilots-table-nav .filter-select:focus {
+  border-color: white;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+
+.pilots-nav-btn-scan {
+  background: white !important;
+  color: #166534 !important;
+  border: 2px solid rgba(255, 255, 255, 0.9) !important;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pilots-nav-btn-scan:hover {
+  background: #f0fdf4 !important;
+  color: #15803d !important;
+  border-color: white !important;
+}
+
+.admin-content-pilots .table-container.pilots-table-wrap {
+  border-radius: 0 0 12px 12px;
+  border-top: none;
+}
+
 .table-header {
   margin-bottom: 24px;
   padding: 20px;
@@ -772,6 +878,36 @@
   .filter-select {
     width: 100%;
     min-width: auto;
+  }
+
+  /* Barra de pilotos en móvil */
+  .pilots-table-nav-inner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px;
+  }
+
+  .pilots-nav-title {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .pilots-nav-heading {
+    font-size: 1.3rem;
+  }
+
+  .pilots-nav-tools {
+    flex-direction: column;
+    min-width: auto;
+    justify-content: stretch;
+  }
+
+  .pilots-nav-search {
+    max-width: none;
+  }
+
+  .pilots-nav-btn-scan {
+    width: 100%;
   }
 
   .table-container {
