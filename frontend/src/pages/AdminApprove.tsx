@@ -4,8 +4,11 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import './AdminApprove.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-axios.defaults.baseURL = API_BASE_URL;
+function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined') return `${window.location.origin}/api`;
+  return import.meta.env.VITE_API_URL || '/api';
+}
+axios.defaults.baseURL = getApiBaseUrl();
 
 interface PilotInfo {
   id: string;
@@ -49,109 +52,91 @@ export default function AdminApprove() {
       return;
     }
 
-    if (id) {
+    if (id && token) {
       console.log('✅ Autenticado, cargando información del piloto:', id);
       fetchPilotInfo(id);
+    } else if (id && !token) {
+      setLoading(false);
+      setError('Sesión no disponible. Volvé a iniciar sesión.');
     } else {
       console.error('❌ ID de piloto no proporcionado');
       setError('ID de piloto no proporcionado');
       setLoading(false);
     }
-  }, [id, isAuthenticated, isRestoring, navigate]);
+  }, [id, isAuthenticated, isRestoring, token, navigate]);
 
   const fetchPilotInfo = async (pilotId: string) => {
-    console.log('📡 Iniciando fetchPilotInfo para:', pilotId);
     setLoading(true);
     setError(null);
-    
-    try {
-      const url = `${axios.defaults.baseURL || '/api'}/admin/pilots/${pilotId}`;
-      console.log('📡 Haciendo petición a:', url);
-      const headers: Record<string, string> = {
-        'Accept': 'application/json'
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      const response = await axios.get(`/admin/pilots/${pilotId}`, { headers });
-      
-      console.log('✅ Respuesta status:', response.status, 'data type:', typeof response.data);
-      
-      let pilotData = response.data;
-      if (typeof pilotData === 'string') {
-        const trimmed = pilotData.trim();
-        if (trimmed.startsWith('<') || trimmed.startsWith('<!')) {
-          console.error('❌ El servidor devolvió HTML en lugar de JSON');
-          setError(
-            'El servidor devolvió una página en lugar de datos. Comprobá que estés logueado como admin. Si entraste desde un link del QR, cerrá esta pestaña, abrí la app, iniciá sesión y escaneá el QR de nuevo desde la pantalla de escaneo.'
-          );
-          setLoading(false);
-          return;
+    const baseUrl = getApiBaseUrl();
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const maxRetries = 3;
+    const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await axios.get(`${baseUrl}/admin/pilots/${pilotId}`, { headers });
+        let pilotData = response.data;
+        if (typeof pilotData === 'string') {
+          if (pilotData.trim().startsWith('<')) {
+            throw new Error('HTML');
+          }
+          try {
+            pilotData = JSON.parse(pilotData);
+          } catch {
+            throw new Error('Invalid JSON');
+          }
         }
-        try {
-          pilotData = JSON.parse(pilotData);
-        } catch (parseError) {
-          console.error('❌ Error parseando respuesta como JSON:', pilotData.substring(0, 200));
-          setError('La respuesta del servidor no es válida. Comprobá la conexión e intentá de nuevo.');
-          setLoading(false);
-          return;
+        if (typeof pilotData !== 'object' || pilotData === null) {
+          throw new Error('No data');
         }
-      }
-      
-      if (typeof pilotData !== 'object' || pilotData === null) {
-        setError('La respuesta del servidor no contiene datos válidos.');
+        const mapped: PilotInfo = {
+          id: pilotData.id || pilotId,
+          nombre: pilotData.nombre || '',
+          apellido: pilotData.apellido || '',
+          dni: pilotData.dni || '',
+          email: pilotData.email || '',
+          telefono: pilotData.telefono || '',
+          categoria: pilotData.categoria || '',
+          categoria_auto: pilotData.categoria_auto,
+          categoria_moto: pilotData.categoria_moto,
+          numero: pilotData.numero,
+          estado: pilotData.estado || 'pendiente',
+          comprobante_pago_url: pilotData.comprobante_pago_url
+        };
+        setPilotInfo(mapped);
         setLoading(false);
         return;
+      } catch (err: any) {
+        const isLast = attempt === maxRetries;
+        if (isLast) {
+          setPilotInfo({
+            id: pilotId,
+            nombre: 'Piloto',
+            apellido: `(ID: ${pilotId.substring(0, 8)}…)`,
+            dni: '',
+            email: '',
+            telefono: '',
+            categoria: '',
+            estado: 'pendiente'
+          });
+          const status = err.response?.status;
+          const data = err.response?.data;
+          if (status === 403) {
+            setError('Acceso denegado. Comprobá que estés logueado como admin.');
+          } else if (status === 404) {
+            setError('Piloto no encontrado. Verificá el QR.');
+          } else if (data && typeof data === 'object' && data.error) {
+            setError(typeof data.error === 'string' ? data.error : 'Error del servidor.');
+          } else {
+            setError('No se cargaron los datos. Podés aprobar o rechazar igual.');
+          }
+        }
+        if (!isLast) await delay(1000);
       }
-      
-      console.log('✅ Keys de pilotData:', Object.keys(pilotData));
-      
-      // Mapear los datos correctamente
-      const mappedPilotInfo: PilotInfo = {
-        id: pilotData.id || '',
-        nombre: pilotData.nombre || '',
-        apellido: pilotData.apellido || '',
-        dni: pilotData.dni || '',
-        email: pilotData.email || '',
-        telefono: pilotData.telefono || '',
-        categoria: pilotData.categoria || '',
-        categoria_auto: pilotData.categoria_auto,
-        categoria_moto: pilotData.categoria_moto,
-        numero: pilotData.numero,
-        estado: pilotData.estado || 'pendiente',
-        comprobante_pago_url: pilotData.comprobante_pago_url
-      };
-      
-      console.log('✅ Datos mapeados:', mappedPilotInfo);
-      
-      // Validar que al menos el ID y nombre estén presentes
-      if (!mappedPilotInfo.id || (!mappedPilotInfo.nombre && !mappedPilotInfo.apellido)) {
-        console.warn('⚠️ Datos incompletos en la respuesta');
-        throw new Error('Los datos del piloto están incompletos');
-      }
-      
-      setPilotInfo(mappedPilotInfo);
-      console.log('✅ Información del piloto cargada exitosamente');
-    } catch (err: any) {
-      console.error('❌ Error obteniendo información del piloto:', err);
-      const data = err.response?.data;
-      const status = err.response?.status;
-      let errorMessage = 'No se pudo cargar la información del piloto.';
-      if (status === 403) {
-        errorMessage = 'Acceso denegado. Comprobá que estés logueado como admin.';
-      } else if (status === 404) {
-        errorMessage = 'Piloto no encontrado. Verificá que el QR sea correcto.';
-      } else if (data && typeof data === 'object' && data.error) {
-        errorMessage = typeof data.error === 'string' ? data.error : data.error.message || errorMessage;
-      } else if (typeof data === 'string' && data.trim().startsWith('<')) {
-        errorMessage = 'El servidor devolvió una página en lugar de datos. Iniciá sesión en la app y escaneá de nuevo desde la pantalla de escaneo.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const updatePilotStatus = async (status: 'aprobado' | 'rechazado') => {
@@ -167,7 +152,13 @@ export default function AdminApprove() {
         status: status
       });
       
-      const response = await axios.patch(`/admin/pilots/${pilotInfo.id}/status`, { estado: status });
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const response = await axios.patch(
+        `${getApiBaseUrl()}/admin/pilots/${pilotInfo.id}/status`,
+        { estado: status },
+        { headers }
+      );
       console.log('✅ Estado actualizado exitosamente:', response.data);
       
       setSuccess(`✅ Piloto ${pilotInfo.nombre || ''} ${pilotInfo.apellido || ''} ${status === 'aprobado' ? 'APROBADO' : 'RECHAZADO'} exitosamente.`);
