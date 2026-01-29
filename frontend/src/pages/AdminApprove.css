@@ -66,6 +66,14 @@
   border-radius: 12px;
 }
 
+.approve-error-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+  align-items: center;
+}
+
 .approve-alert {
   padding: 16px;
   border-radius: 8px;

@@ -25,7 +25,7 @@ interface PilotInfo {
 export default function AdminApprove() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, isRestoring } = useAuth();
+  const { isAuthenticated, isRestoring, token } = useAuth();
   const [pilotInfo, setPilotInfo] = useState<PilotInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,36 +65,43 @@ export default function AdminApprove() {
     setError(null);
     
     try {
-      console.log('📡 Haciendo petición a:', `/api/admin/pilots/${pilotId}`);
-      const response = await axios.get(`/admin/pilots/${pilotId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      });
+      const url = `${axios.defaults.baseURL || '/api'}/admin/pilots/${pilotId}`;
+      console.log('📡 Haciendo petición a:', url);
+      const headers: Record<string, string> = {
+        'Accept': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await axios.get(`/admin/pilots/${pilotId}`, { headers });
       
-      console.log('✅ Respuesta completa:', response);
-      console.log('✅ Respuesta data:', response.data);
-      console.log('✅ Tipo de respuesta data:', typeof response.data);
+      console.log('✅ Respuesta status:', response.status, 'data type:', typeof response.data);
       
-      // Si la respuesta es un string, intentar parsearlo como JSON
       let pilotData = response.data;
       if (typeof pilotData === 'string') {
-        console.log('⚠️ La respuesta es un string, intentando parsear como JSON...');
+        const trimmed = pilotData.trim();
+        if (trimmed.startsWith('<') || trimmed.startsWith('<!')) {
+          console.error('❌ El servidor devolvió HTML en lugar de JSON');
+          setError(
+            'El servidor devolvió una página en lugar de datos. Comprobá que estés logueado como admin. Si entraste desde un link del QR, cerrá esta pestaña, abrí la app, iniciá sesión y escaneá el QR de nuevo desde la pantalla de escaneo.'
+          );
+          setLoading(false);
+          return;
+        }
         try {
           pilotData = JSON.parse(pilotData);
-          console.log('✅ String parseado exitosamente:', pilotData);
         } catch (parseError) {
-          console.error('❌ Error parseando string como JSON:', parseError);
-          console.error('❌ Contenido del string:', pilotData.substring(0, 200));
-          throw new Error('La respuesta del servidor no es un JSON válido');
+          console.error('❌ Error parseando respuesta como JSON:', pilotData.substring(0, 200));
+          setError('La respuesta del servidor no es válida. Comprobá la conexión e intentá de nuevo.');
+          setLoading(false);
+          return;
         }
       }
       
-      // Verificar que pilotData es un objeto
       if (typeof pilotData !== 'object' || pilotData === null) {
-        console.error('❌ pilotData no es un objeto:', pilotData);
-        throw new Error('La respuesta del servidor no contiene datos válidos');
+        setError('La respuesta del servidor no contiene datos válidos.');
+        setLoading(false);
+        return;
       }
       
       console.log('✅ Keys de pilotData:', Object.keys(pilotData));
@@ -127,15 +134,20 @@ export default function AdminApprove() {
       console.log('✅ Información del piloto cargada exitosamente');
     } catch (err: any) {
       console.error('❌ Error obteniendo información del piloto:', err);
-      console.error('❌ Error response:', err.response);
-      console.error('❌ Error status:', err.response?.status);
-      console.error('❌ Error data:', err.response?.data);
-      console.error('❌ Error headers:', err.response?.headers);
-      
-      const errorMessage = err.response?.data?.error 
-        || err.message 
-        || 'No se pudo cargar la información del piloto. Verifica que el ID sea correcto.';
-      
+      const data = err.response?.data;
+      const status = err.response?.status;
+      let errorMessage = 'No se pudo cargar la información del piloto.';
+      if (status === 403) {
+        errorMessage = 'Acceso denegado. Comprobá que estés logueado como admin.';
+      } else if (status === 404) {
+        errorMessage = 'Piloto no encontrado. Verificá que el QR sea correcto.';
+      } else if (data && typeof data === 'object' && data.error) {
+        errorMessage = typeof data.error === 'string' ? data.error : data.error.message || errorMessage;
+      } else if (typeof data === 'string' && data.trim().startsWith('<')) {
+        errorMessage = 'El servidor devolvió una página en lugar de datos. Iniciá sesión en la app y escaneá de nuevo desde la pantalla de escaneo.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -216,9 +228,16 @@ export default function AdminApprove() {
       <div className="admin-approve">
         <div className="approve-error">
           <p>{error}</p>
-          <button onClick={() => navigate('/admin')} className="btn btn-primary">
-            Volver al Dashboard
-          </button>
+          <div className="approve-error-actions">
+            {id && (
+              <button onClick={() => fetchPilotInfo(id)} className="btn btn-secondary">
+                Reintentar
+              </button>
+            )}
+            <button onClick={() => navigate('/admin')} className="btn btn-primary">
+              Volver al Dashboard
+            </button>
+          </div>
         </div>
       </div>
     );
