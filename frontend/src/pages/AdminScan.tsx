@@ -237,7 +237,7 @@ export default function AdminScan() {
           
           // Buscar piloto por número en la API
           try {
-            const response = await axios.get(`/api/admin/pilots?numero=${numero}`);
+            const response = await axios.get(`/admin/pilots?numero=${numero}`);
             if (response.data && response.data.length > 0) {
               const pilot = response.data[0];
               setPilotInfo({
@@ -344,7 +344,7 @@ export default function AdminScan() {
     setSuccess(null);
     
     try {
-      await axios.patch(`/api/admin/pilots/${pilotInfo.id}/status`, { estado: status });
+      await axios.patch(`/admin/pilots/${pilotInfo.id}/status`, { estado: status });
       setSuccess(`Piloto ${status === 'aprobado' ? 'aprobado' : 'rechazado'} exitosamente`);
       
       // Actualizar estado local

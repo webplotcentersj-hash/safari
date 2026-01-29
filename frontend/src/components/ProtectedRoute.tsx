@@ -9,9 +9,20 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isRestoring } = useAuth();
 
-  // Si estamos restaurando la sesión, no redirigir todavía
+  // Si estamos restaurando la sesión, mostrar carga
   if (isRestoring) {
-    return null; // O un spinner de carga
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '60vh',
+        fontSize: '1.2rem',
+        color: '#666'
+      }}>
+        Cargando…
+      </div>
+    );
   }
 
   // Si no está autenticado después de restaurar, redirigir al login
