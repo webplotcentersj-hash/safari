@@ -15,12 +15,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'categoria es obligatoria y debe ser "auto" o "moto"' });
     }
 
+    // Incluir todos los estados: la BD solo permite un número por categoría (también rechazados bloquean).
     const { data: pilots, error } = await supabaseAdmin
       .from('pilots')
       .select('numero')
       .not('numero', 'is', null)
-      .eq('categoria', categoria)
-      .in('estado', ['aprobado', 'pendiente']);
+      .eq('categoria', categoria);
     
     if (error) {
       console.error('Error obteniendo números usados:', error);
