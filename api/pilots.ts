@@ -408,10 +408,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           url: approvalUrl // URL para redirección directa
         };
         
-        // El QR contiene la URL como texto principal (para que los escáneres la reconozcan como link)
-        // Cuando se escanea, si el usuario está logueado, va directamente a aprobar
-        // Si no está logueado, se redirige al login y luego a esta URL
-        const qrText = approvalUrl;
+        // El QR contiene JSON con datos del piloto + url: así al escanear se muestran nombre, DNI, etc. aunque falle la API
+        const qrText = JSON.stringify(qrData);
         qrDataUrl = await QRCode.toDataURL(qrText, {
           errorCorrectionLevel: 'H', // Mayor corrección de errores
           type: 'image/png',

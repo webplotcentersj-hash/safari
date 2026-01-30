@@ -254,27 +254,35 @@ export default function AdminScan() {
 
   const handleScanSuccess = async (decodedText: string) => {
     try {
-      console.log('📱 QR escaneado (texto completo):', decodedText);
-      console.log('📱 Tipo:', typeof decodedText);
-      console.log('📱 Longitud:', decodedText.length);
+      const raw = typeof decodedText === 'string' ? decodedText.trim() : String(decodedText || '');
+      console.log('📱 QR escaneado (texto completo):', raw);
+      console.log('📱 Longitud:', raw.length);
       
       // Detener el escáner primero
       await stopScanning();
       
-      // Si el QR es una URL de aprobación, cargar piloto aquí (sin navegar) para evitar fallos
-      if (decodedText.includes('/admin/approve/')) {
-        const pilotId = decodedText.split('/admin/approve/')[1]?.split('?')[0]?.split('#')[0]?.trim();
+      // Si el QR es una URL de aprobación, extraer ID y cargar piloto (QRs antiguos solo tienen URL)
+      if (raw.includes('/admin/approve/')) {
+        let pilotId = raw.split('/admin/approve/')[1]?.split('?')[0]?.split('#')[0]?.trim() || '';
+        pilotId = pilotId.replace(/\/+$/, ''); // quitar barras finales
         if (pilotId) {
           await loadPilotById(pilotId);
           return;
         }
       }
+
+      // Si el QR es solo un UUID (sin URL), cargar piloto por ID
+      const uuidMatch = raw.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+      if (uuidMatch) {
+        await loadPilotById(raw);
+        return;
+      }
       
       let qrData: PilotData | null = null;
       
-      // Intentar parsear como JSON
+      // Intentar parsear como JSON (QRs nuevos traen JSON con nombre, DNI, etc.)
       try {
-        qrData = JSON.parse(decodedText);
+        qrData = JSON.parse(raw);
         console.log('✅ QR parseado como JSON:', qrData);
         
         // Si el JSON tiene URL de aprobación, cargar piloto aquí (sin navegar)
@@ -313,9 +321,9 @@ export default function AdminScan() {
         console.log('⚠️ No es JSON válido, intentando otros formatos...');
         
         // Si es solo un número, buscar piloto por número
-        const numeroMatch = decodedText.match(/^\d+$/);
+        const numeroMatch = raw.match(/^\d+$/);
         if (numeroMatch) {
-          const numero = parseInt(decodedText, 10);
+          const numero = parseInt(raw, 10);
           console.log('🔢 QR contiene solo número:', numero);
           setError(`QR contiene solo el número ${numero}. Buscando piloto por número...`);
           
