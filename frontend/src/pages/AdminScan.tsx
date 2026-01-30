@@ -229,7 +229,11 @@ export default function AdminScan() {
       if (pilot) {
         setPilotInfo(pilot);
         setError(null);
-        setLoading(false);
+        if (pilot.estado === 'pendiente') {
+          await approvePilotById(pilot.id);
+        } else {
+          setLoading(false);
+        }
         return;
       }
       if (status !== undefined) lastErr = { status, message };
@@ -251,6 +255,8 @@ export default function AdminScan() {
     else if (lastErr.message) errMsg = lastErr.message;
     setError(errMsg);
     setLoading(false);
+    // Intentar aprobar igual por ID (por si el piloto existe y falló solo el GET)
+    approvePilotById(pilotId);
   };
 
   const retryLoadPilot = async () => {
@@ -346,10 +352,15 @@ export default function AdminScan() {
             try {
               const { pilot } = await fetchPilotById(pilotId);
               if (pilot) setPilotInfo(pilot);
+              if (pilot?.estado === 'pendiente' || !pilot) {
+                await approvePilotById(pilot?.id ?? pilotId);
+              } else {
+                setLoading(false);
+              }
             } catch (_) {
-              setError('Datos del QR. No se pudo conectar al servidor; podés aprobar o rechazar igual.');
+              setError('Datos del QR. No se pudo conectar al servidor.');
+              await approvePilotById(pilotId);
             }
-            setLoading(false);
             return;
           }
           setScannedData(qrData);
@@ -451,6 +462,38 @@ export default function AdminScan() {
     }
   };
 
+  /** Aprueba por ID (usado para auto-aprobar al escanear). */
+  const approvePilotById = async (id: string): Promise<boolean> => {
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+      const base = typeof window !== 'undefined' ? window.location.origin + '/api' : (API_BASE || '/api');
+      const url = `${base}/admin/pilots/${encodeURIComponent(id)}/status`;
+      await axios.patch(url, { estado: 'aprobado' }, { headers, timeout: 15000 });
+      setSuccess('Piloto aprobado');
+      setPilotInfo((prev) => (prev?.id === id ? { ...prev, estado: 'aprobado' } : prev));
+      setError(null);
+      setTimeout(() => {
+        setScannedData(null);
+        setPilotInfo(null);
+        setSuccess(null);
+      }, 2000);
+      return true;
+    } catch (err: any) {
+      const status = err.response?.status;
+      const data = err.response?.data;
+      let msg = 'Error al aprobar el piloto.';
+      if (status === 403) msg = 'Sesión expirada. Volvé a iniciar sesión.';
+      else if (status === 404) msg = 'Piloto no encontrado.';
+      else if (data?.error) msg = typeof data.error === 'string' ? data.error : msg;
+      setError(msg);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const updatePilotStatus = async (status: 'aprobado' | 'rechazado') => {
     if (!pilotInfo) return;
     
@@ -460,7 +503,8 @@ export default function AdminScan() {
     
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
       const base = typeof window !== 'undefined' ? window.location.origin + '/api' : (API_BASE || '/api');
       const url = `${base}/admin/pilots/${pilotInfo.id}/status`;
       await axios.patch(url, { estado: status }, {
@@ -469,10 +513,8 @@ export default function AdminScan() {
       });
       setSuccess(`Piloto ${status === 'aprobado' ? 'aprobado' : 'rechazado'} exitosamente`);
       
-      // Actualizar estado local
       setPilotInfo({ ...pilotInfo, estado: status });
       
-      // Limpiar después de 2 segundos
       setTimeout(() => {
         setScannedData(null);
         setPilotInfo(null);
@@ -525,7 +567,7 @@ export default function AdminScan() {
       <div className="scan-container">
         <div className="scan-header">
           <h1>📱 Escanear QR de Inscripción</h1>
-          <p>Escanea el código QR del piloto para aprobar o rechazar su inscripción</p>
+          <p>Al escanear el QR del piloto se aprueba automáticamente. Listo para el siguiente.</p>
         </div>
 
         {authCheck && !authCheck.ok && (
