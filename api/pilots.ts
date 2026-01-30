@@ -324,9 +324,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
-      // Insertar piloto directamente (las políticas RLS permiten INSERT público)
-      // Si hay duplicados (DNI o número), el error lo manejamos abajo
-      const insertClient = supabasePublic || supabaseAdmin;
+      // Insertar piloto: cuatri usa siempre admin (nueva columna categoria_cuatri); resto según RLS
+      const insertClient = categoria === 'cuatri' ? supabaseAdmin : (supabasePublic || supabaseAdmin);
       
       if (!insertClient) {
         console.error('No Supabase client available');
@@ -382,6 +381,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               error: `El número ${numero ? numero.toString().padStart(2, '0') : ''} ya está asignado a otro piloto de ${categoriaTexto}. Por favor, selecciona otro número disponible.` 
             });
           }
+        }
+        
+        // Columna inexistente (migración de cuatriciclos no aplicada en la BD)
+        const msg = (error.message || '').toLowerCase();
+        if (error.code === '42703' || msg.includes('column') && (msg.includes('does not exist') || msg.includes('no existe') || msg.includes('categoria_cuatri'))) {
+          return res.status(503).json({
+            error: 'La base de datos aún no tiene la actualización de cuatriciclos. Por favor, contactá al administrador para que ejecute la migración en Supabase.',
+            details: error.message
+          });
         }
         
         // Error de RLS (Row Level Security)
