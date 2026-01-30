@@ -45,6 +45,7 @@ export default function AdminScan() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [authCheck, setAuthCheck] = useState<{ ok: boolean; status?: number } | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const handleScanSuccessRef = useRef<(text: string) => void>(() => {});
   const qrCodeRegionId = 'qr-reader';
@@ -64,6 +65,15 @@ export default function AdminScan() {
       }
     };
   }, [isAuthenticated, navigate]);
+
+  // Verificar que la API reconozca la sesión (diagnóstico)
+  useEffect(() => {
+    if (!isAuthenticated || !token) return;
+    const headers: Record<string, string> = { Accept: 'application/json', Authorization: `Bearer ${token}` };
+    axios.get('/admin/me', { headers, timeout: 8000 })
+      .then((r) => setAuthCheck({ ok: r.data?.ok === true, status: r.status }))
+      .catch((err) => setAuthCheck({ ok: false, status: err.response?.status }));
+  }, [isAuthenticated, token]);
 
   // Iniciar cámara solo cuando el contenedor ya está visible (display: block)
   useEffect(() => {
@@ -156,7 +166,10 @@ export default function AdminScan() {
     try {
       const headers: Record<string, string> = { Accept: 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await axios.get(`/admin/pilots/${pilotId}`, {
+      const base = typeof window !== 'undefined' ? window.location.origin + '/api' : (API_BASE || '/api');
+      const url = `${base}/admin/pilots/${pilotId}`;
+      if (typeof window !== 'undefined') console.log('GET piloto:', url);
+      const res = await axios.get(url, {
         headers,
         timeout: 15000
       });
@@ -407,7 +420,9 @@ export default function AdminScan() {
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      await axios.patch(`/admin/pilots/${pilotInfo.id}/status`, { estado: status }, {
+      const base = typeof window !== 'undefined' ? window.location.origin + '/api' : (API_BASE || '/api');
+      const url = `${base}/admin/pilots/${pilotInfo.id}/status`;
+      await axios.patch(url, { estado: status }, {
         headers,
         timeout: 15000
       });
@@ -471,6 +486,13 @@ export default function AdminScan() {
           <h1>📱 Escanear QR de Inscripción</h1>
           <p>Escanea el código QR del piloto para aprobar o rechazar su inscripción</p>
         </div>
+
+        {authCheck && !authCheck.ok && (
+          <div className="scan-alert scan-alert-error">
+            <p>La API no reconoce tu sesión (código {authCheck.status ?? '?'}). Probá cerrar sesión y volver a entrar.</p>
+            <button onClick={() => setAuthCheck(null)} className="alert-close">×</button>
+          </div>
+        )}
 
         {error && (
           <div className="scan-alert scan-alert-error">
