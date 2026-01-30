@@ -161,10 +161,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!user || !requireAdmin(user)) {
     return res.status(403).json({ error: 'Acceso denegado' });
   } else if (method === 'GET' && path.includes('/admin/pilots/') && !path.includes('/status') && !path.includes('/pdf')) {
-    // Obtener piloto por ID
+    // Obtener piloto por ID — usar siempre supabaseAdmin (ya verificamos admin con nuestro JWT; RLS bloquearía con token de usuario)
     try {
-      const client = supabaseWithAuth || supabaseAdmin;
-      
       // Extraer el ID del path - puede venir como /api/admin/pilots/:id o /admin/pilots/:id
       let id = path.split('/admin/pilots/')[1];
       if (id) {
@@ -182,7 +180,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'ID de piloto requerido' });
       }
       
-      const { data: pilot, error } = await client
+      const { data: pilot, error } = await supabaseAdmin
         .from('pilots')
         .select('*')
         .eq('id', id)
@@ -226,10 +224,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(500).json({ error: 'Error al obtener el piloto', details: error.message });
     }
   } else if (method === 'PATCH' && path.includes('/admin/pilots/') && path.includes('/status')) {
-    // Actualizar estado de piloto
+    // Actualizar estado de piloto — usar siempre supabaseAdmin (ya verificamos admin; RLS bloquearía con token de usuario)
     try {
-      const client = supabaseWithAuth || supabaseAdmin;
-      
       // Extraer el ID del path - puede venir como /api/admin/pilots/:id/status o /admin/pilots/:id/status
       let id = path.split('/admin/pilots/')[1];
       if (id) {
@@ -256,7 +252,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Estado inválido' });
       }
 
-      const { data, error } = await client
+      const { data, error } = await supabaseAdmin
         .from('pilots')
         .update({ estado })
         .eq('id', id)
