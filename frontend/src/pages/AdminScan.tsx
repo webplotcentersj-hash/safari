@@ -31,6 +31,7 @@ interface PilotInfo {
   categoria: string;
   categoria_auto?: string;
   categoria_moto?: string;
+  categoria_cuatri?: string;
   numero?: number;
   estado: string;
   comprobante_pago_url?: string;
@@ -188,6 +189,7 @@ export default function AdminScan() {
           categoria: d.categoria || '',
           categoria_auto: d.categoria_auto,
           categoria_moto: d.categoria_moto,
+          categoria_cuatri: d.categoria_cuatri,
           numero: d.numero,
           estado: d.estado || 'pendiente',
           comprobante_pago_url: d.comprobante_pago_url
@@ -299,6 +301,7 @@ export default function AdminScan() {
               categoria: qrData.categoria || '',
               categoria_auto: qrData.categoria === 'auto' ? (qrData.categoria_detalle || undefined) : undefined,
               categoria_moto: qrData.categoria === 'moto' ? (qrData.categoria_detalle || undefined) : undefined,
+              categoria_cuatri: qrData.categoria === 'cuatri' ? (qrData.categoria_detalle || undefined) : undefined,
               numero: qrData.numero ?? undefined,
               estado: 'pendiente',
               comprobante_pago_url: undefined
@@ -342,6 +345,7 @@ export default function AdminScan() {
                 categoria: pilot.categoria || '',
                 categoria_auto: pilot.categoria_auto,
                 categoria_moto: pilot.categoria_moto,
+                categoria_cuatri: pilot.categoria_cuatri,
                 numero: pilot.numero,
                 estado: pilot.estado || 'pendiente',
                 comprobante_pago_url: pilot.comprobante_pago_url
@@ -570,9 +574,10 @@ export default function AdminScan() {
               <div className="detail-row">
                 <span className="detail-label">Categoría:</span>
                 <span className="detail-value">
-                  {pilotInfo.categoria ? (pilotInfo.categoria === 'auto' ? 'AUTO' : 'MOTO') : 'No disponible'}
+                  {pilotInfo.categoria ? (pilotInfo.categoria === 'auto' ? 'AUTO' : pilotInfo.categoria === 'moto' ? 'MOTO' : 'CUATRI') : 'No disponible'}
                   {pilotInfo.categoria === 'auto' && pilotInfo.categoria_auto && ` - ${pilotInfo.categoria_auto}`}
                   {pilotInfo.categoria === 'moto' && pilotInfo.categoria_moto && ` - ${pilotInfo.categoria_moto}`}
+                  {pilotInfo.categoria === 'cuatri' && pilotInfo.categoria_cuatri && ` - ${pilotInfo.categoria_cuatri}`}
                 </span>
               </div>
               {pilotInfo.numero && (

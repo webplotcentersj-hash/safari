@@ -11,8 +11,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const categoria = (req.query.categoria as string)?.toLowerCase();
     // IMPORTANTE: Autos y motos usan números distintos (ej: el 1 de auto y el 1 de moto son válidos a la vez).
     // Siempre filtrar por categoría para no mezclar listas.
-    if (categoria !== 'auto' && categoria !== 'moto') {
-      return res.status(400).json({ error: 'categoria es obligatoria y debe ser "auto" o "moto"' });
+    if (categoria !== 'auto' && categoria !== 'moto' && categoria !== 'cuatri') {
+      return res.status(400).json({ error: 'categoria es obligatoria y debe ser "auto", "moto" o "cuatri"' });
     }
 
     // Incluir todos los estados: la BD solo permite un número por categoría (también rechazados bloquean).

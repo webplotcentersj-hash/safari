@@ -44,7 +44,7 @@ async function sendEmailWithQR(
     const qrBuffer = Buffer.from(base64Data, 'base64');
     console.log('📧 QR convertido a buffer, tamaño:', qrBuffer.length, 'bytes');
 
-    const categoriaTexto = categoria === 'auto' ? 'Auto' : 'Moto';
+    const categoriaTexto = categoria === 'auto' ? 'Auto' : categoria === 'moto' ? 'Moto' : 'Cuatriciclo';
     const numeroTexto = numero ? `#${numero.toString().padStart(2, '0')}` : 'Sin número';
     const categoriaDetalleTexto = categoriaDetalle || 'N/A';
 
@@ -218,6 +218,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         categoria,
         categoria_auto,
         categoria_moto,
+        categoria_cuatri,
         numero: numeroRaw,
         comprobante_pago_url,
         certificado_medico_url
@@ -234,7 +235,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (!categoria) {
-        return res.status(400).json({ error: 'El tipo de vehículo (Auto/Moto) es requerido' });
+        return res.status(400).json({ error: 'El tipo de vehículo (Auto/Moto/Cuatriciclo) es requerido' });
       }
 
       if (!comprobante_pago_url) {
@@ -299,6 +300,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
+      // Validar campos requeridos para cuatriciclos
+      if (categoria === 'cuatri') {
+        if (!numeroValid) {
+          return res.status(400).json({ error: 'Para cuatriciclos, debes seleccionar un número entre 01 y 250' });
+        }
+        if (!categoria_cuatri) {
+          return res.status(400).json({ error: 'Para cuatriciclos, debes seleccionar una categoría' });
+        }
+        const { data: existingPilot, error: checkError } = await supabaseAdmin
+          .from('pilots')
+          .select('id, nombre, apellido, dni')
+          .eq('numero', numero)
+          .eq('categoria', 'cuatri')
+          .maybeSingle();
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Error verificando número cuatri:', checkError);
+        }
+        if (existingPilot) {
+          return res.status(400).json({ 
+            error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto de cuatriciclo (${existingPilot.nombre} ${existingPilot.apellido}). Por favor, selecciona otro número.` 
+          });
+        }
+      }
 
       // Insertar piloto directamente (las políticas RLS permiten INSERT público)
       // Si hay duplicados (DNI o número), el error lo manejamos abajo
@@ -325,7 +349,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         categoria: categoria || null,
         categoria_auto: categoria === 'auto' ? categoria_auto : null,
         categoria_moto: categoria === 'moto' ? categoria_moto : null,
-        numero: (categoria === 'auto' || categoria === 'moto') ? numero : null,
+        categoria_cuatri: categoria === 'cuatri' ? categoria_cuatri : null,
+        numero: (categoria === 'auto' || categoria === 'moto' || categoria === 'cuatri') ? numero : null,
         comprobante_pago_url: comprobante_pago_url || null,
         certificado_medico_url: certificado_medico_url,
         estado: 'pendiente'
@@ -351,8 +376,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (error.message?.includes('dni') || error.message?.includes('pilots_dni_key')) {
             return res.status(400).json({ error: 'Ya existe una inscripción con este DNI. Si ya te inscribiste, verifica tu email o contacta a los organizadores.' });
           }
-          if (error.message?.includes('numero') || error.message?.includes('pilots_numero_key') || error.message?.includes('pilots_numero_auto_unique') || error.message?.includes('pilots_numero_moto_unique')) {
-            const categoriaTexto = categoria === 'auto' ? 'auto' : 'moto';
+          if (error.message?.includes('numero') || error.message?.includes('pilots_numero_key') || error.message?.includes('pilots_numero_auto_unique') || error.message?.includes('pilots_numero_moto_unique') || error.message?.includes('pilots_numero_cuatri_unique')) {
+            const categoriaTexto = categoria === 'auto' ? 'auto' : categoria === 'moto' ? 'moto' : 'cuatriciclo';
             return res.status(400).json({ 
               error: `El número ${numero ? numero.toString().padStart(2, '0') : ''} ya está asignado a otro piloto de ${categoriaTexto}. Por favor, selecciona otro número disponible.` 
             });
@@ -402,7 +427,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           apellido: data.apellido,
           categoria: data.categoria,
           numero: data.numero,
-          categoria_detalle: data.categoria === 'auto' ? data.categoria_auto : data.categoria_moto,
+          categoria_detalle: data.categoria === 'auto' ? data.categoria_auto : data.categoria === 'moto' ? data.categoria_moto : data.categoria_cuatri,
           email: data.email,
           telefono: data.telefono,
           url: approvalUrl // URL para redirección directa
@@ -438,7 +463,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           dni,
           categoria,
           numero || null,
-          categoria === 'auto' ? categoria_auto : categoria_moto,
+          categoria === 'auto' ? categoria_auto : categoria === 'moto' ? categoria_moto : categoria_cuatri,
           qrDataUrl
         ).catch((emailError) => {
           console.error('❌ Error enviando email (no crítico):', emailError);
@@ -482,11 +507,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(500).json({ error: 'Error al consultar la inscripción' });
     }
   } else if (method === 'GET' && path === '/api/pilots/used-numbers') {
-    // Autos y motos usan números distintos: categoria es obligatoria para no mezclar listas.
+    // Autos, motos y cuatriciclos usan números distintos: categoria es obligatoria.
     try {
       const categoria = (query.categoria as string)?.toLowerCase();
-      if (categoria !== 'auto' && categoria !== 'moto') {
-        return res.status(400).json({ error: 'categoria es obligatoria y debe ser "auto" o "moto"' });
+      if (categoria !== 'auto' && categoria !== 'moto' && categoria !== 'cuatri') {
+        return res.status(400).json({ error: 'categoria es obligatoria y debe ser "auto", "moto" o "cuatri"' });
       }
 
       // Incluir todos los estados: la BD solo permite un número por categoría (también rechazados bloquean).

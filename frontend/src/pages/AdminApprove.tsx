@@ -17,6 +17,7 @@ interface PilotInfo {
   categoria: string;
   categoria_auto?: string;
   categoria_moto?: string;
+  categoria_cuatri?: string;
   numero?: number;
   estado: string;
   comprobante_pago_url?: string;
@@ -94,6 +95,7 @@ export default function AdminApprove() {
           categoria: pilotData.categoria || '',
           categoria_auto: pilotData.categoria_auto,
           categoria_moto: pilotData.categoria_moto,
+          categoria_cuatri: pilotData.categoria_cuatri,
           numero: pilotData.numero,
           estado: pilotData.estado || 'pendiente',
           comprobante_pago_url: pilotData.comprobante_pago_url
@@ -304,9 +306,10 @@ export default function AdminApprove() {
               <div className="detail-row">
                 <span className="detail-label">Categoría:</span>
                 <span className="detail-value">
-                  {pilotInfo.categoria ? (pilotInfo.categoria === 'auto' ? 'AUTO' : 'MOTO') : 'No disponible'}
+                  {pilotInfo.categoria ? (pilotInfo.categoria === 'auto' ? 'AUTO' : pilotInfo.categoria === 'moto' ? 'MOTO' : 'CUATRI') : 'No disponible'}
                   {pilotInfo.categoria === 'auto' && pilotInfo.categoria_auto && ` - ${pilotInfo.categoria_auto}`}
                   {pilotInfo.categoria === 'moto' && pilotInfo.categoria_moto && ` - ${pilotInfo.categoria_moto}`}
+                  {pilotInfo.categoria === 'cuatri' && pilotInfo.categoria_cuatri && ` - ${pilotInfo.categoria_cuatri}`}
                 </span>
               </div>
               {pilotInfo.numero && (

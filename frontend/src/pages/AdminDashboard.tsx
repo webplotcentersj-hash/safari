@@ -24,6 +24,7 @@ interface Pilot {
   categoria?: string;
   categoria_auto?: string;
   categoria_moto?: string;
+  categoria_cuatri?: string;
   numero?: number;
   comprobante_pago_url?: string;
   certificado_medico_url?: string;
@@ -625,6 +626,7 @@ export default function AdminDashboard() {
                               <option value="todos">Todas las categorías</option>
                               <option value="auto">🚗 Auto</option>
                               <option value="moto">🏍️ Moto</option>
+                              <option value="cuatri">🛞 Cuatriciclo</option>
                             </select>
                             {(() => {
                               const subcats = Array.from(new Set(pilots
@@ -635,7 +637,11 @@ export default function AdminDashboard() {
                                 .filter(p => p.categoria === 'moto' && p.categoria_moto)
                                 .map(p => p.categoria_moto!)
                               )).sort();
-                              const allSubcats = [...subcats.map(s => `auto:${s}`), ...subcatsMoto.map(s => `moto:${s}`)];
+                              const subcatsCuatri = Array.from(new Set(pilots
+                                .filter(p => p.categoria === 'cuatri' && p.categoria_cuatri)
+                                .map(p => p.categoria_cuatri!)
+                              )).sort();
+                              const allSubcats = [...subcats.map(s => `auto:${s}`), ...subcatsMoto.map(s => `moto:${s}`), ...subcatsCuatri.map(s => `cuatri:${s}`)];
                               return allSubcats.length > 0 ? (
                                 <select
                                   value={filterCategoriaDetalle}
@@ -649,6 +655,9 @@ export default function AdminDashboard() {
                                   ))}
                                   {subcatsMoto.map(s => (
                                     <option key={s} value={`moto:${s}`}>Moto — {s}</option>
+                                  ))}
+                                  {subcatsCuatri.map(s => (
+                                    <option key={s} value={`cuatri:${s}`}>Cuatri — {s}</option>
                                   ))}
                                 </select>
                               ) : null;
@@ -673,7 +682,7 @@ export default function AdminDashboard() {
                           const filtered = pilots.filter((pilot) => {
                             if (searchTerm) {
                               const search = searchTerm.toLowerCase();
-                              if (!(pilot.nombre?.toLowerCase().includes(search) || pilot.apellido?.toLowerCase().includes(search) || pilot.dni?.toLowerCase().includes(search) || pilot.email?.toLowerCase().includes(search) || pilot.telefono?.toLowerCase().includes(search) || pilot.categoria_auto?.toLowerCase().includes(search) || pilot.categoria_moto?.toLowerCase().includes(search) || pilot.numero?.toString().includes(search))) return false;
+                              if (!(pilot.nombre?.toLowerCase().includes(search) || pilot.apellido?.toLowerCase().includes(search) || pilot.dni?.toLowerCase().includes(search) || pilot.email?.toLowerCase().includes(search) || pilot.telefono?.toLowerCase().includes(search) || pilot.categoria_auto?.toLowerCase().includes(search) || pilot.categoria_moto?.toLowerCase().includes(search) || pilot.categoria_cuatri?.toLowerCase().includes(search) || pilot.numero?.toString().includes(search))) return false;
                             }
                             if (filterEstado !== 'todos' && pilot.estado !== filterEstado) return false;
                             if (filterCategoria !== 'todos' && pilot.categoria !== filterCategoria) return false;
@@ -681,6 +690,7 @@ export default function AdminDashboard() {
                               const [tipo, detalle] = filterCategoriaDetalle.split(':');
                               if (tipo === 'auto' && (pilot.categoria !== 'auto' || pilot.categoria_auto !== detalle)) return false;
                               if (tipo === 'moto' && (pilot.categoria !== 'moto' || pilot.categoria_moto !== detalle)) return false;
+                              if (tipo === 'cuatri' && (pilot.categoria !== 'cuatri' || pilot.categoria_cuatri !== detalle)) return false;
                             }
                             return true;
                           });
@@ -711,7 +721,7 @@ export default function AdminDashboard() {
                             </th>
                           );
 
-                          const countByTipo = { auto: pilots.filter(p => p.categoria === 'auto').length, moto: pilots.filter(p => p.categoria === 'moto').length };
+                          const countByTipo = { auto: pilots.filter(p => p.categoria === 'auto').length, moto: pilots.filter(p => p.categoria === 'moto').length, cuatri: pilots.filter(p => p.categoria === 'cuatri').length };
                           const countBySubcat = pilots.reduce<Record<string, number>>((acc, p) => {
                             if (p.categoria === 'auto' && p.categoria_auto) {
                               const k = `Auto — ${p.categoria_auto}`;
@@ -719,6 +729,10 @@ export default function AdminDashboard() {
                             }
                             if (p.categoria === 'moto' && p.categoria_moto) {
                               const k = `Moto — ${p.categoria_moto}`;
+                              acc[k] = (acc[k] || 0) + 1;
+                            }
+                            if (p.categoria === 'cuatri' && p.categoria_cuatri) {
+                              const k = `Cuatri — ${p.categoria_cuatri}`;
                               acc[k] = (acc[k] || 0) + 1;
                             }
                             return acc;
@@ -729,6 +743,7 @@ export default function AdminDashboard() {
                               <div className="pilots-categories-summary">
                                 <span className="pilots-summary-tipo"><strong>🚗 Autos:</strong> {countByTipo.auto}</span>
                                 <span className="pilots-summary-tipo"><strong>🏍️ Motos:</strong> {countByTipo.moto}</span>
+                                <span className="pilots-summary-tipo"><strong>🛞 Cuatriciclos:</strong> {countByTipo.cuatri}</span>
                                 {Object.keys(countBySubcat).length > 0 && (
                                   <span className="pilots-summary-detalle">
                                     {Object.entries(countBySubcat).sort((a, b) => b[1] - a[1]).map(([cat, n]) => (
@@ -771,6 +786,11 @@ export default function AdminDashboard() {
                                           {pilot.categoria === 'moto' && (
                                             <span className="category-full vehicle-type-badge vehicle-moto" title={`Moto — ${pilot.categoria_moto || 'N/A'}`}>
                                               🏍️ Moto{pilot.categoria_moto ? ` — ${pilot.categoria_moto}` : ''}
+                                            </span>
+                                          )}
+                                          {pilot.categoria === 'cuatri' && (
+                                            <span className="category-full vehicle-type-badge vehicle-cuatri" title={`Cuatri — ${pilot.categoria_cuatri || 'N/A'}`}>
+                                              🛞 Cuatri{pilot.categoria_cuatri ? ` — ${pilot.categoria_cuatri}` : ''}
                                             </span>
                                           )}
                                           {!pilot.categoria && '-'}
@@ -821,6 +841,7 @@ export default function AdminDashboard() {
                                       <p><strong>Categoría:</strong>{' '}
                                         {pilot.categoria === 'auto' && <span className="vehicle-type-badge vehicle-auto">🚗 Auto{pilot.categoria_auto ? ` — ${pilot.categoria_auto}` : ''}</span>}
                                         {pilot.categoria === 'moto' && <span className="vehicle-type-badge vehicle-moto">🏍️ Moto{pilot.categoria_moto ? ` — ${pilot.categoria_moto}` : ''}</span>}
+                                        {pilot.categoria === 'cuatri' && <span className="vehicle-type-badge vehicle-cuatri">🛞 Cuatri{pilot.categoria_cuatri ? ` — ${pilot.categoria_cuatri}` : ''}</span>}
                                         {!pilot.categoria && '-'}
                                         {pilot.numero != null && <span className="number-badge"> · Nº{pilot.numero}</span>}
                                       </p>

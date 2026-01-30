@@ -163,7 +163,7 @@ async function generatePilotCardImage(
       currentY += 60;
       
       // Categoría
-      const categoriaTexto = categoria === 'auto' ? 'AUTO' : 'MOTO';
+      const categoriaTexto = categoria === 'auto' ? 'AUTO' : categoria === 'moto' ? 'MOTO' : 'CUATRI';
       ctx.font = 'bold 36px Arial';
       ctx.fillStyle = '#65b330';
       ctx.fillText(categoriaTexto, canvas.width / 2, currentY);
@@ -261,6 +261,7 @@ interface PilotFormData {
   categoria: string;
   categoria_auto?: string;
   categoria_moto?: string;
+  categoria_cuatri?: string;
   numero?: number;
   // estos campos no los completa el usuario, los llenamos nosotros con las URLs
   comprobante_pago_url?: string;
@@ -282,7 +283,7 @@ export default function PilotRegistration() {
   const watchCategoria = watch('categoria');
 
   // Autos y motos usan números distintos: la API devuelve solo los usados para la categoría indicada.
-  const loadUsedNumbers = async (categoria: 'auto' | 'moto') => {
+  const loadUsedNumbers = async (categoria: 'auto' | 'moto' | 'cuatri') => {
     categoryRequestedRef.current = categoria;
     setLoadingNumbers(true);
     setUsedNumbers([]);
@@ -322,8 +323,8 @@ export default function PilotRegistration() {
   };
 
   useEffect(() => {
-    if (watchCategoria === 'auto' || watchCategoria === 'moto') {
-      loadUsedNumbers(watchCategoria);
+    if (watchCategoria === 'auto' || watchCategoria === 'moto' || watchCategoria === 'cuatri') {
+      loadUsedNumbers(watchCategoria as 'auto' | 'moto' | 'cuatri');
     } else {
       categoryRequestedRef.current = null;
       setSelectedNumber(null);
@@ -399,7 +400,7 @@ export default function PilotRegistration() {
       if (!data.categoria) {
         setMessage({
           type: 'error',
-          text: 'Debes seleccionar el tipo de vehículo (Auto o Moto).'
+          text: 'Debes seleccionar el tipo de vehículo (Auto, Moto o Cuatriciclo).'
         });
         setLoading(false);
         return;
@@ -445,8 +446,28 @@ export default function PilotRegistration() {
         }
       }
 
-      // Asegurar que el número enviado sea el seleccionado (auto/moto usan números distintos).
-      const numeroToSend = (data.categoria === 'auto' || data.categoria === 'moto')
+      // Validar campos requeridos para cuatriciclos
+      if (data.categoria === 'cuatri') {
+        if (!data.categoria_cuatri) {
+          setMessage({
+            type: 'error',
+            text: 'Debes seleccionar una categoría de cuatriciclo.'
+          });
+          setLoading(false);
+          return;
+        }
+        if (!data.numero) {
+          setMessage({
+            type: 'error',
+            text: 'Debes seleccionar tu número de competencia (01-250).'
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Asegurar que el número enviado sea el seleccionado (auto/moto/cuatri usan números distintos).
+      const numeroToSend = (data.categoria === 'auto' || data.categoria === 'moto' || data.categoria === 'cuatri')
         ? (typeof data.numero === 'number' && data.numero >= 1 && data.numero <= 250
             ? data.numero
             : selectedNumber != null && selectedNumber >= 1 && selectedNumber <= 250
@@ -454,7 +475,7 @@ export default function PilotRegistration() {
               : null)
         : null;
 
-      if ((data.categoria === 'auto' || data.categoria === 'moto') && (numeroToSend == null || numeroToSend < 1 || numeroToSend > 250)) {
+      if ((data.categoria === 'auto' || data.categoria === 'moto' || data.categoria === 'cuatri') && (numeroToSend == null || numeroToSend < 1 || numeroToSend > 250)) {
         setMessage({
           type: 'error',
           text: 'Debes seleccionar tu número de competencia (01-250).'
@@ -469,12 +490,13 @@ export default function PilotRegistration() {
         numero: numeroToSend,
         categoria_auto: data.categoria === 'auto' ? data.categoria_auto : null,
         categoria_moto: data.categoria === 'moto' ? data.categoria_moto : null,
+        categoria_cuatri: data.categoria === 'cuatri' ? data.categoria_cuatri : null,
         comprobante_pago_url: comprobanteUrl
       });
       const qrFromApi = response.data?.qrDataUrl as string | undefined;
 
       // Actualizar la lista de números usados después de una inscripción exitosa
-      if ((data.categoria === 'auto' || data.categoria === 'moto') && numeroToSend != null) {
+      if ((data.categoria === 'auto' || data.categoria === 'moto' || data.categoria === 'cuatri') && numeroToSend != null) {
         setUsedNumbers(prev => [...prev, numeroToSend].sort((a, b) => a - b));
       }
 
@@ -667,6 +689,7 @@ export default function PilotRegistration() {
                   <option value="">Seleccione tipo de vehículo</option>
                   <option value="auto">Auto</option>
                   <option value="moto">Moto</option>
+                  <option value="cuatri">Cuatriciclo</option>
                 </select>
                 {errors.categoria && <span className="error">{errors.categoria.message}</span>}
               </div>
@@ -702,7 +725,7 @@ export default function PilotRegistration() {
                   </div>
 
                   <div className="form-group">
-                    <p className="form-hint">Los números de Auto son independientes de los de Moto (puede haber mismo número en cada categoría).</p>
+                    <p className="form-hint">Los números de Auto son independientes de Moto y Cuatriciclos.</p>
                     {loadingNumbers ? (
                       <div style={{ textAlign: 'center', padding: '2rem' }}>
                         <p>Cargando números disponibles...</p>
@@ -739,7 +762,7 @@ export default function PilotRegistration() {
                   </div>
 
                   <div className="form-group">
-                    <p className="form-hint">Los números de Moto son independientes de los de Auto (puede haber mismo número en cada categoría).</p>
+                    <p className="form-hint">Los números de Moto son independientes de los de Auto y Cuatriciclos.</p>
                     {loadingNumbers ? (
                       <div style={{ textAlign: 'center', padding: '2rem' }}>
                         <p>Cargando números disponibles...</p>
@@ -756,15 +779,47 @@ export default function PilotRegistration() {
                 </>
               )}
 
-              {/* Un solo input oculto para numero (auto y moto) — evita que se pierda el valor al enviar */}
-              {(watchCategoria === 'auto' || watchCategoria === 'moto') && (
+              {watchCategoria === 'cuatri' && (
+                <>
+                  <div className="form-group">
+                    <label>Categoría de Cuatriciclo *</label>
+                    <select {...register('categoria_cuatri', { 
+                      required: watchCategoria === 'cuatri' ? 'Debes seleccionar una categoría' : false 
+                    })}>
+                      <option value="">Seleccione categoría</option>
+                      <option value="200 chino">200 chino</option>
+                      <option value="250 chino">250 chino</option>
+                      <option value="450 open (450cc a 700cc, ingresa banshee)">450 open (450cc a 700cc, ingresa banshee)</option>
+                    </select>
+                    {errors.categoria_cuatri && <span className="error">{errors.categoria_cuatri.message}</span>}
+                  </div>
+                  <div className="form-group">
+                    <p className="form-hint">Los números de Cuatriciclos son independientes de Auto y Moto.</p>
+                    {loadingNumbers ? (
+                      <div style={{ textAlign: 'center', padding: '2rem' }}>
+                        <p>Cargando números disponibles...</p>
+                      </div>
+                    ) : (
+                      <NumberSelector
+                        selectedNumber={selectedNumber}
+                        onSelect={handleNumberSelect}
+                        usedNumbers={usedNumbers}
+                      />
+                    )}
+                    {errors.numero && <span className="error">{errors.numero.message}</span>}
+                  </div>
+                </>
+              )}
+
+              {/* Un solo input oculto para numero (auto, moto, cuatri) — evita que se pierda el valor al enviar */}
+              {(watchCategoria === 'auto' || watchCategoria === 'moto' || watchCategoria === 'cuatri') && (
                 <input
                   type="hidden"
                   {...register('numero', {
-                    required: (watchCategoria === 'auto' || watchCategoria === 'moto') ? 'Debes seleccionar un número' : false,
+                    required: (watchCategoria === 'auto' || watchCategoria === 'moto' || watchCategoria === 'cuatri') ? 'Debes seleccionar un número' : false,
                     validate: (value) => {
                       const n = value != null ? Number(value) : NaN;
-                      if ((watchCategoria === 'auto' || watchCategoria === 'moto') && (!value || isNaN(n) || n < 1 || n > 250)) {
+                      if ((watchCategoria === 'auto' || watchCategoria === 'moto' || watchCategoria === 'cuatri') && (!value || isNaN(n) || n < 1 || n > 250)) {
                         return 'El número debe estar entre 01 y 250';
                       }
                       return true;
@@ -832,7 +887,9 @@ export default function PilotRegistration() {
                         const categoria = watch('categoria') || '';
                         const categoriaDetalle = categoria === 'auto' 
                           ? watch('categoria_auto') || ''
-                          : watch('categoria_moto') || '';
+                          : categoria === 'moto'
+                            ? watch('categoria_moto') || ''
+                            : watch('categoria_cuatri') || '';
                         
                         const fullImage = await generatePilotCardImage(
                           qrDataUrl!,
