@@ -96,6 +96,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState<string>('todos');
   const [filterCategoria, setFilterCategoria] = useState<string>('todos');
+  const [filterCategoriaDetalle, setFilterCategoriaDetalle] = useState<string>('todos');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [raceTimes, setRaceTimes] = useState<RaceTime[]>([]);
   const [timeForm, setTimeForm] = useState({
@@ -618,13 +619,40 @@ export default function AdminDashboard() {
                             </select>
                             <select
                               value={filterCategoria}
-                              onChange={(e) => setFilterCategoria(e.target.value)}
+                              onChange={(e) => { setFilterCategoria(e.target.value); setFilterCategoriaDetalle('todos'); }}
                               className="filter-select pilots-nav-filter"
                             >
                               <option value="todos">Todas las categorías</option>
-                              <option value="auto">Auto</option>
-                              <option value="moto">Moto</option>
+                              <option value="auto">🚗 Auto</option>
+                              <option value="moto">🏍️ Moto</option>
                             </select>
+                            {(() => {
+                              const subcats = Array.from(new Set(pilots
+                                .filter(p => p.categoria === 'auto' && p.categoria_auto)
+                                .map(p => p.categoria_auto!)
+                              )).sort();
+                              const subcatsMoto = Array.from(new Set(pilots
+                                .filter(p => p.categoria === 'moto' && p.categoria_moto)
+                                .map(p => p.categoria_moto!)
+                              )).sort();
+                              const allSubcats = [...subcats.map(s => `auto:${s}`), ...subcatsMoto.map(s => `moto:${s}`)];
+                              return allSubcats.length > 0 ? (
+                                <select
+                                  value={filterCategoriaDetalle}
+                                  onChange={(e) => setFilterCategoriaDetalle(e.target.value)}
+                                  className="filter-select pilots-nav-filter"
+                                  title="Filtrar por categoría detalle"
+                                >
+                                  <option value="todos">Todas las clases</option>
+                                  {subcats.map(s => (
+                                    <option key={s} value={`auto:${s}`}>Auto — {s}</option>
+                                  ))}
+                                  {subcatsMoto.map(s => (
+                                    <option key={s} value={`moto:${s}`}>Moto — {s}</option>
+                                  ))}
+                                </select>
+                              ) : null;
+                            })()}
                             <button
                               type="button"
                               onClick={() => navigate('/admin/scan')}
@@ -649,6 +677,11 @@ export default function AdminDashboard() {
                             }
                             if (filterEstado !== 'todos' && pilot.estado !== filterEstado) return false;
                             if (filterCategoria !== 'todos' && pilot.categoria !== filterCategoria) return false;
+                            if (filterCategoriaDetalle !== 'todos') {
+                              const [tipo, detalle] = filterCategoriaDetalle.split(':');
+                              if (tipo === 'auto' && (pilot.categoria !== 'auto' || pilot.categoria_auto !== detalle)) return false;
+                              if (tipo === 'moto' && (pilot.categoria !== 'moto' || pilot.categoria_moto !== detalle)) return false;
+                            }
                             return true;
                           });
                           const sorted = [...filtered].sort((a, b) => {
@@ -678,8 +711,32 @@ export default function AdminDashboard() {
                             </th>
                           );
 
+                          const countByTipo = { auto: pilots.filter(p => p.categoria === 'auto').length, moto: pilots.filter(p => p.categoria === 'moto').length };
+                          const countBySubcat = pilots.reduce<Record<string, number>>((acc, p) => {
+                            if (p.categoria === 'auto' && p.categoria_auto) {
+                              const k = `Auto — ${p.categoria_auto}`;
+                              acc[k] = (acc[k] || 0) + 1;
+                            }
+                            if (p.categoria === 'moto' && p.categoria_moto) {
+                              const k = `Moto — ${p.categoria_moto}`;
+                              acc[k] = (acc[k] || 0) + 1;
+                            }
+                            return acc;
+                          }, {});
+
                           return (
                             <>
+                              <div className="pilots-categories-summary">
+                                <span className="pilots-summary-tipo"><strong>🚗 Autos:</strong> {countByTipo.auto}</span>
+                                <span className="pilots-summary-tipo"><strong>🏍️ Motos:</strong> {countByTipo.moto}</span>
+                                {Object.keys(countBySubcat).length > 0 && (
+                                  <span className="pilots-summary-detalle">
+                                    {Object.entries(countBySubcat).sort((a, b) => b[1] - a[1]).map(([cat, n]) => (
+                                      <span key={cat} className="pilots-summary-badge">{cat}: {n}</span>
+                                    ))}
+                                  </span>
+                                )}
+                              </div>
                               <div className="table-container pilots-table-wrap">
                                 <table className="data-table data-table-pilots">
                                   <thead>
@@ -689,7 +746,6 @@ export default function AdminDashboard() {
                                       <th>DNI</th>
                                       <th>Email</th>
                                       <th>Teléfono</th>
-                                      <th>Tipo</th>
                                       <th>Categoría</th>
                                       <th>Nº</th>
                                       <ThSort field="estado" label="Estado" />
@@ -706,14 +762,17 @@ export default function AdminDashboard() {
                                         <td>{pilot.dni}</td>
                                         <td><span className="cell-email" title={pilot.email}>{pilot.email}</span></td>
                                         <td>{pilot.telefono}</td>
-                                        <td>
-                                          {pilot.categoria === 'auto' && <span className="vehicle-type-badge vehicle-auto">🚗 Auto</span>}
-                                          {pilot.categoria === 'moto' && <span className="vehicle-type-badge vehicle-moto">🏍️ Moto</span>}
-                                          {!pilot.categoria && '-'}
-                                        </td>
-                                        <td>
-                                          {pilot.categoria === 'auto' && pilot.categoria_auto && <span className="category-badge">{pilot.categoria_auto}</span>}
-                                          {pilot.categoria === 'moto' && pilot.categoria_moto && <span className="category-badge">{pilot.categoria_moto}</span>}
+                                        <td className="cell-categoria">
+                                          {pilot.categoria === 'auto' && (
+                                            <span className="category-full vehicle-type-badge vehicle-auto" title={`Auto — ${pilot.categoria_auto || 'N/A'}`}>
+                                              🚗 Auto{pilot.categoria_auto ? ` — ${pilot.categoria_auto}` : ''}
+                                            </span>
+                                          )}
+                                          {pilot.categoria === 'moto' && (
+                                            <span className="category-full vehicle-type-badge vehicle-moto" title={`Moto — ${pilot.categoria_moto || 'N/A'}`}>
+                                              🏍️ Moto{pilot.categoria_moto ? ` — ${pilot.categoria_moto}` : ''}
+                                            </span>
+                                          )}
                                           {!pilot.categoria && '-'}
                                         </td>
                                         <td>
@@ -759,10 +818,11 @@ export default function AdminDashboard() {
                                       <p><strong>DNI:</strong> {pilot.dni}</p>
                                       <p><strong>Email:</strong> {pilot.email}</p>
                                       <p><strong>Tel:</strong> {pilot.telefono}</p>
-                                      <p>
-                                        {pilot.categoria === 'auto' && <span className="vehicle-type-badge vehicle-auto">🚗 {pilot.categoria_auto || 'Auto'}</span>}
-                                        {pilot.categoria === 'moto' && <span className="vehicle-type-badge vehicle-moto">🏍️ {pilot.categoria_moto || 'Moto'}</span>}
-                                        {pilot.numero != null && <span className="number-badge">#{pilot.numero}</span>}
+                                      <p><strong>Categoría:</strong>{' '}
+                                        {pilot.categoria === 'auto' && <span className="vehicle-type-badge vehicle-auto">🚗 Auto{pilot.categoria_auto ? ` — ${pilot.categoria_auto}` : ''}</span>}
+                                        {pilot.categoria === 'moto' && <span className="vehicle-type-badge vehicle-moto">🏍️ Moto{pilot.categoria_moto ? ` — ${pilot.categoria_moto}` : ''}</span>}
+                                        {!pilot.categoria && '-'}
+                                        {pilot.numero != null && <span className="number-badge"> · Nº{pilot.numero}</span>}
                                       </p>
                                       <p className="pilot-card-mobile-date">
                                         {pilot.created_at ? new Date(pilot.created_at).toLocaleDateString('es-AR') : '-'}
