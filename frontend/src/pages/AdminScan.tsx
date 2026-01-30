@@ -152,32 +152,39 @@ export default function AdminScan() {
     setScanning(true);
   };
 
-  const fetchPilotById = async (pilotId: string): Promise<PilotInfo | null> => {
+  const fetchPilotById = async (pilotId: string): Promise<{ pilot: PilotInfo | null; status?: number; message?: string }> => {
     try {
+      const headers: Record<string, string> = { Accept: 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await axios.get(`/admin/pilots/${pilotId}`, {
-        headers: { Accept: 'application/json' },
+        headers,
         timeout: 15000
       });
       const data = res.data;
-      if (typeof data === 'string' && data.trim().startsWith('<')) return null;
+      if (typeof data === 'string' && data.trim().startsWith('<')) return { pilot: null };
       const d = typeof data === 'string' ? (() => { try { return JSON.parse(data); } catch { return null; } })() : data;
-      if (!d || typeof d !== 'object') return null;
+      if (!d || typeof d !== 'object') return { pilot: null };
       return {
-        id: d.id || pilotId,
-        nombre: d.nombre || '',
-        apellido: d.apellido || '',
-        dni: d.dni || '',
-        email: d.email || '',
-        telefono: d.telefono || '',
-        categoria: d.categoria || '',
-        categoria_auto: d.categoria_auto,
-        categoria_moto: d.categoria_moto,
-        numero: d.numero,
-        estado: d.estado || 'pendiente',
-        comprobante_pago_url: d.comprobante_pago_url
+        pilot: {
+          id: d.id || pilotId,
+          nombre: d.nombre || '',
+          apellido: d.apellido || '',
+          dni: d.dni || '',
+          email: d.email || '',
+          telefono: d.telefono || '',
+          categoria: d.categoria || '',
+          categoria_auto: d.categoria_auto,
+          categoria_moto: d.categoria_moto,
+          numero: d.numero,
+          estado: d.estado || 'pendiente',
+          comprobante_pago_url: d.comprobante_pago_url
+        }
       };
-    } catch {
-      return null;
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.error || err?.message;
+      console.error('fetchPilotById error:', status, err?.response?.data, msg);
+      return { pilot: null, status, message: typeof msg === 'string' ? msg : undefined };
     }
   };
 
@@ -189,16 +196,16 @@ export default function AdminScan() {
     setScannedData(null);
     const maxRetries = 3;
     const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+    let lastErr: { status?: number; message?: string } = {};
     for (let i = 0; i < maxRetries; i++) {
-      try {
-        const pilot = await fetchPilotById(pilotId);
-        if (pilot) {
-          setPilotInfo(pilot);
-          setError(null);
-          setLoading(false);
-          return;
-        }
-      } catch (_) {}
+      const { pilot, status, message } = await fetchPilotById(pilotId);
+      if (pilot) {
+        setPilotInfo(pilot);
+        setError(null);
+        setLoading(false);
+        return;
+      }
+      if (status !== undefined) lastErr = { status, message };
       if (i < maxRetries - 1) await delay(1000);
     }
     setPilotInfo({
@@ -211,7 +218,11 @@ export default function AdminScan() {
       categoria: '',
       estado: 'pendiente'
     });
-    setError('No se pudieron cargar los datos. Podés aprobar o rechazar igual.');
+    let errMsg = 'No se pudieron cargar los datos. Podés aprobar o rechazar igual.';
+    if (lastErr.status === 403) errMsg = 'Sesión expirada. Salí y volvé a iniciar sesión.';
+    else if (lastErr.status === 404) errMsg = 'Piloto no encontrado en la base de datos.';
+    else if (lastErr.message) errMsg = lastErr.message;
+    setError(errMsg);
     setLoading(false);
   };
 
@@ -275,8 +286,8 @@ export default function AdminScan() {
             setScannedData(qrData);
             setError(null);
             try {
-              const full = await fetchPilotById(pilotId);
-              if (full) setPilotInfo(full);
+              const { pilot } = await fetchPilotById(pilotId);
+              if (pilot) setPilotInfo(pilot);
             } catch (_) {
               setError('Datos mostrados desde el QR. Podés aprobar o rechazar.');
             }
@@ -371,8 +382,8 @@ export default function AdminScan() {
       if (qrData.id) {
         setLoading(true);
         try {
-          const full = await fetchPilotById(qrData.id);
-          if (full) setPilotInfo(full);
+          const { pilot } = await fetchPilotById(qrData.id);
+          if (pilot) setPilotInfo(pilot);
         } catch (_) {
           setError('Datos desde el QR. Podés aprobar o rechazar.');
         }
