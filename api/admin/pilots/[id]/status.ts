@@ -1,10 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabaseAdmin } from '../../../_utils/supabase';
 import { authenticateToken, requireAdmin } from '../../../_utils/auth';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { method, body } = req;
@@ -46,21 +42,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Estado inválido' });
     }
 
-    // Crear cliente con token del usuario autenticado o usar admin
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    
-    const client = token && supabaseUrl && supabaseAnonKey 
-      ? createClient(supabaseUrl, supabaseAnonKey, {
-          global: {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        })
-      : supabaseAdmin;
-
-    const { data, error } = await client
+    // Usar siempre admin: ya verificamos que el usuario es admin con nuestro JWT; Supabase no reconoce ese JWT y RLS bloquearía.
+    const { data, error } = await supabaseAdmin
       .from('pilots')
       .update({ estado })
       .eq('id', id)
