@@ -9,16 +9,25 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api';
 axios.defaults.baseURL = API_BASE;
 
 interface PilotData {
-  id: string;
-  dni: string;
-  nombre: string;
-  apellido: string;
-  categoria: string;
-  numero: number | null;
-  categoria_detalle: string | null;
+  id?: string;
+  dni?: string;
+  nombre?: string;
+  apellido?: string;
+  categoria?: string;
+  numero?: number | null;
+  categoria_detalle?: string | null;
   email?: string;
   telefono?: string;
-  url?: string; // URL opcional para redirección directa
+  url?: string;
+  // Formato corto (QR reducido para escanear mejor)
+  n?: string;
+  a?: string;
+  d?: string;
+  c?: string;
+  cd?: string;
+  e?: string;
+  t?: string;
+  num?: number | null;
 }
 
 interface PilotInfo {
@@ -167,9 +176,10 @@ export default function AdminScan() {
   const fetchPilotById = async (pilotId: string): Promise<{ pilot: PilotInfo | null; status?: number; message?: string }> => {
     try {
       const headers: Record<string, string> = { Accept: 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
       const base = typeof window !== 'undefined' ? window.location.origin + '/api' : (API_BASE || '/api');
-      const url = `${base}/admin/pilots/${pilotId}`;
+      const url = `${base}/admin/pilots/${encodeURIComponent(pilotId)}`;
       if (typeof window !== 'undefined') console.log('GET piloto:', url);
       const res = await axios.get(url, {
         headers,
@@ -235,12 +245,18 @@ export default function AdminScan() {
       categoria: '',
       estado: 'pendiente'
     });
-    let errMsg = 'No se pudieron cargar los datos. Podés aprobar o rechazar igual.';
-    if (lastErr.status === 403) errMsg = 'Sesión expirada. Salí y volvé a iniciar sesión.';
+    let errMsg = 'No se pudieron cargar los datos desde el servidor. Probá "Reintentar" o cerrando sesión y entrando de nuevo.';
+    if (lastErr.status === 403) errMsg = 'Sesión expirada. Cerrando sesión y volvé a entrar, o tocá "Reintentar".';
     else if (lastErr.status === 404) errMsg = 'Piloto no encontrado en la base de datos.';
     else if (lastErr.message) errMsg = lastErr.message;
     setError(errMsg);
     setLoading(false);
+  };
+
+  const retryLoadPilot = async () => {
+    if (!pilotInfo?.id) return;
+    setError(null);
+    await loadPilotById(pilotInfo.id);
   };
 
   const stopScanning = async () => {
@@ -289,23 +305,37 @@ export default function AdminScan() {
         qrData = JSON.parse(raw);
         console.log('✅ QR parseado como JSON:', qrData);
         
-        // Si el JSON tiene URL de aprobación, cargar piloto aquí (sin navegar)
-        if (qrData && (qrData.url?.includes('/admin/approve/') || qrData.id)) {
-          const pilotId = qrData.id || qrData.url?.split('/admin/approve/')[1]?.split('?')[0]?.split('#')[0]?.trim();
+        if (!qrData || typeof qrData !== 'object') {
+          qrData = null;
+        } else {
+        // Normalizar campos del QR (formato largo nombre/apellido o corto n/a para menos bytes)
+        const nom = qrData.nombre ?? qrData.n ?? '';
+        const ape = qrData.apellido ?? qrData.a ?? '';
+        const dniVal = qrData.dni ?? qrData.d ?? '';
+        const cat = qrData.categoria ?? qrData.c ?? '';
+        const catDet = qrData.categoria_detalle ?? qrData.cd ?? null;
+        const em = qrData.email ?? qrData.e ?? '';
+        const tel = qrData.telefono ?? qrData.t ?? '';
+        const numVal = qrData.numero ?? qrData.num ?? undefined;
+        const pilotIdFromQr = qrData.id ?? '';
+
+        // Si el JSON tiene URL de aprobación o id, cargar piloto aquí (sin navegar)
+        if (qrData.url?.includes('/admin/approve/') || pilotIdFromQr) {
+          const pilotId = pilotIdFromQr || qrData.url?.split('/admin/approve/')[1]?.split('?')[0]?.split('#')[0]?.trim();
           if (pilotId) {
             const pilotInfoFromQR: PilotInfo = {
               id: pilotId,
-              nombre: qrData.nombre || '',
-              apellido: qrData.apellido || '',
-              dni: qrData.dni || '',
-              email: qrData.email || '',
-              telefono: qrData.telefono || '',
-              categoria: qrData.categoria || '',
-              categoria_auto: qrData.categoria === 'auto' ? (qrData.categoria_detalle || undefined) : undefined,
-              categoria_moto: qrData.categoria === 'moto' ? (qrData.categoria_detalle || undefined) : undefined,
+              nombre: nom,
+              apellido: ape,
+              dni: dniVal,
+              email: em,
+              telefono: tel,
+              categoria: cat,
+              categoria_auto: cat === 'auto' ? (catDet || undefined) : undefined,
+              categoria_moto: cat === 'moto' ? (catDet || undefined) : undefined,
               categoria_moto_china: undefined,
-              categoria_cuatri: qrData.categoria === 'cuatri' ? (qrData.categoria_detalle || undefined) : undefined,
-              numero: qrData.numero ?? undefined,
+              categoria_cuatri: cat === 'cuatri' ? (catDet || undefined) : undefined,
+              numero: numVal ?? undefined,
               estado: 'pendiente',
               comprobante_pago_url: undefined
             };
@@ -317,15 +347,45 @@ export default function AdminScan() {
               const { pilot } = await fetchPilotById(pilotId);
               if (pilot) setPilotInfo(pilot);
             } catch (_) {
-              setError('Datos mostrados desde el QR. Podés aprobar o rechazar.');
+              setError('Datos del QR. No se pudo conectar al servidor; podés aprobar o rechazar igual.');
             }
             setLoading(false);
             return;
           }
+          setScannedData(qrData);
+          setPilotInfo({
+            id: '',
+            nombre: nom,
+            apellido: ape,
+            dni: dniVal,
+            email: em,
+            telefono: tel,
+            categoria: cat,
+            categoria_auto: cat === 'auto' ? (catDet || undefined) : undefined,
+            categoria_moto: cat === 'moto' ? (catDet || undefined) : undefined,
+            categoria_moto_china: undefined,
+            categoria_cuatri: cat === 'cuatri' ? (catDet || undefined) : undefined,
+            numero: numVal ?? undefined,
+            estado: 'pendiente',
+            comprobante_pago_url: undefined
+          });
+          setError('El QR no contiene un ID válido del piloto.');
+          return;
         }
+        } // cierra else (qrData es object)
       } catch (parseError) {
-        // Si no es JSON, puede ser solo un número (QR antiguo) o formato diferente
+        // Si no es JSON, intentar extraer ID (QR truncado o mal formado) o número
         console.log('⚠️ No es JSON válido, intentando otros formatos...');
+        
+        // Intentar extraer UUID del texto (QR truncado con "id":"uuid" o URL /admin/approve/uuid)
+        const idFromJson = raw.match(/"id"\s*:\s*"([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"/i);
+        const idFromUrl = raw.match(/\/admin\/approve\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+        const extractedId = idFromJson?.[1] || idFromUrl?.[1];
+        if (extractedId) {
+          console.log('📌 ID extraído del QR (truncado):', extractedId);
+          await loadPilotById(extractedId);
+          return;
+        }
         
         // Si es solo un número, buscar piloto por número
         const numeroMatch = raw.match(/^\d+$/);
@@ -340,6 +400,8 @@ export default function AdminScan() {
             const headers: Record<string, string> = { Accept: 'application/json' };
             if (token) headers['Authorization'] = `Bearer ${token}`;
             const base = typeof window !== 'undefined' ? window.location.origin + '/api' : (API_BASE || '/api');
+            const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+            if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
             const response = await axios.get(`${base}/admin/pilots?numero=${numero}`, { headers, timeout: 15000 });
             const data = response.data;
             const pilot = Array.isArray(data) ? data[0] : data;
@@ -382,54 +444,6 @@ export default function AdminScan() {
       if (!qrData) {
         setError('No se pudo leer la información del QR.');
         return;
-      }
-      
-      setScannedData(qrData);
-      
-      // Crear objeto PilotInfo con los datos del QR (mostrar todo lo que esté disponible)
-      const pilotInfoFromQR: PilotInfo = {
-        id: qrData.id || '',
-        nombre: qrData.nombre || 'No disponible',
-        apellido: qrData.apellido || 'No disponible',
-        dni: qrData.dni || 'No disponible',
-        email: qrData.email || 'No disponible',
-        telefono: qrData.telefono || 'No disponible',
-        categoria: qrData.categoria || '',
-        categoria_auto: qrData.categoria === 'auto' ? (qrData.categoria_detalle || undefined) : undefined,
-        categoria_moto: qrData.categoria === 'moto' ? (qrData.categoria_detalle || undefined) : undefined,
-        categoria_moto_china: undefined,
-        categoria_cuatri: qrData.categoria === 'cuatri' ? (qrData.categoria_detalle || undefined) : undefined,
-        numero: qrData.numero || undefined,
-        estado: 'pendiente', // Estado por defecto, se actualizará si se obtiene de la API
-        comprobante_pago_url: undefined
-      };
-      
-      console.log('✅ Información del piloto desde QR:', pilotInfoFromQR);
-      console.log('✅ Campos del QR original:', {
-        id: qrData.id,
-        nombre: qrData.nombre,
-        apellido: qrData.apellido,
-        dni: qrData.dni,
-        email: qrData.email,
-        telefono: qrData.telefono,
-        categoria: qrData.categoria,
-        categoria_detalle: qrData.categoria_detalle,
-        numero: qrData.numero
-      });
-      
-      setPilotInfo(pilotInfoFromQR);
-      
-      if (qrData.id) {
-        setLoading(true);
-        try {
-          const { pilot } = await fetchPilotById(qrData.id);
-          if (pilot) setPilotInfo(pilot);
-        } catch (_) {
-          setError('Datos desde el QR. Podés aprobar o rechazar.');
-        }
-        setLoading(false);
-      } else {
-        setError('El QR no contiene un ID válido del piloto.');
       }
     } catch (err: any) {
       console.error('❌ Error procesando QR:', err);
@@ -619,6 +633,13 @@ export default function AdminScan() {
             {!pilotInfo.id && (
               <div className="scan-alert scan-alert-error" style={{ marginTop: '1rem' }}>
                 <p>Este QR no tiene ID de piloto. No se puede aprobar ni rechazar desde aquí.</p>
+              </div>
+            )}
+            {error && pilotInfo.id && (
+              <div className="pilot-actions" style={{ marginTop: '0.5rem' }}>
+                <button type="button" onClick={retryLoadPilot} className="btn btn-secondary btn-small" disabled={loading}>
+                  🔄 Reintentar cargar datos
+                </button>
               </div>
             )}
             <div className="pilot-actions-main">

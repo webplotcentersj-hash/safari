@@ -434,18 +434,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log('🔗 Generando QR con URL única para piloto:', data.id);
         console.log('🔗 URL de aprobación:', approvalUrl);
         
-        // QR contiene tanto la URL como los datos JSON para compatibilidad
+        // QR con datos mínimos para escaneo fiable (menos bytes = menos truncados). La URL se arma en el front con id.
         const qrData = {
           id: data.id,
-          dni: data.dni,
-          nombre: data.nombre,
-          apellido: data.apellido,
-          categoria: data.categoria,
-          numero: data.numero,
-          categoria_detalle: data.categoria === 'auto' ? data.categoria_auto : data.categoria === 'moto' ? (data.categoria_moto || data.categoria_moto_china) : data.categoria_cuatri,
-          email: data.email,
-          telefono: data.telefono,
-          url: approvalUrl // URL para redirección directa
+          n: data.nombre,
+          a: data.apellido,
+          d: data.dni,
+          c: data.categoria,
+          cd: data.categoria === 'auto' ? data.categoria_auto : data.categoria === 'moto' ? (data.categoria_moto || data.categoria_moto_china) : data.categoria_cuatri,
+          e: data.email,
+          t: data.telefono,
+          num: data.numero
         };
         
         // El QR contiene JSON con datos del piloto + url: así al escanear se muestran nombre, DNI, etc. aunque falle la API
