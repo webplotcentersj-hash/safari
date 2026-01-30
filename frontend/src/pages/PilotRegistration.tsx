@@ -275,6 +275,7 @@ export default function PilotRegistration() {
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [usedNumbers, setUsedNumbers] = useState<number[]>([]);
   const [loadingNumbers, setLoadingNumbers] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
   const categoryRequestedRef = useRef<string | null>(null);
 
   const watchDni = watch('dni');
@@ -511,7 +512,65 @@ export default function PilotRegistration() {
             <img src="/logo.png" alt="Safari Tras las Sierras" className="registration-logo" />
             <h1>Inscripción de Pilotos</h1>
             <p className="subtitle">Completa todos los campos para inscribirte en el Safari Tras las Sierras</p>
+            <button
+              type="button"
+              onClick={() => setShowSecurityModal(true)}
+              className="registration-security-link"
+            >
+              <span className="registration-security-icon">🛡️</span>
+              Ver medidas de seguridad obligatorias
+            </button>
           </div>
+
+          {showSecurityModal && (
+            <div className="registration-modal-overlay" onClick={() => setShowSecurityModal(false)}>
+              <div className="registration-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="registration-modal-header">
+                  <div className="registration-modal-title-wrap">
+                    <span className="registration-modal-badge">Requisitos oficiales</span>
+                    <h2>Medidas de seguridad · Safari 2026</h2>
+                  </div>
+                  <button type="button" className="registration-modal-close" onClick={() => setShowSecurityModal(false)} aria-label="Cerrar">×</button>
+                </div>
+                <div className="registration-modal-body">
+                  <p className="registration-modal-intro">Estas son las medidas de seguridad para correr el <strong>Safari Tras las Sierras 2026</strong>.</p>
+                  <div className="registration-modal-dates">
+                    <span className="registration-modal-dates-label">📍 Valle Fértil</span>
+                    <div className="registration-modal-dates-grid">
+                      <span>🏍️ Motos: 6 al 8 de febrero</span>
+                      <span>🚗 Autos: 13 al 15 de febrero</span>
+                    </div>
+                  </div>
+                  <p className="registration-modal-source">El Gobierno de San Juan informa:</p>
+                  <section className="registration-modal-section">
+                    <h3><span className="registration-modal-section-icon">👥</span> Piloto y Copiloto</h3>
+                    <ul>
+                      <li>Cascos.</li>
+                      <li>Buzo antiflama.</li>
+                      <li>Butacas de competición.</li>
+                      <li>Cinturón de 5 puntos.</li>
+                    </ul>
+                  </section>
+                  <section className="registration-modal-section">
+                    <h3><span className="registration-modal-section-icon">🚗</span> Auto</h3>
+                    <p className="registration-modal-structure"><strong>Estructura para vuelco.</strong> Elementos mínimos: arco principal, arco delantero, barras longitudinales, barras de puertas (mínimo una por lado, generalmente en “X” o paralelas).</p>
+                    <ul>
+                      <li>Barreras en las ruedas de tracción.</li>
+                      <li>Cubre batería.</li>
+                      <li>Corta corriente interno y externo (VISIBLE).</li>
+                      <li>Matafuego de 2 kg.</li>
+                      <li>Red en los 2 laterales.</li>
+                      <li>3 banderas de 30×30 cm: <span className="flag flag-amarilla">Amarilla</span> (peligro, reducir velocidad, no adelantar), <span className="flag flag-roja">Roja</span> (peligro extremo, detenerse), <span className="flag flag-blanca">Blanca</span> (vehículo lento).</li>
+                    </ul>
+                  </section>
+                  <div className="registration-modal-warning">
+                    <span className="registration-modal-warning-icon">⚠️</span>
+                    <p>Todo aquel binomio que no cumpla estos requisitos no podrá ser de la partida en el Safari 2026.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="form-section">
