@@ -20,15 +20,9 @@ export async function authenticateToken(req: VercelRequest): Promise<AuthUser | 
   }
 
   try {
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    });
-
-    const { data: { user }, error } = await supabaseClient.auth.getUser();
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    // Pasar el JWT explícitamente: en el servidor no hay sesión, solo el header
+    const { data: { user }, error } = await supabaseClient.auth.getUser(token);
 
     if (error || !user) {
       return null;
