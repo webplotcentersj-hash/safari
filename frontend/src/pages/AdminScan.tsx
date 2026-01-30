@@ -312,6 +312,7 @@ export default function AdminScan() {
             setPilotInfo(pilotInfoFromQR);
             setScannedData(qrData);
             setError(null);
+            setLoading(true);
             try {
               const { pilot } = await fetchPilotById(pilotId);
               if (pilot) setPilotInfo(pilot);
@@ -331,13 +332,18 @@ export default function AdminScan() {
         if (numeroMatch) {
           const numero = parseInt(raw, 10);
           console.log('🔢 QR contiene solo número:', numero);
-          setError(`QR contiene solo el número ${numero}. Buscando piloto por número...`);
+          setLoading(true);
+          setError(`Buscando piloto con número ${numero}...`);
           
-          // Buscar piloto por número en la API
+          // Buscar piloto por número en la API (devuelve objeto único cuando hay ?numero=)
           try {
-            const response = await axios.get(`/admin/pilots?numero=${numero}`);
-            if (response.data && response.data.length > 0) {
-              const pilot = response.data[0];
+            const headers: Record<string, string> = { Accept: 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const base = typeof window !== 'undefined' ? window.location.origin + '/api' : (API_BASE || '/api');
+            const response = await axios.get(`${base}/admin/pilots?numero=${numero}`, { headers, timeout: 15000 });
+            const data = response.data;
+            const pilot = Array.isArray(data) ? data[0] : data;
+            if (pilot && typeof pilot === 'object' && pilot.id) {
               setPilotInfo({
                 id: pilot.id,
                 nombre: pilot.nombre,
@@ -355,14 +361,17 @@ export default function AdminScan() {
                 comprobante_pago_url: pilot.comprobante_pago_url
               });
               setError(null);
-              return;
-            } else {
-              setError(`No se encontró ningún piloto con el número ${numero}.`);
+              setLoading(false);
               return;
             }
+            setError(`No se encontró ningún piloto con el número ${numero}.`);
+            setLoading(false);
+            return;
           } catch (searchError: any) {
             console.error('Error buscando por número:', searchError);
-            setError(`Error al buscar piloto con número ${numero}.`);
+            const status = searchError?.response?.status;
+            setError(status === 403 ? 'Sesión expirada.' : `Error al buscar piloto con número ${numero}.`);
+            setLoading(false);
             return;
           }
         } else {
@@ -607,8 +616,13 @@ export default function AdminScan() {
               </div>
             )}
 
+            {!pilotInfo.id && (
+              <div className="scan-alert scan-alert-error" style={{ marginTop: '1rem' }}>
+                <p>Este QR no tiene ID de piloto. No se puede aprobar ni rechazar desde aquí.</p>
+              </div>
+            )}
             <div className="pilot-actions-main">
-              {pilotInfo.estado !== 'aprobado' && (
+              {pilotInfo.id && pilotInfo.estado !== 'aprobado' && (
                 <button
                   onClick={() => updatePilotStatus('aprobado')}
                   className="btn btn-success btn-large"
@@ -617,7 +631,7 @@ export default function AdminScan() {
                   ✓ Aprobar Piloto
                 </button>
               )}
-              {pilotInfo.estado !== 'rechazado' && (
+              {pilotInfo.id && pilotInfo.estado !== 'rechazado' && (
                 <button
                   onClick={() => updatePilotStatus('rechazado')}
                   className="btn btn-danger btn-large"
