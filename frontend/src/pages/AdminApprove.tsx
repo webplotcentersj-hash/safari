@@ -17,6 +17,7 @@ interface PilotInfo {
   categoria: string;
   categoria_auto?: string;
   categoria_moto?: string;
+  categoria_moto_china?: string;
   categoria_cuatri?: string;
   numero?: number;
   estado: string;
@@ -95,6 +96,7 @@ export default function AdminApprove() {
           categoria: pilotData.categoria || '',
           categoria_auto: pilotData.categoria_auto,
           categoria_moto: pilotData.categoria_moto,
+          categoria_moto_china: pilotData.categoria_moto_china,
           categoria_cuatri: pilotData.categoria_cuatri,
           numero: pilotData.numero,
           estado: pilotData.estado || 'pendiente',
@@ -308,7 +310,7 @@ export default function AdminApprove() {
                 <span className="detail-value">
                   {pilotInfo.categoria ? (pilotInfo.categoria === 'auto' ? 'AUTO' : pilotInfo.categoria === 'moto' ? 'MOTO' : 'CUATRI') : 'No disponible'}
                   {pilotInfo.categoria === 'auto' && pilotInfo.categoria_auto && ` - ${pilotInfo.categoria_auto}`}
-                  {pilotInfo.categoria === 'moto' && pilotInfo.categoria_moto && ` - ${pilotInfo.categoria_moto}`}
+                  {pilotInfo.categoria === 'moto' && (pilotInfo.categoria_moto || pilotInfo.categoria_moto_china) && ` - ${pilotInfo.categoria_moto || pilotInfo.categoria_moto_china}`}
                   {pilotInfo.categoria === 'cuatri' && pilotInfo.categoria_cuatri && ` - ${pilotInfo.categoria_cuatri}`}
                 </span>
               </div>

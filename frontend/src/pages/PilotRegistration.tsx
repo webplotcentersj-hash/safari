@@ -261,6 +261,7 @@ interface PilotFormData {
   categoria: string;
   categoria_auto?: string;
   categoria_moto?: string;
+  categoria_moto_china?: string;
   categoria_cuatri?: string;
   numero?: number;
   // estos campos no los completa el usuario, los llenamos nosotros con las URLs
@@ -277,6 +278,7 @@ export default function PilotRegistration() {
   const [usedNumbers, setUsedNumbers] = useState<number[]>([]);
   const [loadingNumbers, setLoadingNumbers] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [tipoMoto, setTipoMoto] = useState<'estandar' | 'china' | null>(null);
   const categoryRequestedRef = useRef<string | null>(null);
 
   const watchDni = watch('dni');
@@ -340,10 +342,18 @@ export default function PilotRegistration() {
 
   // Mantener el número seleccionado en el formulario (evita que se pierda al enviar)
   useEffect(() => {
-    if ((watchCategoria === 'auto' || watchCategoria === 'moto') && selectedNumber != null) {
+    if ((watchCategoria === 'auto' || watchCategoria === 'moto' || watchCategoria === 'cuatri') && selectedNumber != null) {
       setValue('numero', selectedNumber, { shouldValidate: false });
     }
   }, [watchCategoria, selectedNumber, setValue]);
+
+  // Al cambiar de Moto a otro tipo, resetear tipo de moto
+  useEffect(() => {
+    if (watchCategoria !== 'moto') {
+      setTipoMoto(null);
+      setValue('categoria_moto_china', undefined);
+    }
+  }, [watchCategoria, setValue]);
 
   const onSubmit = async (data: PilotFormData) => {
     setLoading(true);
@@ -426,12 +436,22 @@ export default function PilotRegistration() {
         }
       }
 
-      // Validar campos requeridos para motos
+      // Validar campos requeridos para motos (estándar o moto china)
       if (data.categoria === 'moto') {
-        if (!data.categoria_moto) {
+        const tieneCategoriaEstandar = !!data.categoria_moto;
+        const tieneCategoriaChina = !!data.categoria_moto_china;
+        if (!tieneCategoriaEstandar && !tieneCategoriaChina) {
           setMessage({
             type: 'error',
-            text: 'Debes seleccionar una categoría de moto.'
+            text: 'Debes elegir tipo de moto (Estándar o China) y seleccionar una categoría.'
+          });
+          setLoading(false);
+          return;
+        }
+        if (tieneCategoriaEstandar && tieneCategoriaChina) {
+          setMessage({
+            type: 'error',
+            text: 'Seleccioná solo un tipo: Estándar o Moto china.'
           });
           setLoading(false);
           return;
@@ -489,7 +509,8 @@ export default function PilotRegistration() {
         ...data,
         numero: numeroToSend,
         categoria_auto: data.categoria === 'auto' ? data.categoria_auto : null,
-        categoria_moto: data.categoria === 'moto' ? data.categoria_moto : null,
+        categoria_moto: data.categoria === 'moto' && !data.categoria_moto_china ? data.categoria_moto : null,
+        categoria_moto_china: data.categoria === 'moto' ? (data.categoria_moto_china || null) : null,
         categoria_cuatri: data.categoria === 'cuatri' ? data.categoria_cuatri : null,
         comprobante_pago_url: comprobanteUrl
       });
@@ -745,21 +766,71 @@ export default function PilotRegistration() {
               {watchCategoria === 'moto' && (
                 <>
                   <div className="form-group">
-                    <label>Categoría de Moto Enduro Safari *</label>
-                    <select {...register('categoria_moto', { 
-                      required: watchCategoria === 'moto' ? 'Debes seleccionar una categoría' : false 
-                    })}>
-                      <option value="">Seleccione categoría</option>
-                      <option value="1 SENIOR">1 SENIOR</option>
-                      <option value="2 JUNIOR">2 JUNIOR</option>
-                      <option value="3 MASTER A">3 MASTER A</option>
-                      <option value="4 MASTER B">4 MASTER B</option>
-                      <option value="5 MASTER C">5 MASTER C</option>
-                      <option value="6 PROMOCIONALES">6 PROMOCIONALES</option>
-                      <option value="7 JUNIOR Kids">7 JUNIOR Kids</option>
-                    </select>
-                    {errors.categoria_moto && <span className="error">{errors.categoria_moto.message}</span>}
+                    <label>Tipo de moto *</label>
+                    <div className="form-row-options" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                          type="radio"
+                          name="tipoMoto"
+                          checked={tipoMoto === 'estandar'}
+                          onChange={() => {
+                            setTipoMoto('estandar');
+                            setValue('categoria_moto_china', undefined);
+                          }}
+                        />
+                        Estándar (Enduro Safari)
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                          type="radio"
+                          name="tipoMoto"
+                          checked={tipoMoto === 'china'}
+                          onChange={() => {
+                            setTipoMoto('china');
+                            setValue('categoria_moto', undefined);
+                          }}
+                        />
+                        Moto china
+                      </label>
+                    </div>
                   </div>
+
+                  {tipoMoto === 'estandar' && (
+                    <div className="form-group">
+                      <label>Categoría de Moto Enduro Safari *</label>
+                      <select {...register('categoria_moto', { 
+                        required: watchCategoria === 'moto' && tipoMoto === 'estandar' ? 'Debes seleccionar una categoría' : false 
+                      })}>
+                        <option value="">Seleccione categoría</option>
+                        <option value="1 SENIOR">1 SENIOR</option>
+                        <option value="2 JUNIOR">2 JUNIOR</option>
+                        <option value="3 MASTER A">3 MASTER A</option>
+                        <option value="4 MASTER B">4 MASTER B</option>
+                        <option value="5 MASTER C">5 MASTER C</option>
+                        <option value="6 PROMOCIONALES">6 PROMOCIONALES</option>
+                        <option value="7 JUNIOR Kids">7 JUNIOR Kids</option>
+                      </select>
+                      {errors.categoria_moto && <span className="error">{errors.categoria_moto.message}</span>}
+                    </div>
+                  )}
+
+                  {tipoMoto === 'china' && (
+                    <div className="form-group">
+                      <label>Categoría de Moto China *</label>
+                      <select {...register('categoria_moto_china', { 
+                        required: watchCategoria === 'moto' && tipoMoto === 'china' ? 'Debes seleccionar una categoría' : false 
+                      })}>
+                        <option value="">Seleccione categoría</option>
+                        <option value="110 semi">110 semi</option>
+                        <option value="110 libre">110 libre</option>
+                        <option value="150 china">150 china</option>
+                        <option value="200 china">200 china</option>
+                        <option value="250 china">250 china</option>
+                        <option value="250 4v">250 4v</option>
+                      </select>
+                      {errors.categoria_moto_china && <span className="error">{errors.categoria_moto_china.message}</span>}
+                    </div>
+                  )}
 
                   <div className="form-group">
                     <p className="form-hint">Los números de Moto son independientes de los de Auto y Cuatriciclos.</p>
@@ -888,7 +959,7 @@ export default function PilotRegistration() {
                         const categoriaDetalle = categoria === 'auto' 
                           ? watch('categoria_auto') || ''
                           : categoria === 'moto'
-                            ? watch('categoria_moto') || ''
+                            ? (watch('categoria_moto') || watch('categoria_moto_china') || '')
                             : watch('categoria_cuatri') || '';
                         
                         const fullImage = await generatePilotCardImage(

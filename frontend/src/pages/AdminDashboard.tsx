@@ -24,6 +24,7 @@ interface Pilot {
   categoria?: string;
   categoria_auto?: string;
   categoria_moto?: string;
+  categoria_moto_china?: string;
   categoria_cuatri?: string;
   numero?: number;
   comprobante_pago_url?: string;
@@ -634,8 +635,8 @@ export default function AdminDashboard() {
                                 .map(p => p.categoria_auto!)
                               )).sort();
                               const subcatsMoto = Array.from(new Set(pilots
-                                .filter(p => p.categoria === 'moto' && p.categoria_moto)
-                                .map(p => p.categoria_moto!)
+                                .filter(p => p.categoria === 'moto' && (p.categoria_moto || p.categoria_moto_china))
+                                .map(p => p.categoria_moto || p.categoria_moto_china!)
                               )).sort();
                               const subcatsCuatri = Array.from(new Set(pilots
                                 .filter(p => p.categoria === 'cuatri' && p.categoria_cuatri)
@@ -682,14 +683,14 @@ export default function AdminDashboard() {
                           const filtered = pilots.filter((pilot) => {
                             if (searchTerm) {
                               const search = searchTerm.toLowerCase();
-                              if (!(pilot.nombre?.toLowerCase().includes(search) || pilot.apellido?.toLowerCase().includes(search) || pilot.dni?.toLowerCase().includes(search) || pilot.email?.toLowerCase().includes(search) || pilot.telefono?.toLowerCase().includes(search) || pilot.categoria_auto?.toLowerCase().includes(search) || pilot.categoria_moto?.toLowerCase().includes(search) || pilot.categoria_cuatri?.toLowerCase().includes(search) || pilot.numero?.toString().includes(search))) return false;
+                              if (!(pilot.nombre?.toLowerCase().includes(search) || pilot.apellido?.toLowerCase().includes(search) || pilot.dni?.toLowerCase().includes(search) || pilot.email?.toLowerCase().includes(search) || pilot.telefono?.toLowerCase().includes(search) || pilot.categoria_auto?.toLowerCase().includes(search) || pilot.categoria_moto?.toLowerCase().includes(search) || pilot.categoria_moto_china?.toLowerCase().includes(search) || pilot.categoria_cuatri?.toLowerCase().includes(search) || pilot.numero?.toString().includes(search))) return false;
                             }
                             if (filterEstado !== 'todos' && pilot.estado !== filterEstado) return false;
                             if (filterCategoria !== 'todos' && pilot.categoria !== filterCategoria) return false;
                             if (filterCategoriaDetalle !== 'todos') {
                               const [tipo, detalle] = filterCategoriaDetalle.split(':');
                               if (tipo === 'auto' && (pilot.categoria !== 'auto' || pilot.categoria_auto !== detalle)) return false;
-                              if (tipo === 'moto' && (pilot.categoria !== 'moto' || pilot.categoria_moto !== detalle)) return false;
+                              if (tipo === 'moto' && (pilot.categoria !== 'moto' || (pilot.categoria_moto !== detalle && pilot.categoria_moto_china !== detalle))) return false;
                               if (tipo === 'cuatri' && (pilot.categoria !== 'cuatri' || pilot.categoria_cuatri !== detalle)) return false;
                             }
                             return true;
@@ -727,8 +728,8 @@ export default function AdminDashboard() {
                               const k = `Auto — ${p.categoria_auto}`;
                               acc[k] = (acc[k] || 0) + 1;
                             }
-                            if (p.categoria === 'moto' && p.categoria_moto) {
-                              const k = `Moto — ${p.categoria_moto}`;
+                            if (p.categoria === 'moto' && (p.categoria_moto || p.categoria_moto_china)) {
+                              const k = `Moto — ${p.categoria_moto || p.categoria_moto_china}`;
                               acc[k] = (acc[k] || 0) + 1;
                             }
                             if (p.categoria === 'cuatri' && p.categoria_cuatri) {
@@ -784,8 +785,8 @@ export default function AdminDashboard() {
                                             </span>
                                           )}
                                           {pilot.categoria === 'moto' && (
-                                            <span className="category-full vehicle-type-badge vehicle-moto" title={`Moto — ${pilot.categoria_moto || 'N/A'}`}>
-                                              🏍️ Moto{pilot.categoria_moto ? ` — ${pilot.categoria_moto}` : ''}
+                                            <span className="category-full vehicle-type-badge vehicle-moto" title={`Moto — ${pilot.categoria_moto || pilot.categoria_moto_china || 'N/A'}`}>
+                                              🏍️ Moto{(pilot.categoria_moto || pilot.categoria_moto_china) ? ` — ${pilot.categoria_moto || pilot.categoria_moto_china}` : ''}
                                             </span>
                                           )}
                                           {pilot.categoria === 'cuatri' && (
@@ -840,7 +841,7 @@ export default function AdminDashboard() {
                                       <p><strong>Tel:</strong> {pilot.telefono}</p>
                                       <p><strong>Categoría:</strong>{' '}
                                         {pilot.categoria === 'auto' && <span className="vehicle-type-badge vehicle-auto">🚗 Auto{pilot.categoria_auto ? ` — ${pilot.categoria_auto}` : ''}</span>}
-                                        {pilot.categoria === 'moto' && <span className="vehicle-type-badge vehicle-moto">🏍️ Moto{pilot.categoria_moto ? ` — ${pilot.categoria_moto}` : ''}</span>}
+                                        {pilot.categoria === 'moto' && <span className="vehicle-type-badge vehicle-moto">🏍️ Moto{(pilot.categoria_moto || pilot.categoria_moto_china) ? ` — ${pilot.categoria_moto || pilot.categoria_moto_china}` : ''}</span>}
                                         {pilot.categoria === 'cuatri' && <span className="vehicle-type-badge vehicle-cuatri">🛞 Cuatri{pilot.categoria_cuatri ? ` — ${pilot.categoria_cuatri}` : ''}</span>}
                                         {!pilot.categoria && '-'}
                                         {pilot.numero != null && <span className="number-badge"> · Nº{pilot.numero}</span>}
@@ -1143,7 +1144,9 @@ export default function AdminDashboard() {
                               categoria: selectedPilot?.categoria || '',
                               categoria_detalle: selectedPilot?.categoria === 'auto' 
                                 ? selectedPilot?.categoria_auto || ''
-                                : selectedPilot?.categoria_moto || ''
+                                : selectedPilot?.categoria === 'moto'
+                                  ? (selectedPilot?.categoria_moto || selectedPilot?.categoria_moto_china || '')
+                                  : selectedPilot?.categoria_cuatri || ''
                             });
                           }}
                           required
@@ -1154,7 +1157,8 @@ export default function AdminDashboard() {
                               {pilot.nombre} {pilot.apellido} - {pilot.dni} 
                               {pilot.numero && ` (#${pilot.numero})`}
                               {pilot.categoria === 'auto' && pilot.categoria_auto && ` - ${pilot.categoria_auto}`}
-                              {pilot.categoria === 'moto' && pilot.categoria_moto && ` - ${pilot.categoria_moto}`}
+                              {pilot.categoria === 'moto' && (pilot.categoria_moto || pilot.categoria_moto_china) && ` - ${pilot.categoria_moto || pilot.categoria_moto_china}`}
+                              {pilot.categoria === 'cuatri' && pilot.categoria_cuatri && ` - ${pilot.categoria_cuatri}`}
                             </option>
                           ))}
                         </select>

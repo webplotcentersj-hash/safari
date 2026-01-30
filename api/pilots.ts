@@ -218,6 +218,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         categoria,
         categoria_auto,
         categoria_moto,
+        categoria_moto_china,
         categoria_cuatri,
         numero: numeroRaw,
         comprobante_pago_url,
@@ -271,13 +272,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
-      // Validar campos requeridos para motos
+      // Validar campos requeridos para motos (estándar o china: una u otra categoría)
       if (categoria === 'moto') {
         if (!numeroValid) {
           return res.status(400).json({ error: 'Para motos, debes seleccionar un número entre 01 y 250' });
         }
-        if (!categoria_moto) {
-          return res.status(400).json({ error: 'Para motos, debes seleccionar una categoría' });
+        const tieneCategoriaMoto = !!categoria_moto;
+        const tieneCategoriaMotoChina = !!categoria_moto_china;
+        if (!tieneCategoriaMoto && !tieneCategoriaMotoChina) {
+          return res.status(400).json({ error: 'Para motos, debes seleccionar una categoría (estándar o moto china)' });
+        }
+        if (tieneCategoriaMoto && tieneCategoriaMotoChina) {
+          return res.status(400).json({ error: 'Seleccioná solo una categoría: estándar o moto china' });
         }
         
         // Verificar si el número ya está asignado a otro piloto de MOTO
@@ -347,7 +353,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         copiloto_dni: copiloto_dni || null,
         categoria: categoria || null,
         categoria_auto: categoria === 'auto' ? categoria_auto : null,
-        categoria_moto: categoria === 'moto' ? categoria_moto : null,
+        categoria_moto: categoria === 'moto' && !categoria_moto_china ? categoria_moto : null,
+        categoria_moto_china: categoria === 'moto' ? (categoria_moto_china || null) : null,
         categoria_cuatri: categoria === 'cuatri' ? categoria_cuatri : null,
         numero: (categoria === 'auto' || categoria === 'moto' || categoria === 'cuatri') ? numero : null,
         comprobante_pago_url: comprobante_pago_url || null,
@@ -385,9 +392,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         // Columna inexistente (migración de cuatriciclos no aplicada en la BD)
         const msg = (error.message || '').toLowerCase();
-        if (error.code === '42703' || msg.includes('column') && (msg.includes('does not exist') || msg.includes('no existe') || msg.includes('categoria_cuatri'))) {
+        if (error.code === '42703' || msg.includes('column') && (msg.includes('does not exist') || msg.includes('no existe') || msg.includes('categoria_cuatri') || msg.includes('categoria_moto_china'))) {
           return res.status(503).json({
-            error: 'La base de datos aún no tiene la actualización de cuatriciclos. Por favor, contactá al administrador para que ejecute la migración en Supabase.',
+            error: 'La base de datos aún no tiene la actualización (cuatriciclos / motos chinas). Por favor, contactá al administrador para que ejecute la migración en Supabase.',
             details: error.message
           });
         }
@@ -435,7 +442,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           apellido: data.apellido,
           categoria: data.categoria,
           numero: data.numero,
-          categoria_detalle: data.categoria === 'auto' ? data.categoria_auto : data.categoria === 'moto' ? data.categoria_moto : data.categoria_cuatri,
+          categoria_detalle: data.categoria === 'auto' ? data.categoria_auto : data.categoria === 'moto' ? (data.categoria_moto || data.categoria_moto_china) : data.categoria_cuatri,
           email: data.email,
           telefono: data.telefono,
           url: approvalUrl // URL para redirección directa
@@ -471,7 +478,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           dni,
           categoria,
           numero || null,
-          categoria === 'auto' ? categoria_auto : categoria === 'moto' ? categoria_moto : categoria_cuatri,
+          categoria === 'auto' ? categoria_auto : categoria === 'moto' ? (categoria_moto || categoria_moto_china) : categoria_cuatri,
           qrDataUrl
         ).catch((emailError) => {
           console.error('❌ Error enviando email (no crítico):', emailError);
