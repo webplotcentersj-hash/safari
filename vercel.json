@@ -4,6 +4,10 @@
   "installCommand": "npm install && cd frontend && npm install && cd ../api && npm install",
   "rewrites": [
     {
+      "source": "/api/ticket-solicitud",
+      "destination": "/api/admin?__route=ticket-solicitud"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

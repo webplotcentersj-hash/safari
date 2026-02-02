@@ -34,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             categoria_moto
           )
         `)
-        .order('tiempo_segundos', { ascending: true, nullsLast: true });
+        .order('tiempo_segundos', { ascending: true });
 
       if (categoria) {
         queryBuilder = queryBuilder.eq('categoria', categoria);
