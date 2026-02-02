@@ -1,86 +1,90 @@
 import PDFDocument from 'pdfkit';
-import type { Readable } from 'stream';
+import QRCode from 'qrcode';
 
 export async function generateTicketPDF(ticket: any): Promise<Buffer> {
+  const precio = typeof ticket.precio === 'number' ? ticket.precio : parseFloat(ticket.precio) || 0;
+  const fecha = ticket.fecha_emision || ticket.created_at
+    ? new Date(ticket.fecha_emision || ticket.created_at).toLocaleString('es-AR')
+    : new Date().toLocaleString('es-AR');
+
+  const qrBuffer = await QRCode.toBuffer(ticket.codigo, {
+    width: 256,
+    margin: 2,
+    errorCorrectionLevel: 'M'
+  });
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
-      margins: { top: 50, bottom: 50, left: 50, right: 50 }
+      margins: { top: 40, bottom: 40, left: 40, right: 40 }
     });
 
     const buffers: Buffer[] = [];
     doc.on('data', buffers.push.bind(buffers));
-    doc.on('end', () => {
-      const pdfBuffer = Buffer.concat(buffers);
-      resolve(pdfBuffer);
-    });
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
 
+    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const centerX = doc.page.margins.left + pageWidth / 2;
+
     // Header
-    doc.fontSize(24)
+    doc.fontSize(22)
        .fillColor('#1a472a')
        .text('SAFARI TRAS LAS SIERRAS', { align: 'center' });
-    
-    doc.moveDown();
-    doc.fontSize(16)
+    doc.fontSize(14)
        .fillColor('#333')
        .text('Valle Fértil - San Juan', { align: 'center' });
-    
-    doc.moveDown(2);
+    doc.moveDown(1.5);
 
-    // Ticket info
-    doc.fontSize(20)
+    doc.fontSize(18)
        .fillColor('#1a472a')
        .text('TICKET DE ENTRADA', { align: 'center' });
-    
-    doc.moveDown(2);
+    doc.moveDown(1.5);
 
-    // Código del ticket
-    doc.fontSize(14)
-       .fillColor('#000')
-       .text(`Código: ${ticket.codigo}`, { align: 'left' });
-    
-    doc.moveDown();
-    doc.text(`Tipo: ${ticket.tipo}`, { align: 'left' });
-    doc.moveDown();
-    doc.text(`Nombre: ${ticket.nombre}`, { align: 'left' });
-    
+    // Código en recuadro
+    const codeBoxY = doc.y;
+    doc.rect(doc.page.margins.left, codeBoxY, pageWidth, 32)
+       .fillAndStroke('#e8f5e9', '#1a472a');
+    doc.fillColor('#1a472a')
+       .fontSize(12)
+       .text(ticket.codigo, doc.page.margins.left, codeBoxY + 10, { width: pageWidth, align: 'center' });
+    doc.y = codeBoxY + 32;
+    doc.moveDown(0.5);
+
+    // Dos columnas: datos a la izquierda, QR a la derecha
+    const col1Width = pageWidth * 0.58;
+    const col2Width = pageWidth * 0.42;
+    const startY = doc.y;
+
+    doc.fontSize(11).fillColor('#333');
+    doc.text(`Tipo: ${String(ticket.tipo).toUpperCase()}`, doc.page.margins.left, doc.y);
+    doc.moveDown(0.4);
+    doc.text(`Nombre: ${ticket.nombre || '—'}`, doc.page.margins.left, doc.y);
+    doc.moveDown(0.4);
     if (ticket.dni) {
-      doc.moveDown();
-      doc.text(`DNI: ${ticket.dni}`, { align: 'left' });
+      doc.text(`DNI: ${ticket.dni}`, doc.page.margins.left, doc.y);
+      doc.moveDown(0.4);
     }
-    
     if (ticket.email) {
-      doc.moveDown();
-      doc.text(`Email: ${ticket.email}`, { align: 'left' });
+      doc.text(`Email: ${ticket.email}`, doc.page.margins.left, doc.y);
+      doc.moveDown(0.4);
     }
-    
-    doc.moveDown();
-    doc.fontSize(16)
-       .fillColor('#1a472a')
-       .text(`Precio: $${ticket.precio.toFixed(2)}`, { align: 'left' });
-    
-    doc.moveDown(2);
-    
-    // Fecha
-    const fecha = new Date(ticket.fecha_emision).toLocaleString('es-AR');
-    doc.fontSize(10)
-       .fillColor('#666')
-       .text(`Fecha de emisión: ${fecha}`, { align: 'left' });
-    
-    doc.moveDown(3);
-    
-    // Footer
-    doc.fontSize(10)
-       .fillColor('#666')
-       .text('Este ticket es personal e intransferible.', { align: 'center' });
-    doc.text('Presentar este documento en la entrada del evento.', { align: 'center' });
-    
-    // QR Code placeholder
-    doc.moveDown(2);
-    doc.fontSize(8)
-       .fillColor('#999')
-       .text(`Código de verificación: ${ticket.codigo}`, { align: 'center' });
+    doc.fontSize(14).fillColor('#1a472a');
+    doc.text(`Precio: $${precio.toFixed(2)}`, doc.page.margins.left, doc.y);
+    doc.moveDown(0.6);
+    doc.fontSize(9).fillColor('#666');
+    doc.text(`Emitido: ${fecha}`, doc.page.margins.left, doc.y);
+
+    const qrSize = 100;
+    const qrX = doc.page.margins.left + col1Width + (col2Width - qrSize) / 2;
+    const qrY = startY;
+    doc.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
+    doc.fontSize(8).fillColor('#666').text('Escanear en entrada', qrX, qrY + qrSize + 4, { width: qrSize, align: 'center' });
+
+    doc.y = Math.max(doc.y, qrY + qrSize + 24);
+    doc.moveDown(1.5);
+    doc.fontSize(10).fillColor('#666')
+       .text('Este ticket es personal e intransferible. Presentar en la entrada.', { align: 'center' });
 
     doc.end();
   });

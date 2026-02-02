@@ -3,8 +3,9 @@ import { supabaseAdmin } from './_utils/supabase';
 import { generateTicketPDF } from './_utils/pdfGenerator';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { method, url } = req;
+  const { method, url, query: queryParams } = req;
   const path = url?.split('?')[0] || '';
+  const query = queryParams || {};
   
   if (method === 'POST' && path === '/api/tickets/generate') {
     // Generar ticket

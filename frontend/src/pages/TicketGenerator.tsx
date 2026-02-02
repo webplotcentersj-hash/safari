@@ -1,12 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 
-// Configurar base URL para producción
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 axios.defaults.baseURL = API_BASE_URL;
 import { Link } from 'react-router-dom';
 import './TicketGenerator.css';
+
+// Tipos de ticket con precios predefinidos (podés ajustar valores)
+const TICKET_TYPES = [
+  { value: 'general', label: 'General', precio: 5000 },
+  { value: 'vip', label: 'VIP', precio: 8000 },
+  { value: 'estudiante', label: 'Estudiante', precio: 3500 },
+  { value: 'menor', label: 'Menor (hasta 12 años)', precio: 2000 }
+] as const;
 
 interface TicketFormData {
   tipo: string;
@@ -17,16 +24,25 @@ interface TicketFormData {
 }
 
 export default function TicketGenerator() {
-  const { register, handleSubmit, formState: { errors } } = useForm<TicketFormData>();
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<TicketFormData>({
+    defaultValues: { tipo: '', precio: 0 }
+  });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const watchTipo = watch('tipo');
+
+  // Al elegir tipo, asignar el precio predefinido
+  useEffect(() => {
+    const t = TICKET_TYPES.find((x) => x.value === watchTipo);
+    if (t) setValue('precio', t.precio);
+  }, [watchTipo, setValue]);
 
   const onSubmit = async (data: TicketFormData) => {
     setLoading(true);
     setMessage(null);
 
     try {
-      const response = await axios.post('/api/tickets/generate', data, {
+      const response = await axios.post('/tickets/generate', data, {
         responseType: 'blob'
       });
       
@@ -38,7 +54,9 @@ export default function TicketGenerator() {
       link.click();
       link.remove();
       
-      setMessage({ type: 'success', text: '¡Ticket generado exitosamente! El PDF se ha descargado.' });
+      setMessage({ type: 'success', text: '¡Ticket generado! El PDF se descargó. Presentalo en la entrada.' });
+      window.URL.revokeObjectURL(url);
+      setTimeout(() => setMessage(null), 5000);
     } catch (error: any) {
       setMessage({
         type: 'error',
@@ -74,11 +92,17 @@ export default function TicketGenerator() {
                 {...register('tipo', { required: 'El tipo de ticket es requerido' })}
               >
                 <option value="">Seleccione un tipo</option>
-                <option value="general">General</option>
-                <option value="vip">VIP</option>
-                <option value="estudiante">Estudiante</option>
-                <option value="menor">Menor</option>
+                {TICKET_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label} — $ {t.precio.toLocaleString('es-AR')}
+                  </option>
+                ))}
               </select>
+              {watchTipo && (
+                <p className="form-hint">
+                  Precio: $ {TICKET_TYPES.find((t) => t.value === watchTipo)?.precio.toLocaleString('es-AR') ?? 0}
+                </p>
+              )}
               {errors.tipo && <span className="error">{errors.tipo.message}</span>}
             </div>
 
@@ -118,20 +142,8 @@ export default function TicketGenerator() {
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Precio *</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                {...register('precio', { 
-                  required: 'El precio es requerido',
-                  min: { value: 0, message: 'El precio debe ser mayor o igual a 0' }
-                })}
-                placeholder="0.00"
-              />
-              {errors.precio && <span className="error">{errors.precio.message}</span>}
-            </div>
+            <input type="hidden" {...register('precio', { required: true, min: 0 })} />
+            {errors.precio && <span className="error">Seleccioná un tipo de ticket.</span>}
 
             <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? 'Generando ticket...' : 'Generar y Descargar Ticket'}

@@ -37,6 +37,13 @@
   font-size: 1.1rem;
 }
 
+.ticket-generator-card .form-hint {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  color: #65b330;
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   .ticket-generator-page {
     padding: 30px 15px;
