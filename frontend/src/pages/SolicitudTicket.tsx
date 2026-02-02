@@ -203,9 +203,12 @@ export default function SolicitudTicket() {
                       {s.ticket_codigos && s.ticket_codigos.length > 0 ? (
                         <>
                           <button type="button" className="btn-descarga" onClick={() => s.id && descargarPdfSolicitud(s.id)}>Descargar todos (PDF)</button>
-                          {s.ticket_codigos.map((codigo: string, j: number) => (
-                            <button key={j} type="button" className="btn-descarga" onClick={() => descargarPdfPorCodigo(codigo)}>Ticket{s.ticket_codigos.length > 1 ? ` ${j + 1}` : ''} (PDF)</button>
-                          ))}
+                          {s.ticket_codigos.map((codigo: string, j: number) => {
+                            const total = s.ticket_codigos?.length || 0;
+                            return (
+                              <button key={j} type="button" className="btn-descarga" onClick={() => descargarPdfPorCodigo(codigo)}>Ticket{total > 1 ? ` ${j + 1}` : ''} (PDF)</button>
+                            );
+                          })}
                         </>
                       ) : s.ticket_codigo ? (
                         <button type="button" className="btn-descarga" onClick={() => descargarPdfPorCodigo(s.ticket_codigo!)}>Descargar ticket (PDF)</button>
