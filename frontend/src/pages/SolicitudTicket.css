@@ -1,146 +1,269 @@
 .solicitud-ticket {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #1a472a 0%, #0d2818 100%);
+  background: linear-gradient(160deg, #1a472a 0%, #0f3320 40%, #0d2818 100%);
   color: #fff;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.solicitud-ticket::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(101, 179, 48, 0.25), transparent);
+  pointer-events: none;
 }
 
 .solicitud-header {
-  padding: 2rem 1rem;
+  padding: 2.5rem 1rem 2rem;
   text-align: center;
-}
-
-.solicitud-header .back-link {
-  color: rgba(255,255,255,0.9);
-  text-decoration: none;
-  display: inline-block;
-  margin-bottom: 1rem;
-}
-
-.solicitud-header .back-link:hover {
-  text-decoration: underline;
+  position: relative;
+  z-index: 1;
 }
 
 .solicitud-header h1 {
-  margin: 0 0 0.5rem;
-  font-size: 1.75rem;
+  margin: 0 0 0.75rem;
+  font-size: 2rem;
+  font-weight: 700;
   color: #fff;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.2);
 }
 
 .solicitud-header p {
   margin: 0;
-  opacity: 0.9;
+  opacity: 0.95;
   max-width: 480px;
   margin-left: auto;
   margin-right: auto;
-  color: #fff;
+  color: rgba(255,255,255,0.95);
+  font-size: 1.05rem;
+  line-height: 1.5;
 }
 
 .solicitud-main {
-  padding: 2rem 1rem;
+  padding: 0 1rem 3rem;
   max-width: 560px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .solicitud-form-card,
 .solicitud-consulta-card {
-  background: rgba(255,255,255,0.08);
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 16px;
+  padding: 1.75rem;
   margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.solicitud-form-card:hover,
+.solicitud-consulta-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12);
 }
 
 .solicitud-form-card h2,
 .solicitud-consulta-card h2 {
-  margin: 0 0 1rem;
-  font-size: 1.25rem;
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 600;
   color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.solicitud-form-card h2::before {
+  content: '';
+  width: 4px;
+  height: 1.2em;
+  background: linear-gradient(to bottom, #65b330, #4caf50);
+  border-radius: 2px;
+}
+
+.solicitud-consulta-card h2::before {
+  content: '';
+  width: 4px;
+  height: 1.2em;
+  background: linear-gradient(to bottom, #42a5f5, #2196f3);
+  border-radius: 2px;
 }
 
 .solicitud-form-card .form-group,
 .solicitud-consulta-card .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.15rem;
 }
 
 .solicitud-form-card label,
 .solicitud-consulta-card label {
   display: block;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.4rem;
   font-size: 0.9rem;
-  color: #fff;
+  font-weight: 500;
+  color: rgba(255,255,255,0.95);
 }
 
 .solicitud-form-card input[type="text"],
 .solicitud-form-card input[type="email"],
-.solicitud-form-card input[type="file"],
 .solicitud-consulta-card input[type="email"] {
   width: 100%;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 8px;
-  background: rgba(255,255,255,0.1);
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
   color: #fff;
   box-sizing: border-box;
+  font-size: 1rem;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.solicitud-form-card input[type="text"]:focus,
+.solicitud-form-card input[type="email"]:focus,
+.solicitud-consulta-card input[type="email"]:focus {
+  outline: none;
+  border-color: rgba(101, 179, 48, 0.8);
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 0 0 3px rgba(101, 179, 48, 0.2);
+}
+
+.solicitud-form-card input[type="file"] {
+  width: 100%;
+  padding: 0.65rem 0;
+  color: rgba(255,255,255,0.9);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.solicitud-form-card input[type="file"]::file-selector-button {
+  padding: 0.5rem 1rem;
+  margin-right: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.solicitud-form-card input[type="file"]::file-selector-button:hover {
+  background: rgba(255,255,255,0.25);
 }
 
 .solicitud-form-card input::placeholder,
 .solicitud-consulta-card input::placeholder {
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.45);
 }
 
 .solicitud-form-card .mensaje,
 .solicitud-consulta-card .sin-resultados {
-  margin: 0.75rem 0;
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-size: 0.9rem;
+  margin: 1rem 0 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .solicitud-form-card .mensaje.ok {
-  background: rgba(76, 175, 80, 0.3);
+  background: rgba(76, 175, 80, 0.25);
   color: #c8e6c9;
+  border: 1px solid rgba(76, 175, 80, 0.4);
 }
 
 .solicitud-form-card .mensaje.error {
-  background: rgba(244, 67, 54, 0.3);
+  background: rgba(244, 67, 54, 0.2);
   color: #ffcdd2;
+  border: 1px solid rgba(244, 67, 54, 0.35);
 }
 
 .solicitud-form-card .btn,
 .solicitud-consulta-card .btn {
-  margin-top: 0.5rem;
-  padding: 0.6rem 1.2rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+}
+
+.solicitud-form-card .btn:not(:disabled):hover,
+.solicitud-consulta-card .btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+
+.solicitud-form-card .btn:not(:disabled):active {
+  transform: translateY(0);
 }
 
 .solicitud-form-card .btn-primary {
-  background: #4caf50;
+  background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
   color: #fff;
+  box-shadow: 0 4px 14px rgba(76, 175, 80, 0.4);
+}
+
+.solicitud-form-card .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5bc85f 0%, #4caf50 100%);
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.45);
+}
+
+.solicitud-form-card .btn-primary:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
 }
 
 .solicitud-consulta-card .btn-secondary {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.15);
   color: #fff;
-  border: 1px solid rgba(255,255,255,0.4);
+  border: 2px solid rgba(255,255,255,0.4);
+}
+
+.solicitud-consulta-card .btn-secondary:hover:not(:disabled) {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.6);
+}
+
+.solicitud-consulta-card p {
+  color: rgba(255,255,255,0.9);
+  font-size: 0.95rem;
+  margin: 0 0 1rem;
+  line-height: 1.5;
 }
 
 .solicitudes-list {
   list-style: none;
   padding: 0;
-  margin: 1rem 0 0;
+  margin: 1.25rem 0 0;
 }
 
 .solicitudes-list li {
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.06);
+  padding: 1rem 1rem;
+  margin-bottom: 0.6rem;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.solicitudes-list li:hover {
+  background: rgba(255,255,255,0.12);
+  transform: translateX(4px);
 }
 
 .solicitudes-list li.estado-pendiente { border-left: 4px solid #ff9800; }
@@ -148,23 +271,33 @@
 .solicitudes-list li.estado-rechazado { border-left: 4px solid #f44336; }
 
 .solicitudes-list .btn-descarga {
-  background: #4caf50;
+  background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
   color: #fff;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   text-decoration: none;
   font-size: 0.9rem;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .solicitudes-list .btn-descarga:hover {
-  opacity: 0.9;
-}
-
-.solicitud-consulta-card p {
-  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
 }
 
 .solicitud-consulta-card .sin-resultados {
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.85);
   margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 480px) {
+  .solicitud-header h1 {
+    font-size: 1.6rem;
+  }
+  .solicitud-form-card,
+  .solicitud-consulta-card {
+    padding: 1.35rem;
+  }
 }

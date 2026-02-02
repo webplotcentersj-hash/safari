@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './SolicitudTicket.css';
 
@@ -85,7 +84,6 @@ export default function SolicitudTicket() {
     <div className="solicitud-ticket" style={{ minHeight: '100vh', background: 'linear-gradient(to bottom, #1a472a 0%, #0d2818 100%)', color: '#fff' }}>
       <header className="solicitud-header">
         <div className="container" style={{ maxWidth: 960, margin: '0 auto', padding: '0 1rem' }}>
-          <Link to="/" className="back-link">← Volver</Link>
           <h1>Pedir ticket de entrada</h1>
           <p>Completá el formulario y subí tu comprobante de pago. Cuando lo aprobemos podrás descargar tu ticket.</p>
         </div>
