@@ -1060,46 +1060,100 @@ export default function AdminDashboard() {
               <div className="admin-content">
                 <div className="card">
                   <h2>Solicitudes de ticket</h2>
-                  <p style={{ color: '#666', marginBottom: '1rem' }}>Usuarios que enviaron nombre, email y comprobante (pueden pedir 1 o más tickets). Aprobá para crear los tickets; ellos podrán descargarlos desde la página pública.</p>
-                  <div className="table-container">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Nombre</th>
-                          <th>Email</th>
-                          <th>Cant.</th>
-                          <th>Comprobante</th>
-                          <th>Estado</th>
-                          <th>Fecha</th>
-                          <th>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {solicitudes.map((s) => (
-                          <tr key={s.id}>
-                            <td>{s.nombre}</td>
-                            <td>{s.email}</td>
-                            <td>{s.cantidad ?? 1}</td>
-                            <td>{s.comprobante_pago_url ? <a href={s.comprobante_pago_url} target="_blank" rel="noopener noreferrer">Ver</a> : '—'}</td>
-                            <td><span className={`status-badge ${s.estado === 'aprobado' ? 'status-disponible' : s.estado === 'rechazado' ? 'status-usado' : ''}`}>{s.estado}</span></td>
-                            <td>{new Date(s.created_at).toLocaleDateString('es-AR')}</td>
-                            <td>
-                              {s.estado === 'pendiente' && (
-                                <>
-                                  <button onClick={() => approveSolicitud(s.id)} className="btn btn-primary btn-sm" style={{ marginRight: 6 }}>Aprobar</button>
-                                  <button onClick={() => rejectSolicitud(s.id)} className="btn btn-secondary btn-sm">Rechazar</button>
-                                </>
-                              )}
-                              {s.estado === 'aprobado' && (s.ticket_codigos?.length || s.ticket_id) && (
-                                <span style={{ color: '#4caf50' }}>{s.ticket_codigos?.length || 1} ticket(s) creado(s)</span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {solicitudes.length === 0 && <p style={{ color: '#666' }}>No hay solicitudes.</p>}
+                  <p style={{ color: '#666', marginBottom: '1rem' }}>Usuarios que enviaron nombre, email y comprobante (pueden pedir 1 o más tickets). Al aprobar se crean los tickets y la solicitud pasa a &quot;Aprobados&quot;.</p>
+
+                  {(() => {
+                    const pendientes = solicitudes.filter((s) => s.estado === 'pendiente');
+                    const aprobados = solicitudes.filter((s) => s.estado === 'aprobado');
+                    const rechazados = solicitudes.filter((s) => s.estado === 'rechazado');
+                    const renderRow = (s: any, showActions: boolean) => (
+                      <tr key={s.id}>
+                        <td>{s.nombre}</td>
+                        <td>{s.email}</td>
+                        <td>{s.cantidad ?? 1}</td>
+                        <td>{s.comprobante_pago_url ? <a href={s.comprobante_pago_url} target="_blank" rel="noopener noreferrer">Ver</a> : '—'}</td>
+                        <td>{new Date(s.created_at).toLocaleDateString('es-AR')}</td>
+                        {showActions && (
+                          <td>
+                            <button onClick={() => approveSolicitud(s.id)} className="btn btn-primary btn-sm" style={{ marginRight: 6 }}>Aprobar</button>
+                            <button onClick={() => rejectSolicitud(s.id)} className="btn btn-secondary btn-sm">Rechazar</button>
+                          </td>
+                        )}
+                        {!showActions && s.estado === 'aprobado' && (
+                          <td><span style={{ color: '#4caf50' }}>{s.ticket_codigos?.length || (s.ticket_id ? 1 : 0)} ticket(s) creado(s)</span></td>
+                        )}
+                        {!showActions && s.estado === 'rechazado' && <td>—</td>}
+                      </tr>
+                    );
+                    return (
+                      <>
+                        <h3 style={{ marginTop: 0, marginBottom: '0.75rem' }}>Pendientes</h3>
+                        {pendientes.length > 0 ? (
+                          <div className="table-container">
+                            <table className="data-table">
+                              <thead>
+                                <tr>
+                                  <th>Nombre</th>
+                                  <th>Email</th>
+                                  <th>Cant.</th>
+                                  <th>Comprobante</th>
+                                  <th>Fecha</th>
+                                  <th>Acciones</th>
+                                </tr>
+                              </thead>
+                              <tbody>{pendientes.map((s) => renderRow(s, true))}</tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <p style={{ color: '#666', marginBottom: '1.5rem' }}>No hay solicitudes pendientes.</p>
+                        )}
+
+                        <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Aprobados</h3>
+                        {aprobados.length > 0 ? (
+                          <div className="table-container">
+                            <table className="data-table">
+                              <thead>
+                                <tr>
+                                  <th>Nombre</th>
+                                  <th>Email</th>
+                                  <th>Cant.</th>
+                                  <th>Comprobante</th>
+                                  <th>Fecha</th>
+                                  <th></th>
+                                </tr>
+                              </thead>
+                              <tbody>{aprobados.map((s) => renderRow({ ...s, estado: 'aprobado' }, false))}</tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <p style={{ color: '#666', marginBottom: '1.5rem' }}>Ninguna solicitud aprobada aún.</p>
+                        )}
+
+                        {rechazados.length > 0 && (
+                          <>
+                            <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Rechazados</h3>
+                            <div className="table-container">
+                              <table className="data-table">
+                                <thead>
+                                  <tr>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Cant.</th>
+                                    <th>Comprobante</th>
+                                    <th>Fecha</th>
+                                    <th></th>
+                                  </tr>
+                                </thead>
+                                <tbody>{rechazados.map((s) => renderRow({ ...s, estado: 'rechazado' }, false))}</tbody>
+                              </table>
+                            </div>
+                          </>
+                        )}
+
+                        {solicitudes.length === 0 && <p style={{ color: '#666' }}>No hay solicitudes.</p>}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             )}
