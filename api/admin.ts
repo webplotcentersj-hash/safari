@@ -13,9 +13,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (String((q as any).__route) === 'ticket-solicitud') {
     if (method === 'POST') {
       try {
-        const { nombre, email, comprobanteBase64, fileName } = body || {};
+        const { nombre, email, comprobanteBase64, fileName, cantidad: cantidadBody } = body || {};
         if (!nombre || !email) return res.status(400).json({ error: 'Nombre y email son requeridos' });
         if (!comprobanteBase64 || typeof comprobanteBase64 !== 'string') return res.status(400).json({ error: 'El comprobante de pago (imagen) es obligatorio' });
+        const cantidad = Math.max(1, Math.min(100, parseInt(String(cantidadBody || 1), 10) || 1));
         const buf = Buffer.from(comprobanteBase64, 'base64');
         const ext = (fileName && String(fileName).split('.').pop()) || 'jpg';
         const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -24,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { data: urlData } = supabaseAdmin.storage.from('comprobantes-pago').getPublicUrl(upload.path);
         const comprobante_pago_url = urlData?.publicUrl || null;
         if (!comprobante_pago_url) return res.status(500).json({ error: 'Error al guardar el comprobante.' });
-        const { data: sol, error } = await supabaseAdmin.from('ticket_solicitudes').insert({ nombre, email, comprobante_pago_url, estado: 'pendiente' }).select('id, estado, created_at').single();
+        const { data: sol, error } = await supabaseAdmin.from('ticket_solicitudes').insert({ nombre, email, comprobante_pago_url, estado: 'pendiente', cantidad }).select('id, estado, created_at').single();
         if (error) { console.error('Insert ticket_solicitud error:', error); return res.status(500).json({ error: 'Error al registrar la solicitud.' }); }
         return res.status(201).json({ message: 'Solicitud recibida. Te avisaremos cuando sea aprobada.', id: sol.id });
       } catch (e: any) { console.error('Ticket solicitud POST error:', e); return res.status(500).json({ error: 'Error al enviar la solicitud.' }); }
@@ -33,17 +34,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const email = (q.email as string)?.trim();
         if (!email) return res.status(400).json({ error: 'Indicá tu email para consultar' });
-        const { data: list, error } = await supabaseAdmin.from('ticket_solicitudes').select('id, nombre, email, estado, comprobante_pago_url, ticket_id, created_at').eq('email', email).order('created_at', { ascending: false });
+        const { data: list, error } = await supabaseAdmin.from('ticket_solicitudes').select('id, nombre, email, estado, comprobante_pago_url, ticket_id, cantidad, created_at').eq('email', email).order('created_at', { ascending: false });
         if (error) { console.error('Get ticket_solicitudes error:', error); return res.status(500).json({ error: 'Error al consultar.' }); }
-        const tickets: { [id: string]: { codigo: string } } = {};
+        const ticketCodigosBySolicitud: { [solicitudId: string]: string[] } = {};
         if (list?.length) {
-          const ids = list.map((s: any) => s.ticket_id).filter(Boolean);
-          if (ids.length) {
-            const { data: t } = await supabaseAdmin.from('tickets').select('id, codigo').in('id', ids);
-            if (t) t.forEach((x: any) => { tickets[x.id] = { codigo: x.codigo }; });
+          const { data: tList } = await supabaseAdmin.from('tickets').select('id, codigo, solicitud_id').in('solicitud_id', list.map((s: any) => s.id));
+          if (tList) {
+            for (const t of tList) {
+              const sid = t.solicitud_id;
+              if (sid) {
+                if (!ticketCodigosBySolicitud[sid]) ticketCodigosBySolicitud[sid] = [];
+                ticketCodigosBySolicitud[sid].push(t.codigo);
+              }
+            }
+          }
+          for (const s of list) {
+            if (!ticketCodigosBySolicitud[s.id] && (s as any).ticket_id) {
+              const { data: one } = await supabaseAdmin.from('tickets').select('codigo').eq('id', (s as any).ticket_id).single();
+              if (one) ticketCodigosBySolicitud[s.id] = [one.codigo];
+            }
           }
         }
-        const out = (list || []).map((s: any) => ({ id: s.id, nombre: s.nombre, email: s.email, estado: s.estado, comprobante_pago_url: s.comprobante_pago_url, ticket_codigo: s.ticket_id ? tickets[s.ticket_id]?.codigo : null, created_at: s.created_at }));
+        const out = (list || []).map((s: any) => ({
+          id: s.id, nombre: s.nombre, email: s.email, estado: s.estado, comprobante_pago_url: s.comprobante_pago_url,
+          cantidad: s.cantidad ?? 1,
+          ticket_codigos: ticketCodigosBySolicitud[s.id] || [],
+          ticket_codigo: (ticketCodigosBySolicitud[s.id] && ticketCodigosBySolicitud[s.id][0]) || null,
+          created_at: s.created_at
+        }));
         return res.json(out);
       } catch (e: any) { console.error('Ticket solicitud GET error:', e); return res.status(500).json({ error: 'Error al consultar.' }); }
     }
@@ -91,13 +109,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.json({ message: 'Solicitud rechazada' });
         }
         if (action === 'approve') {
-          const codigo = `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-          const { data: newTicket, error: ticketErr } = await supabaseAdmin.from('tickets').insert({
-            codigo, tipo: 'general', nombre: sol.nombre, dni: null, email: sol.email, precio: 0, usado: false
-          }).select('id').single();
-          if (ticketErr) { console.error('Create ticket on approve error:', ticketErr); return res.status(500).json({ error: 'Error al crear el ticket' }); }
-          await supabaseAdmin.from('ticket_solicitudes').update({ estado: 'aprobado', ticket_id: newTicket.id }).eq('id', id);
-          return res.json({ message: 'Solicitud aprobada. Ticket creado.', ticket_id: newTicket.id, codigo });
+          const cantidad = Math.max(1, Math.min(100, parseInt(String((sol as any).cantidad || 1), 10) || 1));
+          const codigos: string[] = [];
+          let firstTicketId: string | null = null;
+          for (let i = 0; i < cantidad; i++) {
+            const codigo = `TKT-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+            const { data: newTicket, error: ticketErr } = await supabaseAdmin.from('tickets').insert({
+              codigo, tipo: 'general', nombre: sol.nombre, dni: null, email: sol.email, precio: 0, usado: false, solicitud_id: id
+            }).select('id').single();
+            if (ticketErr) { console.error('Create ticket on approve error:', ticketErr); return res.status(500).json({ error: 'Error al crear el ticket' }); }
+            codigos.push(codigo);
+            if (!firstTicketId) firstTicketId = newTicket.id;
+          }
+          await supabaseAdmin.from('ticket_solicitudes').update({ estado: 'aprobado', ticket_id: firstTicketId }).eq('id', id);
+          return res.json({ message: `Solicitud aprobada. ${cantidad} ticket(s) creado(s).`, ticket_id: firstTicketId, codigos, codigo: codigos[0] });
         }
         return res.status(400).json({ error: 'Acción no válida' });
       } catch (e: any) {
@@ -503,7 +528,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      res.json(list || []);
+      const out = list || [];
+      if (out.length) {
+        const { data: ticketsBySol } = await supabaseAdmin.from('tickets').select('solicitud_id, codigo').in('solicitud_id', out.map((s: any) => s.id));
+        const bySol: { [id: string]: string[] } = {};
+        if (ticketsBySol) for (const t of ticketsBySol) {
+          if (t.solicitud_id) { if (!bySol[t.solicitud_id]) bySol[t.solicitud_id] = []; bySol[t.solicitud_id].push(t.codigo); }
+        }
+        for (const s of out) {
+          (s as any).ticket_codigos = bySol[s.id] || [];
+          if (!(s as any).cantidad) (s as any).cantidad = 1;
+        }
+      }
+      res.json(out);
     } catch (e: any) {
       console.error('Get ticket-solicitudes error:', e);
       res.status(500).json({ error: 'Error al listar solicitudes' });
@@ -527,29 +564,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.json({ message: 'Solicitud rechazada' });
       }
       if (action === 'approve') {
-        const codigo = `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-        const { data: newTicket, error: ticketErr } = await supabaseAdmin
-          .from('tickets')
-          .insert({
-            codigo,
-            tipo: 'general',
-            nombre: sol.nombre,
-            dni: null,
-            email: sol.email,
-            precio: 0,
-            usado: false
-          })
-          .select('id')
-          .single();
-        if (ticketErr) {
-          console.error('Create ticket on approve error:', ticketErr);
-          return res.status(500).json({ error: 'Error al crear el ticket' });
+        const cantidad = Math.max(1, Math.min(100, parseInt(String((sol as any).cantidad || 1), 10) || 1));
+        const codigos: string[] = [];
+        let firstTicketId: string | null = null;
+        for (let i = 0; i < cantidad; i++) {
+          const codigo = `TKT-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+          const { data: newTicket, error: ticketErr } = await supabaseAdmin
+            .from('tickets')
+            .insert({
+              codigo,
+              tipo: 'general',
+              nombre: sol.nombre,
+              dni: null,
+              email: sol.email,
+              precio: 0,
+              usado: false,
+              solicitud_id: id
+            })
+            .select('id')
+            .single();
+          if (ticketErr) {
+            console.error('Create ticket on approve error:', ticketErr);
+            return res.status(500).json({ error: 'Error al crear el ticket' });
+          }
+          codigos.push(codigo);
+          if (!firstTicketId) firstTicketId = newTicket.id;
         }
         await supabaseAdmin
           .from('ticket_solicitudes')
-          .update({ estado: 'aprobado', ticket_id: newTicket.id })
+          .update({ estado: 'aprobado', ticket_id: firstTicketId })
           .eq('id', id);
-        return res.json({ message: 'Solicitud aprobada. Ticket creado.', ticket_id: newTicket.id, codigo });
+        return res.json({ message: `Solicitud aprobada. ${cantidad} ticket(s) creado(s).`, ticket_id: firstTicketId, codigos, codigo: codigos[0] });
       }
       return res.status(400).json({ error: 'Acción no válida' });
     } catch (e: any) {

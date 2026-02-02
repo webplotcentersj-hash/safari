@@ -23,6 +23,7 @@ function fileToBase64(file: File): Promise<string> {
 export default function SolicitudTicket() {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
+  const [cantidad, setCantidad] = useState(1);
   const [file, setFile] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; text: string } | null>(null);
@@ -51,10 +52,12 @@ export default function SolicitudTicket() {
         comprobanteBase64 = await fileToBase64(file);
         fileName = file.name;
       }
-      await axios.post('/ticket-solicitud', { nombre: nombre.trim(), email: email.trim(), comprobanteBase64, fileName });
-      setMensaje({ tipo: 'ok', text: 'Solicitud enviada. Cuando la aprobemos podrás consultar tu ticket acá abajo.' });
+      const cant = Math.max(1, Math.min(100, cantidad));
+      await axios.post('/ticket-solicitud', { nombre: nombre.trim(), email: email.trim(), cantidad: cant, comprobanteBase64, fileName });
+      setMensaje({ tipo: 'ok', text: 'Solicitud enviada. Cuando la aprobemos podrás consultar tus tickets acá abajo.' });
       setNombre('');
       setEmail('');
+      setCantidad(1);
       setFile(null);
       setFormKey((k) => k + 1);
     } catch (err: any) {
@@ -102,6 +105,10 @@ export default function SolicitudTicket() {
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="tu@email.com" />
             </div>
             <div className="form-group">
+              <label>Cantidad de tickets *</label>
+              <input type="number" min={1} max={100} value={cantidad} onChange={(e) => setCantidad(Math.max(1, Math.min(100, parseInt(e.target.value, 10) || 1)))} />
+            </div>
+            <div className="form-group">
               <label>Comprobante de pago (imagen) *</label>
               <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
             </div>
@@ -123,12 +130,12 @@ export default function SolicitudTicket() {
           </form>
           {Array.isArray(solicitudes) && solicitudes.length > 0 && (
             <ul className="solicitudes-list">
-              {solicitudes.map((s: { id?: string; nombre?: string; estado?: string; ticket_codigo?: string }, i: number) => (
+              {solicitudes.map((s: { id?: string; nombre?: string; estado?: string; ticket_codigo?: string; ticket_codigos?: string[]; cantidad?: number }, i: number) => (
                 <li key={s.id ?? `s-${i}`} className={`estado-${s.estado ?? ''}`}>
-                  <span><strong>{s.nombre ?? ''}</strong> – {s.estado ?? ''}</span>
-                  {s.estado === 'aprobado' && s.ticket_codigo && (
-                    <a href={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/tickets/download/${s.ticket_codigo}`} target="_blank" rel="noopener noreferrer" className="btn-descarga">Descargar ticket (PDF)</a>
-                  )}
+                  <span><strong>{s.nombre ?? ''}</strong> – {s.estado ?? ''}{s.cantidad && s.cantidad > 1 ? ` (${s.cantidad} tickets)` : ''}</span>
+                  {s.estado === 'aprobado' && (s.ticket_codigos?.length ? s.ticket_codigos : s.ticket_codigo ? [s.ticket_codigo] : []).map((codigo: string, j: number) => (
+                    <a key={j} href={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/tickets/download/${codigo}`} target="_blank" rel="noopener noreferrer" className="btn-descarga">Descargar ticket{s.ticket_codigos && s.ticket_codigos.length > 1 ? ` ${j + 1}` : ''} (PDF)</a>
+                  ))}
                 </li>
               ))}
             </ul>

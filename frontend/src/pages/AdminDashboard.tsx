@@ -1060,13 +1060,14 @@ export default function AdminDashboard() {
               <div className="admin-content">
                 <div className="card">
                   <h2>Solicitudes de ticket</h2>
-                  <p style={{ color: '#666', marginBottom: '1rem' }}>Usuarios que enviaron nombre, email y comprobante. Aprobá para crear el ticket; ellos podrán descargarlo desde la página pública.</p>
+                  <p style={{ color: '#666', marginBottom: '1rem' }}>Usuarios que enviaron nombre, email y comprobante (pueden pedir 1 o más tickets). Aprobá para crear los tickets; ellos podrán descargarlos desde la página pública.</p>
                   <div className="table-container">
                     <table className="data-table">
                       <thead>
                         <tr>
                           <th>Nombre</th>
                           <th>Email</th>
+                          <th>Cant.</th>
                           <th>Comprobante</th>
                           <th>Estado</th>
                           <th>Fecha</th>
@@ -1078,6 +1079,7 @@ export default function AdminDashboard() {
                           <tr key={s.id}>
                             <td>{s.nombre}</td>
                             <td>{s.email}</td>
+                            <td>{s.cantidad ?? 1}</td>
                             <td>{s.comprobante_pago_url ? <a href={s.comprobante_pago_url} target="_blank" rel="noopener noreferrer">Ver</a> : '—'}</td>
                             <td><span className={`status-badge ${s.estado === 'aprobado' ? 'status-disponible' : s.estado === 'rechazado' ? 'status-usado' : ''}`}>{s.estado}</span></td>
                             <td>{new Date(s.created_at).toLocaleDateString('es-AR')}</td>
@@ -1088,8 +1090,8 @@ export default function AdminDashboard() {
                                   <button onClick={() => rejectSolicitud(s.id)} className="btn btn-secondary btn-sm">Rechazar</button>
                                 </>
                               )}
-                              {s.estado === 'aprobado' && s.ticket_id && (
-                                <span style={{ color: '#4caf50' }}>Ticket creado</span>
+                              {s.estado === 'aprobado' && (s.ticket_codigos?.length || s.ticket_id) && (
+                                <span style={{ color: '#4caf50' }}>{s.ticket_codigos?.length || 1} ticket(s) creado(s)</span>
                               )}
                             </td>
                           </tr>
