@@ -87,11 +87,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  // GET /api/tickets?action=download&codigo=XXX&format=base64 (o action=download_solicitud&solicitud_id=XXX)
+  // Así Vercel enruta a api/tickets.ts. Base64 evita corrupción del binario.
+  if (method === 'GET' && (path === '/api/tickets' || path.startsWith('/api/tickets?')) && ((query.action === 'download' && query.codigo) || (query.action === 'download_solicitud' && query.solicitud_id))) {
+    try {
+      const useBase64 = (query.format as string) === 'base64' || true;
+      let buffer: Buffer;
+      let filename: string;
+      if (query.action === 'download_solicitud' && query.solicitud_id) {
+        const solicitudId = String(query.solicitud_id).trim();
+        const { data: tickets, error } = await supabaseAdmin.from('tickets').select('*').eq('solicitud_id', solicitudId).order('codigo');
+        if (error || !tickets?.length) return res.status(404).json({ error: 'No hay tickets para esta solicitud' });
+        const pdfBuffer = await generateTicketsPDF(tickets);
+        buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+        filename = 'tickets-solicitud.pdf';
+      } else {
+        const codigo = String(query.codigo || '').trim();
+        if (!codigo) return res.status(400).json({ error: 'Código requerido' });
+        const { data: ticket, error } = await supabaseAdmin.from('tickets').select('*').eq('codigo', codigo).single();
+        if (error || !ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
+        const pdfBuffer = await generateTicketPDF(ticket);
+        buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+        filename = `ticket-${codigo}.pdf`;
+      }
+      return res.status(200).json({ pdf: buffer.toString('base64'), filename });
+    } catch (e: any) {
+      console.error('Download ticket PDF (query) error:', e);
+      return res.status(500).json({ error: 'Error al generar el PDF' });
+    }
+  }
+
   // GET /api/tickets/download/:codigo - Público: descargar PDF del ticket (quien tenga el código)
+  // En Vercel el binario se corrompe; usamos ?format=base64 y el cliente decodifica.
   if (method === 'GET' && path.startsWith('/api/tickets/download/')) {
     try {
+      const useBase64 = (query.format as string) === 'base64';
       const segment = path.split('/api/tickets/download/')[1]?.split('?')[0] || '';
-      // download-solicitud/:id → todos los tickets de esa solicitud en un PDF
+      let buffer: Buffer;
+      let filename: string;
+
       if (segment.startsWith('solicitud/')) {
         const solicitudId = segment.replace('solicitud/', '').trim();
         if (!solicitudId) return res.status(400).json({ error: 'ID de solicitud requerido' });
@@ -102,23 +136,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .order('codigo');
         if (error || !tickets?.length) return res.status(404).json({ error: 'No hay tickets para esta solicitud' });
         const pdfBuffer = await generateTicketsPDF(tickets);
-        const buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
-        res.status(200);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename="tickets-solicitud.pdf"');
-        res.setHeader('Content-Length', String(buffer.length));
-        res.setHeader('Cache-Control', 'no-transform');
-        return res.end(buffer);
+        buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+        filename = 'tickets-solicitud.pdf';
+      } else {
+        const codigo = segment;
+        if (!codigo) return res.status(400).json({ error: 'Código requerido' });
+        const { data: ticket, error } = await supabaseAdmin.from('tickets').select('*').eq('codigo', codigo).single();
+        if (error || !ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
+        const pdfBuffer = await generateTicketPDF(ticket);
+        buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+        filename = `ticket-${codigo}.pdf`;
       }
-      const codigo = segment;
-      if (!codigo) return res.status(400).json({ error: 'Código requerido' });
-      const { data: ticket, error } = await supabaseAdmin.from('tickets').select('*').eq('codigo', codigo).single();
-      if (error || !ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
-      const pdfBuffer = await generateTicketPDF(ticket);
-      const buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+
+      if (useBase64) {
+        res.status(200).json({ pdf: buffer.toString('base64'), filename });
+        return;
+      }
       res.status(200);
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="ticket-${codigo}.pdf"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Content-Length', String(buffer.length));
       res.setHeader('Cache-Control', 'no-transform');
       return res.end(buffer);
@@ -203,10 +239,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.error('Bulk ticket generation error:', error);
       res.status(500).json({ error: 'Error al generar los tickets' });
     }
-  } else if (method === 'PATCH' && (path.startsWith('/api/tickets/use/') || query.codigo)) {
-    // Marcar ticket como usado
+  } else if (method === 'PATCH' && (path === '/api/tickets' || path.startsWith('/api/tickets?') || path.startsWith('/api/tickets/use/') || query.codigo)) {
+    // Marcar ticket como usado (PATCH /api/tickets?codigo=XXX para que Vercel enrute a api/tickets.ts)
     try {
-      const codigo = (path.split('/api/tickets/use/')[1] || query.codigo) as string;
+      const codigoRaw = (path.split('/api/tickets/use/')[1]?.split('?')[0] || (query.codigo as string) || (req.body && (req.body as any).codigo)) as string;
+      const codigo = typeof codigoRaw === 'string' ? codigoRaw.trim() : '';
       
       if (!codigo) {
         return res.status(400).json({ error: 'Código requerido' });

@@ -405,32 +405,32 @@ export default function AdminDashboard() {
 
   const downloadTicketPDF = async (codigo: string) => {
     try {
-      const response = await axios.get(`/admin/tickets/${codigo}/pdf`, {
-        responseType: 'blob'
-      });
-      const contentType = response.headers['content-type'] || '';
-      if (contentType.includes('application/json')) {
-        const text = await response.data.text();
-        const err = JSON.parse(text);
-        alert(err.error || 'Error al descargar el PDF');
+      const response = await axios.get('/tickets', { params: { action: 'download', codigo, format: 'base64' } });
+      const data = response.data as { pdf?: string; filename?: string; error?: string };
+      if (data.error || !data.pdf) {
+        alert(data.error || 'No se pudo descargar el PDF');
         return;
       }
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const binary = atob(data.pdf);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `ticket-${codigo}.pdf`);
+      link.setAttribute('download', data.filename || `ticket-${codigo}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error('Error downloading PDF:', error);
-      if (error.response?.data instanceof Blob) {
+      const data = error.response?.data;
+      if (data?.error) {
+        alert(data.error);
+      } else if (typeof data === 'object' && data !== null) {
         try {
-          const text = await error.response.data.text();
-          const err = JSON.parse(text);
-          alert(err.error || 'Error al descargar el PDF');
+          alert((data as { error?: string }).error || 'Error al descargar el PDF');
           return;
         } catch (_) {}
       }
@@ -1076,7 +1076,7 @@ export default function AdminDashboard() {
                                 onClick={async () => {
                                   setMarcandoTicket(ticket.codigo);
                                   try {
-                                    await axios.patch(`/tickets/use/${encodeURIComponent(ticket.codigo)}`);
+                                    await axios.patch('/tickets', null, { params: { codigo: ticket.codigo } });
                                     setTickets((prev) => prev.map((t) => (t.codigo === ticket.codigo ? { ...t, usado: true } : t)));
                                   } catch (err: any) {
                                     alert(err.response?.data?.error || 'Error al marcar');

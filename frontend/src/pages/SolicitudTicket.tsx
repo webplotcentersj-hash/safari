@@ -84,28 +84,36 @@ export default function SolicitudTicket() {
   };
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const descargarPdf = async (url: string, nombreArchivo: string) => {
+  const apiBase = baseUrl + (baseUrl.endsWith('/') ? '' : '/') + 'api';
+  const descargarPdfPorCodigo = async (codigo: string) => {
+    const url = `${apiBase}/tickets?action=download&codigo=${encodeURIComponent(codigo)}&format=base64`;
+    await descargarPdfUrl(url, `ticket-${codigo}.pdf`);
+  };
+  const descargarPdfSolicitud = async (solicitudId: string) => {
+    const url = `${apiBase}/tickets?action=download_solicitud&solicitud_id=${encodeURIComponent(solicitudId)}&format=base64`;
+    await descargarPdfUrl(url, 'tickets-solicitud.pdf');
+  };
+  const descargarPdfUrl = async (url: string, nombreArchivo: string) => {
     try {
       const res = await fetch(url, { method: 'GET' });
-      const contentType = res.headers.get('Content-Type') || '';
-      if (!res.ok || (!contentType.includes('application/pdf') && !contentType.includes('octet-stream'))) {
-        const text = await res.text();
-        let msg = 'No se pudo descargar el PDF.';
-        try {
-          const j = JSON.parse(text);
-          if (j.error) msg = j.error;
-        } catch {
-          if (text) msg = text.slice(0, 100);
-        }
-        alert(msg);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) {
+        alert(data.error || 'No se pudo descargar el PDF.');
         return;
       }
-      const blob = await res.blob();
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = nombreArchivo;
-      link.click();
-      URL.revokeObjectURL(link.href);
+      if (data.pdf && typeof data.pdf === 'string') {
+        const binary = atob(data.pdf);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = data.filename || nombreArchivo;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      } else {
+        alert('No se recibió el PDF.');
+      }
     } catch (err: any) {
       alert(err?.message || 'Error al descargar.');
     }
@@ -164,10 +172,10 @@ export default function SolicitudTicket() {
                   {s.estado === 'aprobado' && (
                     <>
                       {(s.ticket_codigos?.length || s.ticket_codigo) && (
-                        <button type="button" className="btn-descarga" onClick={() => descargarPdf(`${baseUrl}/api/tickets/download/solicitud/${s.id}`, 'tickets-solicitud.pdf')}>Descargar todos (PDF)</button>
+                        <button type="button" className="btn-descarga" onClick={() => descargarPdfSolicitud(s.id!)}>Descargar todos (PDF)</button>
                       )}
                       {(s.ticket_codigos?.length ? s.ticket_codigos : s.ticket_codigo ? [s.ticket_codigo] : []).map((codigo: string, j: number) => (
-                        <button key={j} type="button" className="btn-descarga" onClick={() => descargarPdf(`${baseUrl}/api/tickets/download/${codigo}`, `ticket-${codigo}.pdf`)}>Ticket{s.ticket_codigos && s.ticket_codigos.length > 1 ? ` ${j + 1}` : ''} (PDF)</button>
+                        <button key={j} type="button" className="btn-descarga" onClick={() => descargarPdfPorCodigo(codigo)}>Ticket{s.ticket_codigos && s.ticket_codigos.length > 1 ? ` ${j + 1}` : ''} (PDF)</button>
                       ))}
                     </>
                   )}

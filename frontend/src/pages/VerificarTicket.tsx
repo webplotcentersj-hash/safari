@@ -55,7 +55,7 @@ export default function VerificarTicket() {
     if (!ticket?.codigo || ticket.usado) return;
     setMarcando(true);
     try {
-      await axios.patch(`/tickets/use/${encodeURIComponent(ticket.codigo)}`);
+      await axios.patch('/tickets', null, { params: { codigo: ticket.codigo } });
       setTicket({ ...ticket, usado: true });
     } catch (err: any) {
       alert(err.response?.data?.error || 'Error al marcar el ticket');
