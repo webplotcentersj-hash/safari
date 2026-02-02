@@ -15,12 +15,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const { nombre, email, comprobanteBase64, fileName, cantidad: cantidadBody } = body || {};
         if (!nombre || !email) return res.status(400).json({ error: 'Nombre y email son requeridos' });
-        if (!comprobanteBase64 || typeof comprobanteBase64 !== 'string') return res.status(400).json({ error: 'El comprobante de pago (imagen) es obligatorio' });
+        if (!comprobanteBase64 || typeof comprobanteBase64 !== 'string') return res.status(400).json({ error: 'El comprobante de pago (imagen o PDF) es obligatorio' });
         const cantidad = Math.max(1, Math.min(100, parseInt(String(cantidadBody || 1), 10) || 1));
         const buf = Buffer.from(comprobanteBase64, 'base64');
-        const ext = (fileName && String(fileName).split('.').pop()) || 'jpg';
+        const rawExt = (fileName && String(fileName).split('.').pop()?.toLowerCase()) || 'jpg';
+        const ext = rawExt === 'pdf' ? 'pdf' : rawExt === 'png' ? 'png' : 'jpg';
         const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { data: upload, error: uploadError } = await supabaseAdmin.storage.from('comprobantes-pago').upload(safeName, buf, { contentType: ext === 'png' ? 'image/png' : 'image/jpeg', upsert: false });
+        const contentType = ext === 'pdf' ? 'application/pdf' : ext === 'png' ? 'image/png' : 'image/jpeg';
+        const { data: upload, error: uploadError } = await supabaseAdmin.storage.from('comprobantes-pago').upload(safeName, buf, { contentType, upsert: false });
         if (uploadError) { console.error('Upload comprobante error:', uploadError); return res.status(500).json({ error: 'Error al subir el comprobante. Reintentá.' }); }
         const { data: urlData } = supabaseAdmin.storage.from('comprobantes-pago').getPublicUrl(upload.path);
         const comprobante_pago_url = urlData?.publicUrl || null;

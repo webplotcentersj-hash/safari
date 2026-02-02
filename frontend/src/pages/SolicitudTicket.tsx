@@ -40,7 +40,7 @@ export default function SolicitudTicket() {
       return;
     }
     if (!file) {
-      setMensaje({ tipo: 'error', text: 'Tenés que subir el comprobante de pago (imagen).' });
+      setMensaje({ tipo: 'error', text: 'Tenés que subir el comprobante de pago (imagen o PDF).' });
       return;
     }
     setEnviando(true);
@@ -145,8 +145,8 @@ export default function SolicitudTicket() {
               <input type="number" min={1} max={100} value={cantidad} onChange={(e) => setCantidad(Math.max(1, Math.min(100, parseInt(e.target.value, 10) || 1)))} />
             </div>
             <div className="form-group">
-              <label>Comprobante de pago (imagen) *</label>
-              <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
+              <label>Comprobante de pago (imagen o PDF) *</label>
+              <input type="file" accept="image/*,.pdf,application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
             </div>
             {mensaje && <p className={`mensaje ${mensaje.tipo}`} role="alert">{mensaje.text}</p>}
             <button type="submit" className="btn btn-primary" disabled={enviando}>
@@ -171,6 +171,7 @@ export default function SolicitudTicket() {
                   <span><strong>{s.nombre ?? ''}</strong> – {s.estado ?? ''}{s.cantidad && s.cantidad > 1 ? ` (${s.cantidad} tickets)` : ''}</span>
                   {s.estado === 'aprobado' && (
                     <>
+                      <p className="solicitud-descarga-note">Mismo ticket que en el panel de administración.</p>
                       {(s.ticket_codigos?.length || s.ticket_codigo) && (
                         <button type="button" className="btn-descarga" onClick={() => descargarPdfSolicitud(s.id!)}>Descargar todos (PDF)</button>
                       )}

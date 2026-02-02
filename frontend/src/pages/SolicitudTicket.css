@@ -109,7 +109,7 @@
   margin-bottom: 0.4rem;
   font-size: 0.9rem;
   font-weight: 500;
-  color: rgba(255,255,255,0.95);
+  color: #fff;
 }
 
 .solicitud-form-card input[type="text"],
@@ -269,6 +269,12 @@
 .solicitudes-list li.estado-pendiente { border-left: 4px solid #ff9800; }
 .solicitudes-list li.estado-aprobado { border-left: 4px solid #4caf50; }
 .solicitudes-list li.estado-rechazado { border-left: 4px solid #f44336; }
+
+.solicitud-descarga-note {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.9);
+}
 
 .solicitudes-list .btn-descarga {
   display: inline-block;
