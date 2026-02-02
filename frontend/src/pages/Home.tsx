@@ -36,7 +36,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="home-card">
+            <div className="home-card home-card-ticket">
               <h2>Ticket de entrada</h2>
               <p>Pedí tu ticket y subí el comprobante de pago. Cuando lo aprobemos podrás descargarlo.</p>
               <Link to="/solicitar-ticket" className="btn btn-primary">

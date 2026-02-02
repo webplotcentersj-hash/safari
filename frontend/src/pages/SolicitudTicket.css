@@ -23,6 +23,7 @@
 .solicitud-header h1 {
   margin: 0 0 0.5rem;
   font-size: 1.75rem;
+  color: #fff;
 }
 
 .solicitud-header p {
@@ -31,6 +32,7 @@
   max-width: 480px;
   margin-left: auto;
   margin-right: auto;
+  color: #fff;
 }
 
 .solicitud-main {
@@ -51,6 +53,7 @@
 .solicitud-consulta-card h2 {
   margin: 0 0 1rem;
   font-size: 1.25rem;
+  color: #fff;
 }
 
 .solicitud-form-card .form-group,
@@ -63,6 +66,7 @@
   display: block;
   margin-bottom: 0.35rem;
   font-size: 0.9rem;
+  color: #fff;
 }
 
 .solicitud-form-card input[type="text"],
@@ -156,7 +160,11 @@
   opacity: 0.9;
 }
 
+.solicitud-consulta-card p {
+  color: #fff;
+}
+
 .solicitud-consulta-card .sin-resultados {
-  color: rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.9);
   margin-top: 1rem;
 }

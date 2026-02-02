@@ -97,6 +97,27 @@
   line-height: 1.6;
 }
 
+.home-card-ticket {
+  background: linear-gradient(135deg, #1a472a 0%, #0d2818 100%);
+  color: #fff;
+}
+
+.home-card-ticket h2,
+.home-card-ticket p {
+  color: #fff;
+}
+
+.home-card-ticket .btn-primary {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: 2px solid #fff;
+}
+
+.home-card-ticket .btn-primary:hover {
+  background: rgba(255,255,255,0.3);
+  color: #fff;
+}
+
 .home-footer {
   background-color: #333;
   color: white;

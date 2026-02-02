@@ -4,7 +4,9 @@ import axios from 'axios';
 import './SolicitudTicket.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
-axios.defaults.baseURL = API_BASE;
+if (typeof window !== 'undefined') {
+  axios.defaults.baseURL = API_BASE;
+}
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -25,6 +27,7 @@ export default function SolicitudTicket() {
   const [file, setFile] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; text: string } | null>(null);
+  const [formKey, setFormKey] = useState(0);
 
   const [emailConsulta, setEmailConsulta] = useState('');
   const [consultando, setConsultando] = useState(false);
@@ -54,8 +57,10 @@ export default function SolicitudTicket() {
       setNombre('');
       setEmail('');
       setFile(null);
+      setFormKey((k) => k + 1);
     } catch (err: any) {
-      setMensaje({ tipo: 'error', text: err.response?.data?.error || 'Error al enviar. Reintentá.' });
+      const msg = err?.response?.data?.error || err?.message || 'Error al enviar. Reintentá.';
+      setMensaje({ tipo: 'error', text: msg });
     } finally {
       setEnviando(false);
     }
@@ -77,19 +82,19 @@ export default function SolicitudTicket() {
   };
 
   return (
-    <div className="solicitud-ticket">
+    <div className="solicitud-ticket" style={{ minHeight: '100vh', background: 'linear-gradient(to bottom, #1a472a 0%, #0d2818 100%)', color: '#fff' }}>
       <header className="solicitud-header">
-        <div className="container">
+        <div className="container" style={{ maxWidth: 960, margin: '0 auto', padding: '0 1rem' }}>
           <Link to="/" className="back-link">← Volver</Link>
           <h1>Pedir ticket de entrada</h1>
           <p>Completá el formulario y subí tu comprobante de pago. Cuando lo aprobemos podrás descargar tu ticket.</p>
         </div>
       </header>
 
-      <main className="solicitud-main container">
+      <main className="solicitud-main container" style={{ maxWidth: 560, margin: '0 auto', padding: '2rem 1rem' }}>
         <section className="solicitud-form-card">
           <h2>Enviar solicitud</h2>
-          <form onSubmit={enviar}>
+          <form key={formKey} onSubmit={enviar}>
             <div className="form-group">
               <label>Nombre *</label>
               <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required placeholder="Tu nombre" />
@@ -102,7 +107,7 @@ export default function SolicitudTicket() {
               <label>Comprobante de pago (imagen) *</label>
               <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
             </div>
-            {mensaje && <p className={`mensaje ${mensaje.tipo}`}>{mensaje.text}</p>}
+            {mensaje && <p className={`mensaje ${mensaje.tipo}`} role="alert">{mensaje.text}</p>}
             <button type="submit" className="btn btn-primary" disabled={enviando}>
               {enviando ? 'Enviando...' : 'Enviar solicitud'}
             </button>
@@ -118,11 +123,11 @@ export default function SolicitudTicket() {
             </div>
             <button type="submit" className="btn btn-secondary" disabled={consultando}>{consultando ? 'Buscando...' : 'Consultar'}</button>
           </form>
-          {solicitudes.length > 0 && (
+          {Array.isArray(solicitudes) && solicitudes.length > 0 && (
             <ul className="solicitudes-list">
-              {solicitudes.map((s) => (
-                <li key={s.id} className={`estado-${s.estado}`}>
-                  <span><strong>{s.nombre}</strong> – {s.estado}</span>
+              {solicitudes.map((s: { id?: string; nombre?: string; estado?: string; ticket_codigo?: string }, i: number) => (
+                <li key={s.id ?? `s-${i}`} className={`estado-${s.estado ?? ''}`}>
+                  <span><strong>{s.nombre ?? ''}</strong> – {s.estado ?? ''}</span>
                   {s.estado === 'aprobado' && s.ticket_codigo && (
                     <a href={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/tickets/download/${s.ticket_codigo}`} target="_blank" rel="noopener noreferrer" className="btn-descarga">Descargar ticket (PDF)</a>
                   )}
