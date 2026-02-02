@@ -8,6 +8,21 @@ Esta guía te ayudará a desplegar la aplicación Safari Tras las Sierras en Ver
 2. Proyecto configurado en Supabase (ver `SETUP_SUPABASE.md`)
 3. Git repository (GitHub, GitLab, o Bitbucket)
 
+## ¿Por qué no se despliega al hacer push?
+
+**El despliegue automático solo ocurre si el proyecto de Vercel está conectado a tu repositorio de GitHub.**
+
+1. Entrá a [vercel.com](https://vercel.com) → **Add New** → **Project**.
+2. **Import** el repo de GitHub (ej. `webplotcentersj-hash/safari`).
+3. Dejá las opciones que Vercel detecte (Build Command, Output Directory según `vercel.json`).
+4. Agregá las **variables de entorno** (Supabase, etc.) y hacé **Deploy**.
+
+Desde ese momento, **cada push a `main`** dispara un nuevo despliegue. Podés ver el estado en **Vercel Dashboard → Deployments**.
+
+En GitHub también hay un workflow (`.github/workflows/ci.yml`) que corre el build en cada push; sirve para ver que el build pasa, pero **el deploy a producción lo hace Vercel** cuando el proyecto está vinculado al repo.
+
+---
+
 ## Opción 1: Despliegue desde GitHub (Recomendado)
 
 ### 1. Subir el código a GitHub
