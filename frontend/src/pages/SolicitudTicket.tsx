@@ -95,27 +95,55 @@ export default function SolicitudTicket() {
   };
   const descargarPdfUrl = async (url: string, nombreArchivo: string) => {
     try {
+      console.log('Descargando PDF desde:', url);
       const res = await fetch(url, { method: 'GET' });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || data.error) {
-        alert(data.error || 'No se pudo descargar el PDF.');
+      if (!res.ok) {
+        const text = await res.text();
+        let errorMsg = 'No se pudo descargar el PDF.';
+        try {
+          const json = JSON.parse(text);
+          errorMsg = json.error || errorMsg;
+        } catch {
+          errorMsg = text || errorMsg;
+        }
+        alert(errorMsg);
+        console.error('Error respuesta:', res.status, errorMsg);
+        return;
+      }
+      const data = await res.json().catch(async () => {
+        const text = await res.text();
+        console.error('No es JSON:', text.slice(0, 200));
+        return { error: 'Respuesta inválida del servidor' };
+      });
+      if (data.error) {
+        alert(data.error);
         return;
       }
       if (data.pdf && typeof data.pdf === 'string') {
-        const binary = atob(data.pdf);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        const blob = new Blob([bytes], { type: 'application/pdf' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = data.filename || nombreArchivo;
-        link.click();
-        URL.revokeObjectURL(link.href);
+        try {
+          const binary = atob(data.pdf);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          const blob = new Blob([bytes], { type: 'application/pdf' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = data.filename || nombreArchivo;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+          console.log('PDF descargado:', data.filename || nombreArchivo);
+        } catch (decodeErr: any) {
+          console.error('Error decodificando base64:', decodeErr);
+          alert('Error al procesar el PDF. Reintentá.');
+        }
       } else {
-        alert('No se recibió el PDF.');
+        console.error('No hay PDF en la respuesta:', data);
+        alert('No se recibió el PDF en la respuesta.');
       }
     } catch (err: any) {
-      alert(err?.message || 'Error al descargar.');
+      console.error('Error descargando PDF:', err);
+      alert(err?.message || 'Error al descargar. Revisá la consola para más detalles.');
     }
   };
 
@@ -172,12 +200,18 @@ export default function SolicitudTicket() {
                   {s.estado === 'aprobado' && (
                     <>
                       <p className="solicitud-descarga-note">Mismo ticket que en el panel de administración.</p>
-                      {(s.ticket_codigos?.length || s.ticket_codigo) && (
-                        <button type="button" className="btn-descarga" onClick={() => descargarPdfSolicitud(s.id!)}>Descargar todos (PDF)</button>
+                      {s.ticket_codigos && s.ticket_codigos.length > 0 ? (
+                        <>
+                          <button type="button" className="btn-descarga" onClick={() => s.id && descargarPdfSolicitud(s.id)}>Descargar todos (PDF)</button>
+                          {s.ticket_codigos.map((codigo: string, j: number) => (
+                            <button key={j} type="button" className="btn-descarga" onClick={() => descargarPdfPorCodigo(codigo)}>Ticket{s.ticket_codigos.length > 1 ? ` ${j + 1}` : ''} (PDF)</button>
+                          ))}
+                        </>
+                      ) : s.ticket_codigo ? (
+                        <button type="button" className="btn-descarga" onClick={() => descargarPdfPorCodigo(s.ticket_codigo!)}>Descargar ticket (PDF)</button>
+                      ) : (
+                        <p className="sin-resultados" style={{ marginTop: '0.5rem' }}>Ticket aprobado pero aún no disponible para descargar. Contactá al administrador.</p>
                       )}
-                      {(s.ticket_codigos?.length ? s.ticket_codigos : s.ticket_codigo ? [s.ticket_codigo] : []).map((codigo: string, j: number) => (
-                        <button key={j} type="button" className="btn-descarga" onClick={() => descargarPdfPorCodigo(codigo)}>Ticket{s.ticket_codigos && s.ticket_codigos.length > 1 ? ` ${j + 1}` : ''} (PDF)</button>
-                      ))}
                     </>
                   )}
                 </li>
