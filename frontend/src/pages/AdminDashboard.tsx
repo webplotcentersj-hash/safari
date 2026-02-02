@@ -83,13 +83,6 @@ export default function AdminDashboard() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [ticketForm, setTicketForm] = useState({
-    tipo: 'general',
-    nombre: '',
-    dni: '',
-    email: '',
-    precio: 0
-  });
   const [bulkTicketForm, setBulkTicketForm] = useState({
     cantidad: 1,
     tipo: 'general',
@@ -361,29 +354,6 @@ export default function AdminDashboard() {
       console.error('❌ Error updating status:', error);
       const errorMessage = error.message || 'Error al actualizar el estado. Verificá la consola para más detalles.';
       alert(errorMessage);
-    }
-  };
-
-  const generateTicket = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post('/api/tickets', ticketForm, {
-        responseType: 'blob'
-      });
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `ticket-${Date.now()}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      
-      setTicketForm({ tipo: 'general', nombre: '', dni: '', email: '', precio: 0 });
-      fetchData();
-    } catch (error) {
-      console.error('Error generating ticket:', error);
-      alert('Error al generar el ticket');
     }
   };
 
@@ -916,71 +886,6 @@ export default function AdminDashboard() {
             {activeTab === 'tickets' && (
               <div className="admin-content">
                 <div className="card">
-                  <h2>Generar Nuevo Ticket</h2>
-                  <form onSubmit={generateTicket} className="ticket-form">
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Tipo</label>
-                        <select
-                          value={ticketForm.tipo}
-                          onChange={(e) => setTicketForm({ ...ticketForm, tipo: e.target.value })}
-                          required
-                        >
-                          <option value="general">General</option>
-                          <option value="vip">VIP</option>
-                          <option value="estudiante">Estudiante</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group">
-                        <label>Precio</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={ticketForm.precio}
-                          onChange={(e) => setTicketForm({ ...ticketForm, precio: parseFloat(e.target.value) })}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Nombre *</label>
-                      <input
-                        type="text"
-                        value={ticketForm.nombre}
-                        onChange={(e) => setTicketForm({ ...ticketForm, nombre: e.target.value })}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>DNI</label>
-                        <input
-                          type="text"
-                          value={ticketForm.dni}
-                          onChange={(e) => setTicketForm({ ...ticketForm, dni: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Email</label>
-                        <input
-                          type="email"
-                          value={ticketForm.email}
-                          onChange={(e) => setTicketForm({ ...ticketForm, email: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    <button type="submit" className="btn btn-primary">
-                      Generar y Descargar Ticket
-                    </button>
-                  </form>
-                </div>
-
-                <div className="card" style={{ marginTop: '2rem' }}>
                   <h2>Generar Tickets Masivamente (Para el Público)</h2>
                   <p style={{ color: '#666', marginBottom: '1rem' }}>
                     Genera múltiples tickets de una vez sin datos personales. Los tickets se crearán automáticamente y estarán disponibles para ser asignados al público.
