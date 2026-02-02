@@ -133,19 +133,19 @@ export default function SolicitudTicket() {
           <h2>Enviar solicitud</h2>
           <form key={formKey} onSubmit={enviar}>
             <div className="form-group">
-              <label>Nombre *</label>
+              <label style={{ color: '#fff' }}>Nombre *</label>
               <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required placeholder="Tu nombre" />
             </div>
             <div className="form-group">
-              <label>Email *</label>
+              <label style={{ color: '#fff' }}>Email *</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="tu@email.com" />
             </div>
             <div className="form-group">
-              <label>Cantidad de tickets *</label>
+              <label style={{ color: '#fff' }}>Cantidad de tickets *</label>
               <input type="number" min={1} max={100} value={cantidad} onChange={(e) => setCantidad(Math.max(1, Math.min(100, parseInt(e.target.value, 10) || 1)))} />
             </div>
             <div className="form-group">
-              <label>Comprobante de pago (imagen o PDF) *</label>
+              <label style={{ color: '#fff' }}>Comprobante de pago (imagen o PDF) *</label>
               <input type="file" accept="image/*,.pdf,application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} required />
             </div>
             {mensaje && <p className={`mensaje ${mensaje.tipo}`} role="alert">{mensaje.text}</p>}
