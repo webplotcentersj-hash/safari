@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabaseAdmin } from './_utils/supabase';
-import { generateTicketPDF } from './_utils/pdfGenerator';
+import { generateTicketPDF, generateTicketsPDF } from './_utils/pdfGenerator';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { method, url, query: queryParams } = req;
@@ -90,7 +90,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // GET /api/tickets/download/:codigo - Público: descargar PDF del ticket (quien tenga el código)
   if (method === 'GET' && path.startsWith('/api/tickets/download/')) {
     try {
-      const codigo = path.split('/api/tickets/download/')[1]?.split('?')[0];
+      const segment = path.split('/api/tickets/download/')[1]?.split('?')[0] || '';
+      // download-solicitud/:id → todos los tickets de esa solicitud en un PDF
+      if (segment.startsWith('solicitud/')) {
+        const solicitudId = segment.replace('solicitud/', '').trim();
+        if (!solicitudId) return res.status(400).json({ error: 'ID de solicitud requerido' });
+        const { data: tickets, error } = await supabaseAdmin
+          .from('tickets')
+          .select('*')
+          .eq('solicitud_id', solicitudId)
+          .order('codigo');
+        if (error || !tickets?.length) return res.status(404).json({ error: 'No hay tickets para esta solicitud' });
+        const pdfBuffer = await generateTicketsPDF(tickets);
+        const buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=tickets-solicitud.pdf`);
+        res.setHeader('Content-Length', buffer.length);
+        return res.end(buffer);
+      }
+      const codigo = segment;
       if (!codigo) return res.status(400).json({ error: 'Código requerido' });
       const { data: ticket, error } = await supabaseAdmin.from('tickets').select('*').eq('codigo', codigo).single();
       if (error || !ticket) return res.status(404).json({ error: 'Ticket no encontrado' });

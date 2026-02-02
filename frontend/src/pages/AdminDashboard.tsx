@@ -37,7 +37,7 @@ interface Ticket {
   tipo: string;
   nombre: string;
   precio: number;
-  usado: number;
+  usado: boolean;
   fecha_emision: string;
 }
 
@@ -90,6 +90,8 @@ export default function AdminDashboard() {
     precio: 0
   });
   const [ticketSearchTerm, setTicketSearchTerm] = useState('');
+  const [filterTicketUsado, setFilterTicketUsado] = useState<'todos' | 'disponible' | 'usado'>('todos');
+  const [marcandoTicket, setMarcandoTicket] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState<string>('todos');
   const [filterCategoria, setFilterCategoria] = useState<string>('todos');
@@ -937,22 +939,38 @@ export default function AdminDashboard() {
               <div className="admin-content">
                 <div className="card" style={{ marginBottom: '1.5rem' }}>
                   <h2 style={{ marginBottom: '0.5rem' }}>Buscador de ticket</h2>
-                  <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.95rem' }}>Buscá por código, nombre, tipo o email para verificar o descargar.</p>
-                  <input
-                    type="text"
-                    placeholder="Ej: TKT-..., nombre, email, general, vip..."
-                    value={ticketSearchTerm}
-                    onChange={(e) => setTicketSearchTerm(e.target.value)}
-                    className="ticket-search-input"
-                    style={{
-                      width: '100%',
-                      padding: '1rem 1.25rem',
-                      fontSize: '1.1rem',
-                      border: '2px solid #e0e0e0',
-                      borderRadius: '12px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
+                  <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.95rem' }}>Buscá por código, nombre, tipo o email. Filtrá por estado y marcá como usado en la entrada.</p>
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <input
+                      type="text"
+                      placeholder="Ej: TKT-..., nombre, email, general, vip..."
+                      value={ticketSearchTerm}
+                      onChange={(e) => setTicketSearchTerm(e.target.value)}
+                      className="ticket-search-input"
+                      style={{
+                        flex: '1',
+                        minWidth: 200,
+                        padding: '1rem 1.25rem',
+                        fontSize: '1.1rem',
+                        border: '2px solid #e0e0e0',
+                        borderRadius: '12px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ color: '#666' }}>Estado:</span>
+                      <select
+                        value={filterTicketUsado}
+                        onChange={(e) => setFilterTicketUsado(e.target.value as 'todos' | 'disponible' | 'usado')}
+                        style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: '1px solid #ddd' }}
+                      >
+                        <option value="todos">Todos</option>
+                        <option value="disponible">Disponible</option>
+                        <option value="usado">Usado</option>
+                      </select>
+                    </label>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>Verificación en entrada: <a href="/verificar" target="_blank" rel="noopener noreferrer">/verificar</a></p>
                 </div>
 
                 <div className="card">
@@ -1031,7 +1049,9 @@ export default function AdminDashboard() {
                             return codigo.includes(q) || nombre.includes(q) || tipo.includes(q) || email.includes(q);
                           })
                         : tickets
-                      ).map((ticket) => (
+                      )
+                        .filter((t) => filterTicketUsado === 'todos' || (filterTicketUsado === 'usado' && t.usado) || (filterTicketUsado === 'disponible' && !t.usado))
+                        .map((ticket) => (
                         <tr key={ticket.id}>
                           <td>{ticket.codigo}</td>
                           <td>{ticket.tipo}</td>
@@ -1047,9 +1067,29 @@ export default function AdminDashboard() {
                             <button
                               onClick={() => downloadTicketPDF(ticket.codigo)}
                               className="btn btn-primary btn-sm"
+                              style={{ marginRight: 6 }}
                             >
                               Descargar PDF
                             </button>
+                            {!ticket.usado && (
+                              <button
+                                onClick={async () => {
+                                  setMarcandoTicket(ticket.codigo);
+                                  try {
+                                    await axios.patch(`/tickets/use/${encodeURIComponent(ticket.codigo)}`);
+                                    setTickets((prev) => prev.map((t) => (t.codigo === ticket.codigo ? { ...t, usado: true } : t)));
+                                  } catch (err: any) {
+                                    alert(err.response?.data?.error || 'Error al marcar');
+                                  } finally {
+                                    setMarcandoTicket(null);
+                                  }
+                                }}
+                                disabled={marcandoTicket === ticket.codigo}
+                                className="btn btn-success btn-sm"
+                              >
+                                {marcandoTicket === ticket.codigo ? '…' : 'Marcar usado'}
+                              </button>
+                            )}
                           </td>
                         </tr>
                       ))}

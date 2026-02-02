@@ -1,0 +1,113 @@
+.verificar-ticket {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #1a472a 0%, #0f3320 40%, #0d2818 100%);
+  color: #fff;
+}
+
+.verificar-header {
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.verificar-header h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+}
+
+.verificar-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 1rem;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.verificar-main.container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+
+.verificar-buscar.card,
+.verificar-result.card {
+  background: rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.verificar-result.card.error {
+  border-color: rgba(244, 67, 54, 0.5);
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.verificar-buscar h2,
+.verificar-result h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.verificar-buscar input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.2);
+  color: #fff;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.verificar-buscar input::placeholder {
+  color: rgba(255,255,255,0.5);
+}
+
+.verificar-loading {
+  text-align: center;
+  padding: 2rem;
+  opacity: 0.9;
+}
+
+.status-badge.big {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.status-badge.big.valido {
+  background: rgba(76, 175, 80, 0.3);
+  color: #a5d6a7;
+}
+
+.status-badge.big.usado {
+  background: rgba(158, 158, 158, 0.3);
+  color: #bdbdbd;
+}
+
+.verificar-datos {
+  margin: 0 0 1.25rem;
+  text-align: left;
+}
+
+.verificar-datos dt {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.7);
+  margin-top: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.verificar-datos dd {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.verificar-result .btn {
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}

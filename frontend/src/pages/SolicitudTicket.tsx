@@ -133,9 +133,16 @@ export default function SolicitudTicket() {
               {solicitudes.map((s: { id?: string; nombre?: string; estado?: string; ticket_codigo?: string; ticket_codigos?: string[]; cantidad?: number }, i: number) => (
                 <li key={s.id ?? `s-${i}`} className={`estado-${s.estado ?? ''}`}>
                   <span><strong>{s.nombre ?? ''}</strong> – {s.estado ?? ''}{s.cantidad && s.cantidad > 1 ? ` (${s.cantidad} tickets)` : ''}</span>
-                  {s.estado === 'aprobado' && (s.ticket_codigos?.length ? s.ticket_codigos : s.ticket_codigo ? [s.ticket_codigo] : []).map((codigo: string, j: number) => (
-                    <a key={j} href={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/tickets/download/${codigo}`} target="_blank" rel="noopener noreferrer" className="btn-descarga">Descargar ticket{s.ticket_codigos && s.ticket_codigos.length > 1 ? ` ${j + 1}` : ''} (PDF)</a>
-                  ))}
+                  {s.estado === 'aprobado' && (
+                    <>
+                      {(s.ticket_codigos?.length || s.ticket_codigo) && (
+                        <a href={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/tickets/download/solicitud/${s.id}`} target="_blank" rel="noopener noreferrer" className="btn-descarga">Descargar todos (PDF)</a>
+                      )}
+                      {(s.ticket_codigos?.length ? s.ticket_codigos : s.ticket_codigo ? [s.ticket_codigo] : []).map((codigo: string, j: number) => (
+                        <a key={j} href={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/tickets/download/${codigo}`} target="_blank" rel="noopener noreferrer" className="btn-descarga">Ticket{s.ticket_codigos && s.ticket_codigos.length > 1 ? ` ${j + 1}` : ''} (PDF)</a>
+                      ))}
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
