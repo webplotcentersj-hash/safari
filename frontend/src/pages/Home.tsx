@@ -37,14 +37,6 @@ export default function Home() {
             </div>
 
             <div className="home-card">
-              <h2>Tickets de Entrada</h2>
-              <p>Genera y descarga tu ticket de entrada al evento.</p>
-              <Link to="/tickets" className="btn btn-primary">
-                Generar Ticket
-              </Link>
-            </div>
-
-            <div className="home-card">
               <h2>Panel de Administración</h2>
               <p>Acceso exclusivo para administradores del evento.</p>
               <Link to="/admin/login" className="btn btn-secondary">

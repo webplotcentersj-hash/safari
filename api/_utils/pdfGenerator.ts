@@ -41,7 +41,9 @@ export async function generateTicketPDF(ticket: any): Promise<Buffer> {
        .text('TICKET DE ENTRADA', { align: 'center' });
     doc.moveDown(1.5);
 
-    // Código en recuadro
+    // ID único / Código en recuadro
+    doc.fontSize(9).fillColor('#666').text('ID único (presentar o escanear en entrada)', doc.page.margins.left, doc.y);
+    doc.moveDown(0.25);
     const codeBoxY = doc.y;
     doc.rect(doc.page.margins.left, codeBoxY, pageWidth, 32)
        .fillAndStroke('#e8f5e9', '#1a472a');

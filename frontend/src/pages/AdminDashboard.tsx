@@ -367,7 +367,7 @@ export default function AdminDashboard() {
   const generateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/tickets/generate', ticketForm, {
+      const response = await axios.post('/api/tickets', ticketForm, {
         responseType: 'blob'
       });
       
@@ -393,7 +393,7 @@ export default function AdminDashboard() {
       return;
     }
     try {
-      const response = await axios.post('/api/tickets/generate-bulk', bulkTicketForm);
+      const response = await axios.post('/api/tickets', bulkTicketForm);
       alert(`¡${response.data.cantidad} tickets generados exitosamente!`);
       setBulkTicketForm({ cantidad: 1, tipo: 'general', precio: 0 });
       fetchData();
@@ -1036,7 +1036,7 @@ export default function AdminDashboard() {
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th>Código</th>
+                        <th title="ID único para verificación en entrada">Código (ID único)</th>
                         <th>Tipo</th>
                         <th>Nombre</th>
                         <th>Precio</th>

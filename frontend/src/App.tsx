@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Home from './pages/Home';
 import PilotRegistration from './pages/PilotRegistration';
-import TicketGenerator from './pages/TicketGenerator';
 import PilotsList from './pages/PilotsList';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
@@ -18,7 +17,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/inscripcion" element={<PilotRegistration />} />
         <Route path="/pilotos" element={<PilotsList />} />
-        <Route path="/tickets" element={<TicketGenerator />} />
+        <Route path="/tickets" element={<Navigate to="/admin" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin"
