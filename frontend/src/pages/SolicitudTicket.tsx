@@ -206,38 +206,46 @@ export default function SolicitudTicket() {
             <ul className="solicitudes-list">
               {solicitudes.map((s: { id?: string; nombre?: string; estado?: string; ticket_codigo?: string; ticket_codigos?: string[]; cantidad?: number }, i: number) => {
                 const esAprobado = s.estado === 'aprobado';
-                const tieneCodigos = s.ticket_codigos && s.ticket_codigos.length > 0;
+                const codigosArray = Array.isArray(s.ticket_codigos) ? s.ticket_codigos : [];
+                const tieneCodigos = codigosArray.length > 0;
                 const tieneCodigo = !!s.ticket_codigo;
-                console.log(`🔍 Solicitud ${i}:`, { id: s.id, estado: s.estado, esAprobado, tieneCodigos, tieneCodigo, ticket_codigos: s.ticket_codigos, ticket_codigo: s.ticket_codigo });
+                const codigosParaMostrar = tieneCodigos ? codigosArray : (s.ticket_codigo ? [s.ticket_codigo] : []);
+                console.log(`🔍 Solicitud ${i}:`, { 
+                  id: s.id, 
+                  estado: s.estado, 
+                  esAprobado, 
+                  tieneCodigos, 
+                  tieneCodigo, 
+                  ticket_codigos: s.ticket_codigos, 
+                  ticket_codigo: s.ticket_codigo,
+                  codigosParaMostrar,
+                  cantidad: s.cantidad
+                });
                 return (
                   <li key={s.id ?? `s-${i}`} className={`estado-${s.estado ?? ''}`}>
                     <span><strong>{s.nombre ?? ''}</strong> – {s.estado ?? ''}{s.cantidad && s.cantidad > 1 ? ` (${s.cantidad} tickets)` : ''}</span>
                     {esAprobado && (
                       <>
                         <p className="solicitud-descarga-note">Mismo ticket que en el panel de administración.</p>
-                        {tieneCodigos && s.ticket_codigos ? (
+                        {codigosParaMostrar.length > 0 ? (
                           <>
-                            <button type="button" className="btn-descarga" onClick={() => {
-                              console.log('📥 Descargando todos los tickets de solicitud:', s.id);
-                              if (s.id) descargarPdfSolicitud(s.id);
-                            }}>Descargar todos (PDF)</button>
-                            {s.ticket_codigos.map((codigo: string, j: number) => {
-                              const total = s.ticket_codigos!.length;
-                              return (
-                                <button key={j} type="button" className="btn-descarga" onClick={() => {
-                                  console.log('📥 Descargando ticket individual:', codigo);
-                                  descargarPdfPorCodigo(codigo);
-                                }}>Ticket{total > 1 ? ` ${j + 1}` : ''} (PDF)</button>
-                              );
-                            })}
+                            {tieneCodigos && s.id && (
+                              <button type="button" className="btn-descarga" onClick={() => {
+                                console.log('📥 Descargando todos los tickets de solicitud:', s.id);
+                                descargarPdfSolicitud(s.id);
+                              }}>Descargar todos (PDF)</button>
+                            )}
+                            {codigosParaMostrar.map((codigo: string, j: number) => (
+                              <button key={j} type="button" className="btn-descarga" onClick={() => {
+                                console.log('📥 Descargando ticket individual:', codigo);
+                                descargarPdfPorCodigo(codigo);
+                              }}>Ticket{codigosParaMostrar.length > 1 ? ` ${j + 1}` : ''} (PDF)</button>
+                            ))}
                           </>
-                        ) : tieneCodigo ? (
-                          <button type="button" className="btn-descarga" onClick={() => {
-                            console.log('📥 Descargando ticket por código:', s.ticket_codigo);
-                            descargarPdfPorCodigo(s.ticket_codigo!);
-                          }}>Descargar ticket (PDF)</button>
                         ) : (
-                          <p className="sin-resultados" style={{ marginTop: '0.5rem' }}>Ticket aprobado pero aún no disponible para descargar. Contactá al administrador.</p>
+                          <p className="sin-resultados" style={{ marginTop: '0.5rem', color: '#ffcdd2' }}>
+                            ⚠️ Ticket aprobado pero sin códigos disponibles. ID: {s.id || 'N/A'}. Contactá al administrador.
+                          </p>
                         )}
                       </>
                     )}
