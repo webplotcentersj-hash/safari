@@ -363,7 +363,7 @@ export default function AdminDashboard() {
       return;
     }
     try {
-      const response = await axios.post('/api/tickets', bulkTicketForm);
+      const response = await axios.post('/api/tickets/generate-bulk', bulkTicketForm);
       alert(`¡${response.data.cantidad} tickets generados exitosamente!`);
       setBulkTicketForm({ cantidad: 1, tipo: 'general', precio: 0 });
       fetchData();
