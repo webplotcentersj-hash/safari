@@ -7,6 +7,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminScan from './pages/AdminScan';
 import AdminApprove from './pages/AdminApprove';
+import SolicitudTicket from './pages/SolicitudTicket';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -17,6 +18,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/inscripcion" element={<PilotRegistration />} />
         <Route path="/pilotos" element={<PilotsList />} />
+        <Route path="/solicitar-ticket" element={<SolicitudTicket />} />
         <Route path="/tickets" element={<Navigate to="/admin" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route

@@ -37,6 +37,14 @@ export default function Home() {
             </div>
 
             <div className="home-card">
+              <h2>Ticket de entrada</h2>
+              <p>Pedí tu ticket y subí el comprobante de pago. Cuando lo aprobemos podrás descargarlo.</p>
+              <Link to="/solicitar-ticket" className="btn btn-primary">
+                Pedir ticket
+              </Link>
+            </div>
+
+            <div className="home-card">
               <h2>Panel de Administración</h2>
               <p>Acceso exclusivo para administradores del evento.</p>
               <Link to="/admin/login" className="btn btn-secondary">

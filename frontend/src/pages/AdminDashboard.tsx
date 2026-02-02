@@ -78,9 +78,10 @@ interface RaceTime {
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'pilots' | 'tickets' | 'stats' | 'times'>('stats');
+  const [activeTab, setActiveTab] = useState<'pilots' | 'tickets' | 'stats' | 'times' | 'solicitudes'>('stats');
   const [pilots, setPilots] = useState<Pilot[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [solicitudes, setSolicitudes] = useState<any[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [bulkTicketForm, setBulkTicketForm] = useState({
@@ -210,6 +211,9 @@ export default function AdminDashboard() {
           throw new Error(ticketsError.message || 'Error al cargar los tickets');
         }
         setTickets(Array.isArray(ticketsData) ? ticketsData : []);
+      } else if (activeTab === 'solicitudes') {
+        const { data } = await axios.get('/admin/ticket-solicitudes');
+        setSolicitudes(Array.isArray(data) ? data : []);
       } else {
         // Calcular estadísticas desde Supabase directamente
         if (!supabase) {
@@ -280,6 +284,7 @@ export default function AdminDashboard() {
         setPilots([]);
       }
       if (activeTab === 'tickets') setTickets([]);
+      if (activeTab === 'solicitudes') setSolicitudes([]);
       if (activeTab === 'stats') setStats(null);
     } finally {
       // Solo ocultar loading si no es una actualización silenciosa
@@ -373,21 +378,56 @@ export default function AdminDashboard() {
     }
   };
 
+  const approveSolicitud = async (id: string) => {
+    if (!confirm('¿Aprobar esta solicitud y crear el ticket?')) return;
+    try {
+      await axios.patch(`/admin/ticket-solicitudes/${id}/approve`);
+      fetchData(true);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Error al aprobar');
+    }
+  };
+  const rejectSolicitud = async (id: string) => {
+    if (!confirm('¿Rechazar esta solicitud?')) return;
+    try {
+      await axios.patch(`/admin/ticket-solicitudes/${id}/reject`);
+      fetchData(true);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Error al rechazar');
+    }
+  };
+
   const downloadTicketPDF = async (codigo: string) => {
     try {
       const response = await axios.get(`/admin/tickets/${codigo}/pdf`, {
         responseType: 'blob'
       });
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const contentType = response.headers['content-type'] || '';
+      if (contentType.includes('application/json')) {
+        const text = await response.data.text();
+        const err = JSON.parse(text);
+        alert(err.error || 'Error al descargar el PDF');
+        return;
+      }
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `ticket-${codigo}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (error) {
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
       console.error('Error downloading PDF:', error);
+      if (error.response?.data instanceof Blob) {
+        try {
+          const text = await error.response.data.text();
+          const err = JSON.parse(text);
+          alert(err.error || 'Error al descargar el PDF');
+          return;
+        } catch (_) {}
+      }
       alert('Error al descargar el PDF');
     }
   };
@@ -440,6 +480,12 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('tickets')}
           >
             Tickets
+          </button>
+          <button
+            className={activeTab === 'solicitudes' ? 'active' : ''}
+            onClick={() => setActiveTab('solicitudes')}
+          >
+            Solicitudes
           </button>
           <button
             className={activeTab === 'times' ? 'active' : ''}
@@ -975,6 +1021,52 @@ export default function AdminDashboard() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'solicitudes' && (
+              <div className="admin-content">
+                <div className="card">
+                  <h2>Solicitudes de ticket</h2>
+                  <p style={{ color: '#666', marginBottom: '1rem' }}>Usuarios que enviaron nombre, email y comprobante. Aprobá para crear el ticket; ellos podrán descargarlo desde la página pública.</p>
+                  <div className="table-container">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Nombre</th>
+                          <th>Email</th>
+                          <th>Comprobante</th>
+                          <th>Estado</th>
+                          <th>Fecha</th>
+                          <th>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {solicitudes.map((s) => (
+                          <tr key={s.id}>
+                            <td>{s.nombre}</td>
+                            <td>{s.email}</td>
+                            <td>{s.comprobante_pago_url ? <a href={s.comprobante_pago_url} target="_blank" rel="noopener noreferrer">Ver</a> : '—'}</td>
+                            <td><span className={`status-badge ${s.estado === 'aprobado' ? 'status-disponible' : s.estado === 'rechazado' ? 'status-usado' : ''}`}>{s.estado}</span></td>
+                            <td>{new Date(s.created_at).toLocaleDateString('es-AR')}</td>
+                            <td>
+                              {s.estado === 'pendiente' && (
+                                <>
+                                  <button onClick={() => approveSolicitud(s.id)} className="btn btn-primary btn-sm" style={{ marginRight: 6 }}>Aprobar</button>
+                                  <button onClick={() => rejectSolicitud(s.id)} className="btn btn-secondary btn-sm">Rechazar</button>
+                                </>
+                              )}
+                              {s.estado === 'aprobado' && s.ticket_id && (
+                                <span style={{ color: '#4caf50' }}>Ticket creado</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {solicitudes.length === 0 && <p style={{ color: '#666' }}>No hay solicitudes.</p>}
                 </div>
               </div>
             )}

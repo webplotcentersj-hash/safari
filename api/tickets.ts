@@ -87,6 +87,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  // GET /api/tickets/download/:codigo - Público: descargar PDF del ticket (quien tenga el código)
+  if (method === 'GET' && path.startsWith('/api/tickets/download/')) {
+    try {
+      const codigo = path.split('/api/tickets/download/')[1]?.split('?')[0];
+      if (!codigo) return res.status(400).json({ error: 'Código requerido' });
+      const { data: ticket, error } = await supabaseAdmin.from('tickets').select('*').eq('codigo', codigo).single();
+      if (error || !ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
+      const pdfBuffer = await generateTicketPDF(ticket);
+      const buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=ticket-${codigo}.pdf`);
+      res.setHeader('Content-Length', buffer.length);
+      return res.end(buffer);
+    } catch (e: any) {
+      console.error('Download ticket PDF error:', e);
+      return res.status(500).json({ error: 'Error al generar el PDF' });
+    }
+  }
+
   if (method === 'GET' && (path.startsWith('/api/tickets/verify/') || query.codigo)) {
     // Verificar ticket
     try {

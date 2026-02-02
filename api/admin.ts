@@ -332,10 +332,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const pdfBuffer = await generateTicketPDF(ticket);
+      const buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=ticket-${codigo}.pdf`);
-      res.send(pdfBuffer);
+      res.setHeader('Content-Length', buffer.length);
+      res.end(buffer);
     } catch (error: any) {
       console.error('Download PDF error:', error);
       res.status(500).json({ error: 'Error al generar el PDF' });
@@ -405,6 +407,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         tickets: { total: 0, used: 0, available: 0 },
         revenue: 0
       });
+    }
+  }
+  // Admin - Solicitudes de ticket (público sube comprobante, admin aprueba)
+  else if (method === 'GET' && (path === '/api/admin/ticket-solicitudes' || path.endsWith('/admin/ticket-solicitudes'))) {
+    try {
+      const { data: list, error } = await supabaseAdmin
+        .from('ticket_solicitudes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      res.json(list || []);
+    } catch (e: any) {
+      console.error('Get ticket-solicitudes error:', e);
+      res.status(500).json({ error: 'Error al listar solicitudes' });
+    }
+  }
+  else if (method === 'PATCH' && path.includes('/admin/ticket-solicitudes/')) {
+    const id = path.split('/admin/ticket-solicitudes/')[1]?.split('/')[0] || (req.body && (req.body as any).id);
+    if (!id) return res.status(400).json({ error: 'ID requerido' });
+    const segment = path.split('/admin/ticket-solicitudes/')[1] || '';
+    const action = segment.includes('approve') ? 'approve' : segment.includes('reject') ? 'reject' : null;
+    try {
+      const { data: sol, error: fetchErr } = await supabaseAdmin
+        .from('ticket_solicitudes')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (fetchErr || !sol) return res.status(404).json({ error: 'Solicitud no encontrada' });
+      if (sol.estado !== 'pendiente') return res.status(400).json({ error: 'La solicitud ya fue procesada' });
+      if (action === 'reject') {
+        await supabaseAdmin.from('ticket_solicitudes').update({ estado: 'rechazado' }).eq('id', id);
+        return res.json({ message: 'Solicitud rechazada' });
+      }
+      if (action === 'approve') {
+        const codigo = `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        const { data: newTicket, error: ticketErr } = await supabaseAdmin
+          .from('tickets')
+          .insert({
+            codigo,
+            tipo: 'general',
+            nombre: sol.nombre,
+            dni: null,
+            email: sol.email,
+            precio: 0,
+            usado: false
+          })
+          .select('id')
+          .single();
+        if (ticketErr) {
+          console.error('Create ticket on approve error:', ticketErr);
+          return res.status(500).json({ error: 'Error al crear el ticket' });
+        }
+        await supabaseAdmin
+          .from('ticket_solicitudes')
+          .update({ estado: 'aprobado', ticket_id: newTicket.id })
+          .eq('id', id);
+        return res.json({ message: 'Solicitud aprobada. Ticket creado.', ticket_id: newTicket.id, codigo });
+      }
+      return res.status(400).json({ error: 'Acción no válida' });
+    } catch (e: any) {
+      console.error('Patch ticket-solicitud error:', e);
+      return res.status(500).json({ error: 'Error al procesar' });
     }
   } else {
     res.status(404).json({ error: 'Ruta no encontrada' });
