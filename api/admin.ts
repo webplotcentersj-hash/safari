@@ -90,7 +90,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const client = supabaseWithAuth || supabaseAdmin;
         const { data: list, error } = await client.from('ticket_solicitudes').select('*').order('created_at', { ascending: false });
         if (error) throw error;
-        return res.json(list || []);
+        const out = list || [];
+        if (out.length) {
+          const { data: ticketsBySol } = await supabaseAdmin.from('tickets').select('solicitud_id, codigo').in('solicitud_id', out.map((s: any) => s.id));
+          const bySol: { [id: string]: string[] } = {};
+          if (ticketsBySol) for (const t of ticketsBySol) {
+            if (t.solicitud_id) { if (!bySol[t.solicitud_id]) bySol[t.solicitud_id] = []; bySol[t.solicitud_id].push(t.codigo); }
+          }
+          for (const s of out) {
+            (s as any).ticket_codigos = bySol[s.id] || [];
+            if (!(s as any).cantidad) (s as any).cantidad = 1;
+          }
+        }
+        return res.json(out);
       } catch (e: any) {
         console.error('Get ticket-solicitudes error:', e);
         return res.status(500).json({ error: 'Error al listar solicitudes' });

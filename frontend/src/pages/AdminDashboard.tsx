@@ -380,10 +380,12 @@ export default function AdminDashboard() {
   };
 
   const approveSolicitud = async (id: string) => {
-    if (!confirm('¿Aprobar esta solicitud y crear el ticket?')) return;
+    if (!confirm('¿Aprobar esta solicitud y crear los ticket(s)?')) return;
     try {
-      await axios.patch(`/admin?__subpath=ticket-solicitudes&__action=approve&id=${encodeURIComponent(id)}`);
-      fetchData(true);
+      const res = await axios.patch(`/admin?__subpath=ticket-solicitudes&__action=approve&id=${encodeURIComponent(id)}`);
+      const msg = res?.data?.message || 'Solicitud aprobada.';
+      alert(msg);
+      await fetchData(true);
     } catch (err: any) {
       alert(err.response?.data?.error || 'Error al aprobar');
     }
@@ -392,7 +394,8 @@ export default function AdminDashboard() {
     if (!confirm('¿Rechazar esta solicitud?')) return;
     try {
       await axios.patch(`/admin?__subpath=ticket-solicitudes&__action=reject&id=${encodeURIComponent(id)}`);
-      fetchData(true);
+      alert('Solicitud rechazada.');
+      await fetchData(true);
     } catch (err: any) {
       alert(err.response?.data?.error || 'Error al rechazar');
     }
