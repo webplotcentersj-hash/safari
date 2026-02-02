@@ -89,6 +89,7 @@ export default function AdminDashboard() {
     tipo: 'general',
     precio: 0
   });
+  const [ticketSearchTerm, setTicketSearchTerm] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEstado, setFilterEstado] = useState<string>('todos');
   const [filterCategoria, setFilterCategoria] = useState<string>('todos');
@@ -381,7 +382,7 @@ export default function AdminDashboard() {
   const approveSolicitud = async (id: string) => {
     if (!confirm('¿Aprobar esta solicitud y crear el ticket?')) return;
     try {
-      await axios.patch(`/admin/ticket-solicitudes/${id}/approve`);
+      await axios.patch(`/admin?__subpath=ticket-solicitudes&__action=approve&id=${encodeURIComponent(id)}`);
       fetchData(true);
     } catch (err: any) {
       alert(err.response?.data?.error || 'Error al aprobar');
@@ -390,7 +391,7 @@ export default function AdminDashboard() {
   const rejectSolicitud = async (id: string) => {
     if (!confirm('¿Rechazar esta solicitud?')) return;
     try {
-      await axios.patch(`/admin/ticket-solicitudes/${id}/reject`);
+      await axios.patch(`/admin?__subpath=ticket-solicitudes&__action=reject&id=${encodeURIComponent(id)}`);
       fetchData(true);
     } catch (err: any) {
       alert(err.response?.data?.error || 'Error al rechazar');
@@ -931,6 +932,26 @@ export default function AdminDashboard() {
 
             {activeTab === 'tickets' && (
               <div className="admin-content">
+                <div className="card" style={{ marginBottom: '1.5rem' }}>
+                  <h2 style={{ marginBottom: '0.5rem' }}>Buscador de ticket</h2>
+                  <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.95rem' }}>Buscá por código, nombre, tipo o email para verificar o descargar.</p>
+                  <input
+                    type="text"
+                    placeholder="Ej: TKT-..., nombre, email, general, vip..."
+                    value={ticketSearchTerm}
+                    onChange={(e) => setTicketSearchTerm(e.target.value)}
+                    className="ticket-search-input"
+                    style={{
+                      width: '100%',
+                      padding: '1rem 1.25rem',
+                      fontSize: '1.1rem',
+                      border: '2px solid #e0e0e0',
+                      borderRadius: '12px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
                 <div className="card">
                   <h2>Generar Tickets Masivamente (Para el Público)</h2>
                   <p style={{ color: '#666', marginBottom: '1rem' }}>
@@ -997,7 +1018,17 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {tickets.map((ticket) => (
+                      {(ticketSearchTerm.trim()
+                        ? tickets.filter((t) => {
+                            const q = ticketSearchTerm.trim().toLowerCase();
+                            const codigo = (t.codigo || '').toLowerCase();
+                            const nombre = (t.nombre || '').toLowerCase();
+                            const tipo = (t.tipo || '').toLowerCase();
+                            const email = ((t as any).email || '').toLowerCase();
+                            return codigo.includes(q) || nombre.includes(q) || tipo.includes(q) || email.includes(q);
+                          })
+                        : tickets
+                      ).map((ticket) => (
                         <tr key={ticket.id}>
                           <td>{ticket.codigo}</td>
                           <td>{ticket.tipo}</td>

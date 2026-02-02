@@ -1060,5 +1060,15 @@
   }
 }
 
+/* Buscador de ticket (gran, destacado) */
+.ticket-search-input {
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.ticket-search-input:focus {
+  outline: none;
+  border-color: #65b330 !important;
+  box-shadow: 0 0 0 3px rgba(101, 179, 48, 0.2);
+}
+
 
 
