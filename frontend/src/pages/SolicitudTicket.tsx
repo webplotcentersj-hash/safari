@@ -75,22 +75,32 @@ export default function SolicitudTicket() {
     setSolicitudes([]);
     try {
       const { data } = await axios.get('/ticket-solicitud', { params: { email: emailConsulta.trim() } });
-      setSolicitudes(Array.isArray(data) ? data : []);
-    } catch {
+      console.log('📋 Solicitudes recibidas:', data);
+      const solicitudesArray = Array.isArray(data) ? data : [];
+      console.log('📋 Solicitudes procesadas:', solicitudesArray.map(s => ({
+        id: s.id,
+        estado: s.estado,
+        ticket_codigos: s.ticket_codigos,
+        ticket_codigo: s.ticket_codigo,
+        cantidad: s.cantidad
+      })));
+      setSolicitudes(solicitudesArray);
+    } catch (err: any) {
+      console.error('❌ Error consultando:', err);
       setSolicitudes([]);
     } finally {
       setConsultando(false);
     }
   };
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const apiBase = baseUrl + (baseUrl.endsWith('/') ? '' : '/') + 'api';
   const descargarPdfPorCodigo = async (codigo: string) => {
-    const url = `${apiBase}/tickets?action=download&codigo=${encodeURIComponent(codigo)}&format=base64`;
+    const url = `/api/tickets?action=download&codigo=${encodeURIComponent(codigo)}&format=base64`;
+    console.log('🔗 URL descarga por código:', url);
     await descargarPdfUrl(url, `ticket-${codigo}.pdf`);
   };
   const descargarPdfSolicitud = async (solicitudId: string) => {
-    const url = `${apiBase}/tickets?action=download_solicitud&solicitud_id=${encodeURIComponent(solicitudId)}&format=base64`;
+    const url = `/api/tickets?action=download_solicitud&solicitud_id=${encodeURIComponent(solicitudId)}&format=base64`;
+    console.log('🔗 URL descarga solicitud:', url);
     await descargarPdfUrl(url, 'tickets-solicitud.pdf');
   };
   const descargarPdfUrl = async (url: string, nombreArchivo: string) => {
@@ -194,31 +204,46 @@ export default function SolicitudTicket() {
           </form>
           {Array.isArray(solicitudes) && solicitudes.length > 0 && (
             <ul className="solicitudes-list">
-              {solicitudes.map((s: { id?: string; nombre?: string; estado?: string; ticket_codigo?: string; ticket_codigos?: string[]; cantidad?: number }, i: number) => (
-                <li key={s.id ?? `s-${i}`} className={`estado-${s.estado ?? ''}`}>
-                  <span><strong>{s.nombre ?? ''}</strong> – {s.estado ?? ''}{s.cantidad && s.cantidad > 1 ? ` (${s.cantidad} tickets)` : ''}</span>
-                  {s.estado === 'aprobado' && (
-                    <>
-                      <p className="solicitud-descarga-note">Mismo ticket que en el panel de administración.</p>
-                      {s.ticket_codigos && s.ticket_codigos.length > 0 ? (
-                        <>
-                          <button type="button" className="btn-descarga" onClick={() => s.id && descargarPdfSolicitud(s.id)}>Descargar todos (PDF)</button>
-                          {s.ticket_codigos.map((codigo: string, j: number) => {
-                            const total = s.ticket_codigos?.length || 0;
-                            return (
-                              <button key={j} type="button" className="btn-descarga" onClick={() => descargarPdfPorCodigo(codigo)}>Ticket{total > 1 ? ` ${j + 1}` : ''} (PDF)</button>
-                            );
-                          })}
-                        </>
-                      ) : s.ticket_codigo ? (
-                        <button type="button" className="btn-descarga" onClick={() => descargarPdfPorCodigo(s.ticket_codigo!)}>Descargar ticket (PDF)</button>
-                      ) : (
-                        <p className="sin-resultados" style={{ marginTop: '0.5rem' }}>Ticket aprobado pero aún no disponible para descargar. Contactá al administrador.</p>
-                      )}
-                    </>
-                  )}
-                </li>
-              ))}
+              {solicitudes.map((s: { id?: string; nombre?: string; estado?: string; ticket_codigo?: string; ticket_codigos?: string[]; cantidad?: number }, i: number) => {
+                const esAprobado = s.estado === 'aprobado';
+                const tieneCodigos = s.ticket_codigos && s.ticket_codigos.length > 0;
+                const tieneCodigo = !!s.ticket_codigo;
+                console.log(`🔍 Solicitud ${i}:`, { id: s.id, estado: s.estado, esAprobado, tieneCodigos, tieneCodigo, ticket_codigos: s.ticket_codigos, ticket_codigo: s.ticket_codigo });
+                return (
+                  <li key={s.id ?? `s-${i}`} className={`estado-${s.estado ?? ''}`}>
+                    <span><strong>{s.nombre ?? ''}</strong> – {s.estado ?? ''}{s.cantidad && s.cantidad > 1 ? ` (${s.cantidad} tickets)` : ''}</span>
+                    {esAprobado && (
+                      <>
+                        <p className="solicitud-descarga-note">Mismo ticket que en el panel de administración.</p>
+                        {tieneCodigos ? (
+                          <>
+                            <button type="button" className="btn-descarga" onClick={() => {
+                              console.log('📥 Descargando todos los tickets de solicitud:', s.id);
+                              if (s.id) descargarPdfSolicitud(s.id);
+                            }}>Descargar todos (PDF)</button>
+                            {s.ticket_codigos.map((codigo: string, j: number) => {
+                              const total = s.ticket_codigos?.length || 0;
+                              return (
+                                <button key={j} type="button" className="btn-descarga" onClick={() => {
+                                  console.log('📥 Descargando ticket individual:', codigo);
+                                  descargarPdfPorCodigo(codigo);
+                                }}>Ticket{total > 1 ? ` ${j + 1}` : ''} (PDF)</button>
+                              );
+                            })}
+                          </>
+                        ) : tieneCodigo ? (
+                          <button type="button" className="btn-descarga" onClick={() => {
+                            console.log('📥 Descargando ticket por código:', s.ticket_codigo);
+                            descargarPdfPorCodigo(s.ticket_codigo!);
+                          }}>Descargar ticket (PDF)</button>
+                        ) : (
+                          <p className="sin-resultados" style={{ marginTop: '0.5rem' }}>Ticket aprobado pero aún no disponible para descargar. Contactá al administrador.</p>
+                        )}
+                      </>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
           {solicitudes.length === 0 && consultando === false && emailConsulta && (
