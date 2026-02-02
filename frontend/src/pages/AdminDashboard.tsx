@@ -363,7 +363,7 @@ export default function AdminDashboard() {
       return;
     }
     try {
-      const response = await axios.post('/api/tickets/generate-bulk', bulkTicketForm);
+      const response = await axios.post('/tickets/generate-bulk', bulkTicketForm);
       alert(`¡${response.data.cantidad} tickets generados exitosamente!`);
       setBulkTicketForm({ cantidad: 1, tipo: 'general', precio: 0 });
       fetchData();
@@ -375,7 +375,7 @@ export default function AdminDashboard() {
 
   const downloadTicketPDF = async (codigo: string) => {
     try {
-      const response = await axios.get(`/api/admin/tickets/${codigo}/pdf`, {
+      const response = await axios.get(`/admin/tickets/${codigo}/pdf`, {
         responseType: 'blob'
       });
       
@@ -1009,7 +1009,7 @@ export default function AdminDashboard() {
                         etapa: timeForm.etapa
                       });
 
-                      const response = await axios.post('/api/race_times', {
+                      const response = await axios.post('/race_times', {
                         pilot_id: timeForm.pilot_id,
                         categoria: timeForm.categoria,
                         categoria_detalle: timeForm.categoria_detalle || null,
