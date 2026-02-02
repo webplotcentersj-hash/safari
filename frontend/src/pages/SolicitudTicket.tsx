@@ -210,6 +210,7 @@ export default function SolicitudTicket() {
                 const tieneCodigos = codigosArray.length > 0;
                 const tieneCodigo = !!s.ticket_codigo;
                 const codigosParaMostrar = tieneCodigos ? codigosArray : (s.ticket_codigo ? [s.ticket_codigo] : []);
+                const solicitudId = s.id;
                 console.log(`🔍 Solicitud ${i}:`, { 
                   id: s.id, 
                   estado: s.estado, 
@@ -229,10 +230,11 @@ export default function SolicitudTicket() {
                         <p className="solicitud-descarga-note">Mismo ticket que en el panel de administración.</p>
                         {codigosParaMostrar.length > 0 ? (
                           <>
-                            {tieneCodigos && s.id && (
+                            {tieneCodigos && solicitudId && (
                               <button type="button" className="btn-descarga" onClick={() => {
-                                console.log('📥 Descargando todos los tickets de solicitud:', s.id);
-                                descargarPdfSolicitud(s.id);
+                                if (!solicitudId) return;
+                                console.log('📥 Descargando todos los tickets de solicitud:', solicitudId);
+                                descargarPdfSolicitud(solicitudId as string);
                               }}>Descargar todos (PDF)</button>
                             )}
                             {codigosParaMostrar.map((codigo: string, j: number) => (
