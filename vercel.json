@@ -8,6 +8,18 @@
       "destination": "/api/admin?__route=ticket-solicitud"
     },
     {
+      "source": "/api/admin/ticket-solicitudes",
+      "destination": "/api/admin?__subpath=ticket-solicitudes"
+    },
+    {
+      "source": "/api/admin/ticket-solicitudes/:id/approve",
+      "destination": "/api/admin?__subpath=ticket-solicitudes&__action=approve"
+    },
+    {
+      "source": "/api/admin/ticket-solicitudes/:id/reject",
+      "destination": "/api/admin?__subpath=ticket-solicitudes&__action=reject"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

@@ -64,6 +64,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }) : null;
 
+  // Rewrite: /api/admin/ticket-solicitudes → /api/admin?__subpath=ticket-solicitudes (Vercel no enruta /api/admin/xxx a admin.ts)
+  if (String((q as any).__subpath) === 'ticket-solicitudes') {
+    if (!token) return res.status(401).json({ error: 'No autorizado' });
+    if (method === 'GET') {
+      try {
+        const client = supabaseWithAuth || supabaseAdmin;
+        const { data: list, error } = await client.from('ticket_solicitudes').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        return res.json(list || []);
+      } catch (e: any) {
+        console.error('Get ticket-solicitudes error:', e);
+        return res.status(500).json({ error: 'Error al listar solicitudes' });
+      }
+    }
+    if (method === 'PATCH') {
+      const action = String((q as any).__action);
+      const id = String((q as any).__id || (q as any).id || '').trim();
+      if (!id) return res.status(400).json({ error: 'ID requerido' });
+      try {
+        const { data: sol, error: fetchErr } = await supabaseAdmin.from('ticket_solicitudes').select('*').eq('id', id).single();
+        if (fetchErr || !sol) return res.status(404).json({ error: 'Solicitud no encontrada' });
+        if (sol.estado !== 'pendiente') return res.status(400).json({ error: 'La solicitud ya fue procesada' });
+        if (action === 'reject') {
+          await supabaseAdmin.from('ticket_solicitudes').update({ estado: 'rechazado' }).eq('id', id);
+          return res.json({ message: 'Solicitud rechazada' });
+        }
+        if (action === 'approve') {
+          const codigo = `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+          const { data: newTicket, error: ticketErr } = await supabaseAdmin.from('tickets').insert({
+            codigo, tipo: 'general', nombre: sol.nombre, dni: null, email: sol.email, precio: 0, usado: false
+          }).select('id').single();
+          if (ticketErr) { console.error('Create ticket on approve error:', ticketErr); return res.status(500).json({ error: 'Error al crear el ticket' }); }
+          await supabaseAdmin.from('ticket_solicitudes').update({ estado: 'aprobado', ticket_id: newTicket.id }).eq('id', id);
+          return res.json({ message: 'Solicitud aprobada. Ticket creado.', ticket_id: newTicket.id, codigo });
+        }
+        return res.status(400).json({ error: 'Acción no válida' });
+      } catch (e: any) {
+        console.error('Patch ticket-solicitud error:', e);
+        return res.status(500).json({ error: 'Error al procesar' });
+      }
+    }
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   // Setup (solo para bootstrap del primer admin) - protegido por secreto
   // POST /api/admin/setup/create-admin { email, password }
   if (method === 'POST' && path === '/api/admin/setup/create-admin') {
