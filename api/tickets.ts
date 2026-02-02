@@ -103,9 +103,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (error || !tickets?.length) return res.status(404).json({ error: 'No hay tickets para esta solicitud' });
         const pdfBuffer = await generateTicketsPDF(tickets);
         const buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+        res.status(200);
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=tickets-solicitud.pdf`);
-        res.setHeader('Content-Length', buffer.length);
+        res.setHeader('Content-Disposition', 'attachment; filename="tickets-solicitud.pdf"');
+        res.setHeader('Content-Length', String(buffer.length));
+        res.setHeader('Cache-Control', 'no-transform');
         return res.end(buffer);
       }
       const codigo = segment;
@@ -114,9 +116,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (error || !ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
       const pdfBuffer = await generateTicketPDF(ticket);
       const buffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+      res.status(200);
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename=ticket-${codigo}.pdf`);
-      res.setHeader('Content-Length', buffer.length);
+      res.setHeader('Content-Disposition', `attachment; filename="ticket-${codigo}.pdf"`);
+      res.setHeader('Content-Length', String(buffer.length));
+      res.setHeader('Cache-Control', 'no-transform');
       return res.end(buffer);
     } catch (e: any) {
       console.error('Download ticket PDF error:', e);

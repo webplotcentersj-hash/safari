@@ -271,11 +271,17 @@
 .solicitudes-list li.estado-rechazado { border-left: 4px solid #f44336; }
 
 .solicitudes-list .btn-descarga {
+  display: inline-block;
   background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
   color: #fff;
   padding: 0.5rem 1rem;
   border-radius: 8px;
   text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  margin-right: 0.5rem;
+  margin-bottom: 0.25rem;
   font-size: 0.9rem;
   font-weight: 600;
   transition: transform 0.2s, box-shadow 0.2s;

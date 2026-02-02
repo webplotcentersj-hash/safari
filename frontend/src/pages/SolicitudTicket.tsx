@@ -83,6 +83,34 @@ export default function SolicitudTicket() {
     }
   };
 
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const descargarPdf = async (url: string, nombreArchivo: string) => {
+    try {
+      const res = await fetch(url, { method: 'GET' });
+      const contentType = res.headers.get('Content-Type') || '';
+      if (!res.ok || (!contentType.includes('application/pdf') && !contentType.includes('octet-stream'))) {
+        const text = await res.text();
+        let msg = 'No se pudo descargar el PDF.';
+        try {
+          const j = JSON.parse(text);
+          if (j.error) msg = j.error;
+        } catch {
+          if (text) msg = text.slice(0, 100);
+        }
+        alert(msg);
+        return;
+      }
+      const blob = await res.blob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = nombreArchivo;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    } catch (err: any) {
+      alert(err?.message || 'Error al descargar.');
+    }
+  };
+
   return (
     <div className="solicitud-ticket" style={{ minHeight: '100vh', background: 'linear-gradient(to bottom, #1a472a 0%, #0d2818 100%)', color: '#fff' }}>
       <header className="solicitud-header">
@@ -136,10 +164,10 @@ export default function SolicitudTicket() {
                   {s.estado === 'aprobado' && (
                     <>
                       {(s.ticket_codigos?.length || s.ticket_codigo) && (
-                        <a href={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/tickets/download/solicitud/${s.id}`} target="_blank" rel="noopener noreferrer" className="btn-descarga">Descargar todos (PDF)</a>
+                        <button type="button" className="btn-descarga" onClick={() => descargarPdf(`${baseUrl}/api/tickets/download/solicitud/${s.id}`, 'tickets-solicitud.pdf')}>Descargar todos (PDF)</button>
                       )}
                       {(s.ticket_codigos?.length ? s.ticket_codigos : s.ticket_codigo ? [s.ticket_codigo] : []).map((codigo: string, j: number) => (
-                        <a key={j} href={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/tickets/download/${codigo}`} target="_blank" rel="noopener noreferrer" className="btn-descarga">Ticket{s.ticket_codigos && s.ticket_codigos.length > 1 ? ` ${j + 1}` : ''} (PDF)</a>
+                        <button key={j} type="button" className="btn-descarga" onClick={() => descargarPdf(`${baseUrl}/api/tickets/download/${codigo}`, `ticket-${codigo}.pdf`)}>Ticket{s.ticket_codigos && s.ticket_codigos.length > 1 ? ` ${j + 1}` : ''} (PDF)</button>
                       ))}
                     </>
                   )}
