@@ -615,6 +615,19 @@ export default function PilotRegistration() {
             </div>
           )}
 
+          <div className="registration-payment-box">
+            <span className="registration-payment-icon">💳</span>
+            <p className="registration-payment-text">Pagá acá la inscripción</p>
+            <a
+              href="https://mpago.la/1ccAJk9"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="registration-payment-link"
+            >
+              Mercado Pago · Pagar inscripción
+            </a>
+          </div>
+
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="form-section">
               <h2>Datos Personales</h2>

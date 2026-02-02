@@ -76,6 +76,47 @@
   font-size: 1.25rem;
 }
 
+/* Caja de pago inscripción */
+.registration-payment-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-bottom: 28px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #009ee3 0%, #0078c1 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 158, 227, 0.35);
+}
+
+.registration-payment-icon {
+  font-size: 1.75rem;
+}
+
+.registration-payment-text {
+  margin: 0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.registration-payment-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  background: #fff;
+  color: #009ee3;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.registration-payment-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 /* Modal medidas de seguridad */
 .registration-modal-overlay {
   position: fixed;
