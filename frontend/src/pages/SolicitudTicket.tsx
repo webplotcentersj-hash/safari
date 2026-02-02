@@ -215,14 +215,14 @@ export default function SolicitudTicket() {
                     {esAprobado && (
                       <>
                         <p className="solicitud-descarga-note">Mismo ticket que en el panel de administración.</p>
-                        {tieneCodigos ? (
+                        {tieneCodigos && s.ticket_codigos ? (
                           <>
                             <button type="button" className="btn-descarga" onClick={() => {
                               console.log('📥 Descargando todos los tickets de solicitud:', s.id);
                               if (s.id) descargarPdfSolicitud(s.id);
                             }}>Descargar todos (PDF)</button>
                             {s.ticket_codigos.map((codigo: string, j: number) => {
-                              const total = s.ticket_codigos?.length || 0;
+                              const total = s.ticket_codigos!.length;
                               return (
                                 <button key={j} type="button" className="btn-descarga" onClick={() => {
                                   console.log('📥 Descargando ticket individual:', codigo);
