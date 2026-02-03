@@ -632,7 +632,7 @@ export default function PilotRegistration() {
   }
 
   return (
-    <div className="registration-page">
+    <div className={`registration-page${tipo === 'moto' ? ' registration-page--moto' : ''}`}>
       <div className="container">
         <Link to={tipo ? '/inscripcion' : '/'} className="back-link">← {tipo ? 'Elegir tipo de vehículo' : 'Volver al inicio'}</Link>
         
