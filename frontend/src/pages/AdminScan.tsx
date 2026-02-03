@@ -229,11 +229,7 @@ export default function AdminScan() {
       if (pilot) {
         setPilotInfo(pilot);
         setError(null);
-        if (pilot.estado === 'pendiente') {
-          await approvePilotById(pilot.id);
-        } else {
-          setLoading(false);
-        }
+        setLoading(false);
         return;
       }
       if (status !== undefined) lastErr = { status, message };
@@ -255,8 +251,6 @@ export default function AdminScan() {
     else if (lastErr.message) errMsg = lastErr.message;
     setError(errMsg);
     setLoading(false);
-    // Intentar aprobar igual por ID (por si el piloto existe y falló solo el GET)
-    approvePilotById(pilotId);
   };
 
   const retryLoadPilot = async () => {
@@ -352,15 +346,10 @@ export default function AdminScan() {
             try {
               const { pilot } = await fetchPilotById(pilotId);
               if (pilot) setPilotInfo(pilot);
-              if (pilot?.estado === 'pendiente' || !pilot) {
-                await approvePilotById(pilot?.id ?? pilotId);
-              } else {
-                setLoading(false);
-              }
             } catch (_) {
-              setError('Datos del QR. No se pudo conectar al servidor.');
-              await approvePilotById(pilotId);
+              setError('No se pudo conectar al servidor. Revisá los datos y tocá "Aprobar" o "Rechazar" si corresponde.');
             }
+            setLoading(false);
             return;
           }
           setScannedData(qrData);
@@ -462,7 +451,7 @@ export default function AdminScan() {
     }
   };
 
-  /** Aprueba por ID (usado para auto-aprobar al escanear). */
+  /** Aprueba por ID (llamado al hacer clic en "Aprobar Piloto"). */
   const approvePilotById = async (id: string): Promise<boolean> => {
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -567,7 +556,7 @@ export default function AdminScan() {
       <div className="scan-container">
         <div className="scan-header">
           <h1>📱 Escanear QR de Inscripción</h1>
-          <p>Al escanear el QR del piloto se aprueba automáticamente. Listo para el siguiente.</p>
+          <p>Escaneá el QR para ver los datos del piloto. Luego aprobá o rechazá la inscripción manualmente.</p>
         </div>
 
         {authCheck && !authCheck.ok && (
