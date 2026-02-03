@@ -9,6 +9,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const path = url?.split('?')[0] || '';
   const q = query || {};
 
+  // Rewrite: /api/health → /api/admin?__route=health (reduce Serverless Functions en Vercel Hobby)
+  if (String((q as any).__route) === 'health') {
+    return res.json({ status: 'ok', message: 'Safari API is running' });
+  }
+
+  // Rewrite: /api/admin-setup → /api/admin?__route=admin-setup (reduce Serverless Functions)
+  if (String((q as any).__route) === 'admin-setup') {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+    try {
+      const secretHeader =
+        (req.headers['x-admin-setup-secret'] as string | undefined) ||
+        (req.headers['X-Admin-Setup-Secret'] as string | undefined);
+      const expectedSecret = process.env.ADMIN_SETUP_SECRET;
+      if (!expectedSecret) {
+        return res.status(500).json({ error: 'ADMIN_SETUP_SECRET no configurado en el servidor' });
+      }
+      if (!secretHeader || secretHeader !== expectedSecret) {
+        return res.status(403).json({ error: 'Acceso denegado' });
+      }
+      const { email, password } = (body as any) || {};
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email y contraseña son requeridos' });
+      }
+      const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true
+      });
+      if (error || !created?.user) {
+        console.error('Create admin user error:', error);
+        return res.status(500).json({ error: error?.message || 'No se pudo crear el usuario admin' });
+      }
+      const { error: upsertError } = await supabaseAdmin
+        .from('users')
+        .upsert({ id: created.user.id, email, role: 'admin' }, { onConflict: 'id' });
+      if (upsertError) console.error('Upsert users role error:', upsertError);
+      return res.status(201).json({
+        message: 'Usuario admin creado',
+        user: { id: created.user.id, email }
+      });
+    } catch (e: any) {
+      console.error('Admin-setup crashed:', e);
+      return res.status(500).json({ error: 'Error al crear el usuario admin' });
+    }
+  }
+
   // Rewrite: /api/ticket-solicitud → /api/admin?__route=ticket-solicitud (para no superar límite de funciones)
   if (String((q as any).__route) === 'ticket-solicitud') {
     if (method === 'POST') {
