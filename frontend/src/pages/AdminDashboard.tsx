@@ -764,12 +764,19 @@ export default function AdminDashboard() {
                                     return;
                                   }
                                   const blob = response.data as Blob;
+                                  if (!blob || blob.size === 0) {
+                                    setErrorMessage('El PDF llegó vacío. Reintentá.');
+                                    return;
+                                  }
                                   const resFilename = (response.headers['x-filename'] as string) || `planilla-inscripcion-${planillaCategoria}.pdf`;
                                   const url = URL.createObjectURL(blob);
                                   const a = document.createElement('a');
                                   a.href = url;
                                   a.download = resFilename;
+                                  a.style.display = 'none';
+                                  document.body.appendChild(a);
                                   a.click();
+                                  document.body.removeChild(a);
                                   URL.revokeObjectURL(url);
                                 } catch (err: any) {
                                   if (err.response?.data instanceof Blob) {
