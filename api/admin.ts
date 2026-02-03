@@ -343,22 +343,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .order('apellido', { ascending: true })
         .order('nombre', { ascending: true });
       if (categoria !== 'todos') {
-        if (!['auto', 'moto', 'cuatri'].includes(categoria)) {
-          return res.status(400).json({ error: 'Categoría debe ser todos, auto, moto o cuatri' });
+        if (categoria === 'moto_enduro') {
+          queryBuilder = queryBuilder.eq('categoria', 'moto').eq('tipo_campeonato', 'enduro');
+        } else if (categoria === 'moto_travesias') {
+          queryBuilder = queryBuilder.eq('categoria', 'moto').eq('tipo_campeonato', 'travesias');
+        } else if (!['auto', 'moto', 'cuatri'].includes(categoria)) {
+          return res.status(400).json({ error: 'Categoría debe ser todos, auto, moto, moto_enduro, moto_travesias o cuatri' });
+        } else {
+          queryBuilder = queryBuilder.eq('categoria', categoria);
         }
-        queryBuilder = queryBuilder.eq('categoria', categoria);
       }
       const { data: pilots, error } = await queryBuilder;
       if (error) throw error;
-      const label = categoria === 'todos' ? 'Todas las categorías' : categoria === 'auto' ? 'Auto' : categoria === 'moto' ? 'Moto' : 'Cuatriciclo';
+      const label = categoria === 'todos' ? 'Todas las categorías' : categoria === 'auto' ? 'Auto' : categoria === 'moto' ? 'Moto' : categoria === 'moto_enduro' ? 'Moto (Enduro)' : categoria === 'moto_travesias' ? 'Moto (Travesías)' : 'Cuatriciclo';
       const buffer = await generatePlanillaInscripcionPDF(pilots || [], label);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="planilla-inscripcion-${categoria}.pdf"`);
-      res.setHeader('Content-Length', String(buffer.length));
-      res.end(buffer);
+      const base64 = buffer.toString('base64');
+      return res.status(200).json({ pdf: base64, filename: `planilla-inscripcion-${categoria}.pdf` });
     } catch (e: any) {
       console.error('Planilla inscripcion error:', e);
-      res.status(500).json({ error: 'Error al generar la planilla' });
+      return res.status(500).json({ error: 'Error al generar la planilla' });
     }
   } else if (method === 'GET' && path.includes('/admin/pilots/') && !path.includes('/status') && !path.includes('/pdf')) {
     // Obtener piloto por ID — usar siempre supabaseAdmin (ya verificamos admin con nuestro JWT; RLS bloquearía con token de usuario)
