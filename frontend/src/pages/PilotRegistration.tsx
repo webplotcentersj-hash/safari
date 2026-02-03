@@ -1048,17 +1048,17 @@ export default function PilotRegistration() {
 
             </div>
 
-            {tipo === 'moto' && tipoCampeonato && (
+            {(tipo === 'auto' || (tipo === 'moto' && tipoCampeonato)) && (
               <div className="registration-payment-box" style={{ marginBottom: '1.5rem' }}>
                 <span className="registration-payment-icon">💳</span>
                 <p className="registration-payment-text">Pagá acá la inscripción</p>
                 <a
-                  href={tipoCampeonato === 'enduro' ? 'https://mpago.la/1zfu8A9' : 'https://mpago.la/16eEYR9'}
+                  href={tipo === 'auto' ? 'https://mpago.la/1ccAJk9' : tipoCampeonato === 'enduro' ? 'https://mpago.la/1zfu8A9' : 'https://mpago.la/16eEYR9'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="registration-payment-link"
                 >
-                  {tipoCampeonato === 'enduro' ? 'Mercado Pago · Inscripción Enduro' : 'Mercado Pago · Inscripción Travesías / Safari'}
+                  {tipo === 'auto' ? 'Mercado Pago · Inscripción Autos' : tipoCampeonato === 'enduro' ? 'Mercado Pago · Inscripción Enduro' : 'Mercado Pago · Inscripción Travesías / Safari'}
                 </a>
               </div>
             )}
