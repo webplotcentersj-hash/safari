@@ -778,29 +778,33 @@ export default function AdminDashboard() {
                                   if (planillaSubcategoria !== 'todos') params.categoria_detalle = planillaSubcategoria;
                                   const authToken = token || localStorage.getItem('token');
                                   const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
-                                  const response = await axios.get('/admin/planilla-inscripcion', { params, headers });
-                                  const data = response?.data;
-                                  if (!data || typeof data !== 'object') {
-                                    setErrorMessage('La respuesta del servidor no es válida. Reintentá.');
+                                  const response = await axios.get('/admin/planilla-inscripcion', {
+                                    params,
+                                    headers,
+                                    responseType: 'blob'
+                                  });
+                                  if (response.status !== 200) {
+                                    const text = await (response.data as Blob).text();
+                                    const err = (() => { try { return JSON.parse(text); } catch { return {}; } })();
+                                    setErrorMessage(err?.error || 'Error al descargar la planilla');
                                     return;
                                   }
-                                  const { pdf, filename: resFilename, error: resError } = data as { pdf?: string; filename?: string; error?: string };
-                                  if (resError || !pdf) {
-                                    setErrorMessage(resError || 'No se pudo generar la planilla');
-                                    return;
-                                  }
-                                  const binary = atob(pdf);
-                                  const bytes = new Uint8Array(binary.length);
-                                  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-                                  const blob = new Blob([bytes], { type: 'application/pdf' });
+                                  const blob = response.data as Blob;
+                                  const resFilename = (response.headers['x-filename'] as string) || `planilla-inscripcion-${planillaCategoria}.pdf`;
                                   const url = URL.createObjectURL(blob);
                                   const a = document.createElement('a');
                                   a.href = url;
-                                  a.download = resFilename || `planilla-inscripcion-${planillaCategoria}.pdf`;
+                                  a.download = resFilename;
                                   a.click();
                                   URL.revokeObjectURL(url);
                                 } catch (err: any) {
-                                  setErrorMessage(err.response?.data?.error || err.message || 'Error al descargar la planilla');
+                                  if (err.response?.data instanceof Blob) {
+                                    err.response.data.text().then((t: string) => {
+                                      try { setErrorMessage(JSON.parse(t)?.error || 'Error al descargar la planilla'); } catch { setErrorMessage('Error al descargar la planilla'); }
+                                    });
+                                  } else {
+                                    setErrorMessage(err.response?.data?.error || err.message || 'Error al descargar la planilla');
+                                  }
                                 } finally {
                                   setDownloadingPlanilla(false);
                                 }

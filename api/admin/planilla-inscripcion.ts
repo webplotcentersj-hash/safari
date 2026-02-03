@@ -93,12 +93,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'No se pudo generar el PDF (buffer vacío)' });
     }
 
-    const base64 = buffer.toString('base64');
     const filenamePart = categoriaDetalle
       ? `planilla-inscripcion-${categoria}-${categoriaDetalle.replace(/[^a-z0-9\u00C0-\u024F\-]/gi, '-')}.pdf`
       : `planilla-inscripcion-${categoria}.pdf`;
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(200).json({ pdf: base64, filename: filenamePart });
+    const safeFilename = encodeURIComponent(filenamePart);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filenamePart}"; filename*=UTF-8''${safeFilename}`);
+    res.setHeader('X-Filename', filenamePart);
+    res.setHeader('Content-Length', String(buffer.length));
+    return res.status(200).end(buffer);
   } catch (e: any) {
     console.error('Planilla inscripcion error:', e);
     return res.status(500).json({ error: e?.message || 'Error al generar la planilla' });
