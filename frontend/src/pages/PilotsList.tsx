@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { supabase } from '../config/supabase';
 import './PilotsList.css';
+
+const SITE_HOME = 'https://safaritraslassierras.com.ar/';
+
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 interface Pilot {
   id: string;
@@ -15,6 +17,10 @@ interface Pilot {
   categoria?: string;
   categoria_auto?: string;
   categoria_moto?: string;
+  categoria_enduro?: string;
+  categoria_travesia_moto?: string;
+  categoria_cuatri?: string;
+  tipo_campeonato?: string;
   numero?: number;
 }
 
@@ -28,40 +34,17 @@ export default function PilotsList() {
     setLoading(true);
     setError(null);
     try {
-      console.log('=== FETCHING PILOTS DIRECTLY FROM SUPABASE ===');
-      console.log('Supabase client available:', !!supabase);
-      
-      if (!supabase) {
-        const errorMsg = 'Supabase client no está configurado. Verificá que VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY estén configuradas en Vercel.';
-        console.error('❌', errorMsg);
-        throw new Error(errorMsg);
+      const url = `${API_BASE}/admin/pilots`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error || errData?.details || `Error ${res.status}`);
       }
-
-      // Consultar directamente desde Supabase usando el cliente del frontend
-      const { data: pilotsData, error: supabaseError } = await supabase
-        .from('pilots')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      console.log('Supabase query result - error:', supabaseError);
-      console.log('Supabase query result - data:', pilotsData);
-      console.log('Supabase query result - data length:', pilotsData?.length);
-
-      if (supabaseError) {
-        console.error('Supabase error:', supabaseError);
-        throw new Error(supabaseError.message || 'Error al cargar los pilotos desde Supabase');
-      }
-
-      const pilotsArray = Array.isArray(pilotsData) ? pilotsData : [];
-      console.log(`✅ Successfully loaded ${pilotsArray.length} pilots`);
-      
-      if (pilotsArray.length > 0) {
-        console.log('First pilot:', pilotsArray[0]);
-      }
-      
+      const data = await res.json();
+      const pilotsArray = Array.isArray(data) ? data : [];
       setPilots(pilotsArray);
     } catch (err: any) {
-      console.error('❌ Error fetching pilots:', err);
+      console.error('Error fetching pilots:', err);
       setError(err.message || 'Error al cargar los pilotos');
     } finally {
       setLoading(false);
@@ -85,122 +68,95 @@ export default function PilotsList() {
       pilot.email?.toLowerCase().includes(search) ||
       pilot.categoria_auto?.toLowerCase().includes(search) ||
       pilot.categoria_moto?.toLowerCase().includes(search) ||
+      pilot.categoria_enduro?.toLowerCase().includes(search) ||
+      pilot.categoria_travesia_moto?.toLowerCase().includes(search) ||
+      pilot.categoria_cuatri?.toLowerCase().includes(search) ||
       pilot.numero?.toString().includes(search)
     );
   });
 
-  const approvedPilots = filteredPilots.filter(p => p.estado === 'aprobado');
-  const pendingPilots = filteredPilots.filter(p => p.estado === 'pendiente');
+  const getCategoriaLabel = (p: Pilot) => {
+    if (p.categoria === 'auto' && p.categoria_auto) return p.categoria_auto;
+    if (p.categoria === 'moto') {
+      if (p.tipo_campeonato === 'enduro' && p.categoria_enduro) return `Enduro — ${p.categoria_enduro}`;
+      if (p.tipo_campeonato === 'travesias' && p.categoria_travesia_moto) return `Travesías — ${p.categoria_travesia_moto}`;
+      if (p.categoria_moto) return p.categoria_moto;
+      return 'Moto';
+    }
+    if (p.categoria === 'cuatri' && p.categoria_cuatri) return p.categoria_cuatri;
+    if (p.categoria === 'auto') return 'Auto';
+    if (p.categoria === 'cuatri') return 'Cuatriciclo';
+    return p.categoria_auto || p.categoria_moto || '—';
+  };
+
+  const getVehiculoLabel = (p: Pilot) => {
+    if (p.categoria === 'auto') return 'Auto';
+    if (p.categoria === 'moto') return 'Moto';
+    if (p.categoria === 'cuatri') return 'Cuatriciclo';
+    return '—';
+  };
 
   return (
     <div className="pilots-list-page">
       <header className="pilots-header">
-        <div className="container">
-          <Link to="/" className="back-link">← Volver al inicio</Link>
+        <div className="pilots-header-inner">
+          <a href={SITE_HOME} className="back-link" rel="noopener noreferrer">← Volver al sitio</a>
           <img src="/logo.png" alt="Safari Tras las Sierras" className="pilots-logo" />
           <h1>Pilotos Inscritos</h1>
-          <p className="subtitle">Lista de todos los pilotos inscritos en el Safari Tras las Sierras</p>
+          <p className="subtitle">Safari Tras las Sierras — Valle Fértil, San Juan</p>
         </div>
       </header>
 
       <main className="pilots-main">
-        <div className="container">
+        <div className="pilots-main-inner">
           {loading ? (
-            <div className="loading">Cargando pilotos...</div>
+            <div className="pilots-loading">Cargando lista...</div>
           ) : error ? (
-            <div className="alert alert-error">
-              <strong>Error:</strong> {error}
-              <button onClick={fetchPilots} className="btn btn-primary btn-sm" style={{ marginLeft: '10px' }}>
-                Reintentar
-              </button>
+            <div className="pilots-error">
+              <p>{error}</p>
+              <button type="button" onClick={fetchPilots} className="pilots-retry">Reintentar</button>
             </div>
           ) : (
             <>
-              <div className="pilots-stats">
-                <div className="stat-box">
-                  <span className="stat-label">Total Inscritos:</span>
-                  <span className="stat-value">{pilots.length}</span>
-                </div>
-                <div className="stat-box stat-approved">
-                  <span className="stat-label">Aprobados:</span>
-                  <span className="stat-value">{approvedPilots.length}</span>
-                </div>
-                <div className="stat-box stat-pending">
-                  <span className="stat-label">Pendientes:</span>
-                  <span className="stat-value">{pendingPilots.length}</span>
-                </div>
-              </div>
-
-              <div className="search-section">
+              <div className="pilots-toolbar">
+                <span className="pilots-count">{filteredPilots.length} inscripto{filteredPilots.length !== 1 ? 's' : ''}</span>
                 <input
                   type="text"
-                  placeholder="Buscar por nombre, apellido, DNI, email, categoría o número..."
+                  placeholder="Buscar por nombre, categoría o número..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
+                  className="pilots-search"
                 />
               </div>
 
               {filteredPilots.length === 0 ? (
-                <div className="empty-state">
-                  <p>No se encontraron pilotos{searchTerm ? ' que coincidan con la búsqueda' : ''}.</p>
+                <div className="pilots-empty">
+                  No hay pilotos{searchTerm ? ' que coincidan con la búsqueda' : ''}.
                 </div>
               ) : (
-                <div className="pilots-grid">
-                  {filteredPilots.map((pilot) => (
-                    <div key={pilot.id} className={`pilot-card ${pilot.estado}`}>
-                      <div className="pilot-card-header">
-                        <div className="pilot-name">
-                          <h3>{pilot.nombre} {pilot.apellido}</h3>
-                          {pilot.numero && (
-                            <span className="pilot-number">#{pilot.numero.toString().padStart(2, '0')}</span>
-                          )}
-                        </div>
-                        <span className={`status-badge status-${pilot.estado}`}>
-                          {pilot.estado === 'aprobado' ? '✓ Aprobado' : 
-                           pilot.estado === 'rechazado' ? '✗ Rechazado' : 
-                           '⏳ Pendiente'}
-                        </span>
-                      </div>
-                      
-                      <div className="pilot-details">
-                        <div className="detail-row">
-                          <span className="detail-label">DNI:</span>
-                          <span className="detail-value">{pilot.dni}</span>
-                        </div>
-                        <div className="detail-row">
-                          <span className="detail-label">Email:</span>
-                          <span className="detail-value">{pilot.email}</span>
-                        </div>
-                        <div className="detail-row">
-                          <span className="detail-label">Teléfono:</span>
-                          <span className="detail-value">{pilot.telefono}</span>
-                        </div>
-                        <div className="detail-row">
-                          <span className="detail-label">Vehículo:</span>
-                          <span className="detail-value">
-                            {pilot.categoria === 'auto' ? '🚗 Auto' : 
-                             pilot.categoria === 'moto' ? '🏍️ Moto' : 
-                             'N/A'}
-                          </span>
-                        </div>
-                        {(pilot.categoria_auto || pilot.categoria_moto) && (
-                          <div className="detail-row">
-                            <span className="detail-label">Categoría:</span>
-                            <span className="detail-value category-badge">
-                              {pilot.categoria_auto || pilot.categoria_moto}
-                            </span>
-                          </div>
-                        )}
-                        <div className="detail-row">
-                          <span className="detail-label">Fecha de inscripción:</span>
-                          <span className="detail-value">
-                            {new Date(pilot.created_at).toLocaleDateString('es-AR')}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="pilots-table-wrap">
+                  <table className="pilots-table">
+                    <thead>
+                      <tr>
+                        <th>Nº</th>
+                        <th>Nombre</th>
+                        <th>Vehículo</th>
+                        <th>Categoría</th>
+                        <th>Fecha inscripción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredPilots.map((pilot) => (
+                        <tr key={pilot.id}>
+                          <td className="col-num">{pilot.numero != null ? pilot.numero.toString().padStart(2, '0') : '—'}</td>
+                          <td className="col-name">{pilot.nombre} {pilot.apellido}</td>
+                          <td className="col-vehiculo">{getVehiculoLabel(pilot)}</td>
+                          <td className="col-categoria">{getCategoriaLabel(pilot)}</td>
+                          <td className="col-fecha">{new Date(pilot.created_at).toLocaleDateString('es-AR')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </>
@@ -209,9 +165,7 @@ export default function PilotsList() {
       </main>
 
       <footer className="pilots-footer">
-        <div className="container">
-          <p>Desarrollado con ❤️ por <strong>Plot Center</strong> 2026</p>
-        </div>
+        <a href={SITE_HOME} rel="noopener noreferrer">safaritraslassierras.com.ar</a>
       </footer>
     </div>
   );
