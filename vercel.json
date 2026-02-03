@@ -28,6 +28,10 @@
       "destination": "/api/admin?__subpath=ticket-solicitudes&__action=reject"
     },
     {
+      "source": "/api/admin/planilla-inscripcion",
+      "destination": "/api/admin?__route=planilla-inscripcion"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

@@ -333,7 +333,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const user = await authenticateToken(req);
   if (!user || !requireAdmin(user)) {
     return res.status(403).json({ error: 'Acceso denegado' });
-  } else if (method === 'GET' && (path === '/api/admin/planilla-inscripcion' || path.endsWith('/admin/planilla-inscripcion'))) {
+  } else if (method === 'GET' && ((q as any).__route === 'planilla-inscripcion' || path === '/api/admin/planilla-inscripcion' || path.endsWith('/admin/planilla-inscripcion'))) {
     try {
       const categoria = String((q as any).categoria || 'todos').toLowerCase();
       let queryBuilder = supabaseAdmin
@@ -357,11 +357,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (error) throw error;
       const label = categoria === 'todos' ? 'Todas las categorías' : categoria === 'auto' ? 'Auto' : categoria === 'moto' ? 'Moto' : categoria === 'moto_enduro' ? 'Moto (Enduro)' : categoria === 'moto_travesias' ? 'Moto (Travesías)' : 'Cuatriciclo';
       const buffer = await generatePlanillaInscripcionPDF(pilots || [], label);
+      if (!buffer || buffer.length === 0) {
+        return res.status(500).json({ error: 'No se pudo generar el PDF (buffer vacío)' });
+      }
       const base64 = buffer.toString('base64');
       return res.status(200).json({ pdf: base64, filename: `planilla-inscripcion-${categoria}.pdf` });
     } catch (e: any) {
       console.error('Planilla inscripcion error:', e);
-      return res.status(500).json({ error: 'Error al generar la planilla' });
+      return res.status(500).json({ error: e?.message || 'Error al generar la planilla' });
     }
   } else if (method === 'GET' && path.includes('/admin/pilots/') && !path.includes('/status') && !path.includes('/pdf')) {
     // Obtener piloto por ID — usar siempre supabaseAdmin (ya verificamos admin con nuestro JWT; RLS bloquearía con token de usuario)

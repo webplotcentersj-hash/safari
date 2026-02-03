@@ -713,9 +713,14 @@ export default function AdminDashboard() {
                                   const response = await axios.get('/admin/planilla-inscripcion', {
                                     params: { categoria: planillaCategoria }
                                   });
-                                  const data = response.data as { pdf?: string; filename?: string; error?: string };
-                                  if (data.error || !data.pdf) {
-                                    setErrorMessage(data.error || 'No se pudo generar la planilla');
+                                  const data = response?.data;
+                                  if (!data || typeof data !== 'object') {
+                                    setErrorMessage('La respuesta del servidor no es válida. Reintentá.');
+                                    return;
+                                  }
+                                  const { pdf, filename: resFilename, error: resError } = data as { pdf?: string; filename?: string; error?: string };
+                                  if (resError || !pdf) {
+                                    setErrorMessage(resError || 'No se pudo generar la planilla');
                                     return;
                                   }
                                   const binary = atob(data.pdf);
@@ -725,7 +730,7 @@ export default function AdminDashboard() {
                                   const url = URL.createObjectURL(blob);
                                   const a = document.createElement('a');
                                   a.href = url;
-                                  a.download = data.filename || `planilla-inscripcion-${planillaCategoria}.pdf`;
+                                  a.download = resFilename || `planilla-inscripcion-${planillaCategoria}.pdf`;
                                   a.click();
                                   URL.revokeObjectURL(url);
                                 } catch (err: any) {
