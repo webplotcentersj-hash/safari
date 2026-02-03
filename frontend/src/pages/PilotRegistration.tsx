@@ -6,6 +6,9 @@ import { supabase } from '../config/supabase';
 // Configurar base URL para producción
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 axios.defaults.baseURL = API_BASE_URL;
+
+// Logo del formulario de inscripción (solo este formulario)
+const REGISTRATION_LOGO_URL = 'https://plotcenter.com.ar/wp-content/uploads/2026/02/ASER-logos-01-scaled.png';
 import { Link, useLocation } from 'react-router-dom';
 import './PilotRegistration.css';
 import NumberSelector from '../components/NumberSelector';
@@ -610,7 +613,7 @@ export default function PilotRegistration() {
           <Link to="/" className="back-link">← Volver al inicio</Link>
           <div className="registration-card">
             <div className="registration-header">
-              <img src="/logo.png" alt="Safari Tras las Sierras" className="registration-logo" />
+              <img src={REGISTRATION_LOGO_URL} alt="Safari Tras las Sierras" className="registration-logo" />
               <h1>Inscripción de Pilotos</h1>
               <p className="subtitle">Elegí el formulario según tu vehículo</p>
             </div>
@@ -635,7 +638,7 @@ export default function PilotRegistration() {
         
         <div className="registration-card">
           <div className="registration-header">
-            <img src="/logo.png" alt="Safari Tras las Sierras" className="registration-logo" />
+            <img src={REGISTRATION_LOGO_URL} alt="Safari Tras las Sierras" className="registration-logo" />
             <h1>Inscripción {tipo === 'auto' ? 'Autos' : 'Motos (y cuatriciclos)'}</h1>
             <p className="subtitle">Completa todos los campos para inscribirte en el Safari Tras las Sierras</p>
             <button
@@ -698,18 +701,20 @@ export default function PilotRegistration() {
             </div>
           )}
 
-          <div className="registration-payment-box">
-            <span className="registration-payment-icon">💳</span>
-            <p className="registration-payment-text">Pagá acá la inscripción</p>
-            <a
-              href="https://mpago.la/1ccAJk9"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="registration-payment-link"
-            >
-              Mercado Pago · Pagar inscripción
-            </a>
-          </div>
+          {tipo === 'moto' && tipoCampeonato && (
+            <div className="registration-payment-box">
+              <span className="registration-payment-icon">💳</span>
+              <p className="registration-payment-text">Pagá acá la inscripción</p>
+              <a
+                href={tipoCampeonato === 'enduro' ? 'https://mpago.la/1zfu8A9' : 'https://mpago.la/16eEYR9'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="registration-payment-link"
+              >
+                {tipoCampeonato === 'enduro' ? 'Mercado Pago · Inscripción Enduro' : 'Mercado Pago · Inscripción Travesías / Safari'}
+              </a>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="form-section">
