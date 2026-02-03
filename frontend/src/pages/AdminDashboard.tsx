@@ -79,7 +79,7 @@ interface RaceTime {
 }
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'pilots' | 'tickets' | 'stats' | 'times' | 'solicitudes'>('stats');
   const [pilots, setPilots] = useState<Pilot[]>([]);
@@ -776,7 +776,9 @@ export default function AdminDashboard() {
                                 try {
                                   const params: { categoria: string; categoria_detalle?: string } = { categoria: planillaCategoria };
                                   if (planillaSubcategoria !== 'todos') params.categoria_detalle = planillaSubcategoria;
-                                  const response = await axios.get('/admin/planilla-inscripcion', { params });
+                                  const authToken = token || localStorage.getItem('token');
+                                  const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+                                  const response = await axios.get('/admin/planilla-inscripcion', { params, headers });
                                   const data = response?.data;
                                   if (!data || typeof data !== 'object') {
                                     setErrorMessage('La respuesta del servidor no es válida. Reintentá.');
