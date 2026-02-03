@@ -3,6 +3,8 @@
   background: #0f1f14;
   color: #e8ebe0;
   font-family: 'Oswald', sans-serif;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 /* Header */
@@ -68,6 +70,7 @@
   border-radius: 12px;
   padding: 1.5rem;
   border: 1px solid rgba(101, 179, 48, 0.25);
+  overflow: visible;
 }
 
 .pilots-toolbar {
@@ -76,6 +79,37 @@
   align-items: center;
   gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.pilots-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pilots-filter-btn {
+  padding: 0.5rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(101, 179, 48, 0.4);
+  border-radius: 8px;
+  color: #b8c9b8;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.pilots-filter-btn:hover {
+  background: rgba(101, 179, 48, 0.15);
+  border-color: rgba(101, 179, 48, 0.5);
+  color: #e8ebe0;
+}
+
+.pilots-filter-btn.active {
+  background: rgba(101, 179, 48, 0.25);
+  border-color: #65b330;
+  color: #fff;
 }
 
 .pilots-count {
@@ -109,6 +143,7 @@
 /* Table */
 .pilots-table-wrap {
   overflow-x: auto;
+  overflow-y: visible;
   border-radius: 8px;
   border: 1px solid rgba(101, 179, 48, 0.2);
 }
@@ -266,6 +301,11 @@
   color: #e8ebe0;
 }
 
+.pilots-cards-mobile {
+  overflow: visible;
+  min-height: 0;
+}
+
 /* Responsive: móvil */
 @media (max-width: 768px) {
   /* En móvil ocultar tabla y mostrar todas las cards */
@@ -296,6 +336,18 @@
   .pilots-toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .pilots-filters {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .pilots-filter-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 0.55rem 0.5rem;
+    font-size: 0.85rem;
   }
 
   .pilots-search {

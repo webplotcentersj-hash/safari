@@ -24,11 +24,14 @@ interface Pilot {
   numero?: number;
 }
 
+type VehiculoFilter = 'all' | 'auto' | 'moto' | 'cuatri';
+
 export default function PilotsList() {
   const [pilots, setPilots] = useState<Pilot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [vehiculoFilter, setVehiculoFilter] = useState<VehiculoFilter>('all');
 
   const fetchPilots = useCallback(async () => {
     setLoading(true);
@@ -59,6 +62,12 @@ export default function PilotsList() {
   }, [fetchPilots]);
 
   const filteredPilots = pilots.filter((pilot) => {
+    if (vehiculoFilter !== 'all') {
+      const cat = pilot.categoria?.toLowerCase();
+      if (vehiculoFilter === 'auto' && cat !== 'auto') return false;
+      if (vehiculoFilter === 'moto' && cat !== 'moto') return false;
+      if (vehiculoFilter === 'cuatri' && cat !== 'cuatri') return false;
+    }
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
@@ -120,6 +129,36 @@ export default function PilotsList() {
             <>
               <div className="pilots-toolbar">
                 <span className="pilots-count">{filteredPilots.length} inscripto{filteredPilots.length !== 1 ? 's' : ''}</span>
+                <div className="pilots-filters">
+                  <button
+                    type="button"
+                    className={`pilots-filter-btn ${vehiculoFilter === 'all' ? 'active' : ''}`}
+                    onClick={() => setVehiculoFilter('all')}
+                  >
+                    Todos
+                  </button>
+                  <button
+                    type="button"
+                    className={`pilots-filter-btn ${vehiculoFilter === 'auto' ? 'active' : ''}`}
+                    onClick={() => setVehiculoFilter('auto')}
+                  >
+                    Autos
+                  </button>
+                  <button
+                    type="button"
+                    className={`pilots-filter-btn ${vehiculoFilter === 'moto' ? 'active' : ''}`}
+                    onClick={() => setVehiculoFilter('moto')}
+                  >
+                    Motos
+                  </button>
+                  <button
+                    type="button"
+                    className={`pilots-filter-btn ${vehiculoFilter === 'cuatri' ? 'active' : ''}`}
+                    onClick={() => setVehiculoFilter('cuatri')}
+                  >
+                    Cuatriciclos
+                  </button>
+                </div>
                 <input
                   type="text"
                   placeholder="Buscar por nombre, categoría o número..."
@@ -131,7 +170,7 @@ export default function PilotsList() {
 
               {filteredPilots.length === 0 ? (
                 <div className="pilots-empty">
-                  No hay pilotos{searchTerm ? ' que coincidan con la búsqueda' : ''}.
+                  No hay pilotos{searchTerm || vehiculoFilter !== 'all' ? ' que coincidan con el filtro' : ''}.
                 </div>
               ) : (
                 <>
