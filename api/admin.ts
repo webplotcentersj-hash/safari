@@ -379,8 +379,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   } else if (method === 'GET' && ((q as any).__route === 'planilla-inscripcion' || path === '/api/admin/planilla-inscripcion' || path.endsWith('/admin/planilla-inscripcion'))) {
     try {
-      const categoria = String((q as any).categoria || 'todos').toLowerCase();
-      const categoriaDetalle = typeof (q as any).categoria_detalle === 'string' ? (q as any).categoria_detalle.trim() : '';
+      const rawCat = (q as any).categoria;
+      const rawDet = (q as any).categoria_detalle;
+      const categoria = String(Array.isArray(rawCat) ? rawCat[0] : rawCat || 'todos').toLowerCase().trim();
+      const categoriaDetalle = (Array.isArray(rawDet) ? rawDet[0] : rawDet) ? String(Array.isArray(rawDet) ? rawDet[0] : rawDet).trim() : '';
       let queryBuilder = supabaseAdmin
         .from('pilots')
         .select('*')
@@ -395,9 +397,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           queryBuilder = queryBuilder.eq('categoria', 'moto').eq('tipo_campeonato', 'travesias');
           if (categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_travesia_moto', categoriaDetalle);
         } else if (categoria === 'moto') {
-          // Moto (todas) incluye motos y cuatriciclos (cuatri englobado en motos)
           queryBuilder = queryBuilder.in('categoria', ['moto', 'cuatri']);
-          // Filtro por subcategoría se aplica después si hay categoriaDetalle
         } else if (!['auto', 'cuatri'].includes(categoria)) {
           return res.status(400).json({ error: 'Categoría debe ser todos, auto, moto, moto_enduro, moto_travesias o cuatri' });
         } else {
@@ -413,20 +413,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         pilots = pilots.filter((p: any) =>
           p.categoria_enduro === categoriaDetalle ||
           p.categoria_travesia_moto === categoriaDetalle ||
-          (p.categoria === 'cuatri' && p.categoria_cuatri === categoriaDetalle)
+          (p.categoria === 'cuatri' && p.categoria_cuatri === categoriaDetalle) ||
+          (p.categoria === 'moto' && (p.categoria_moto === categoriaDetalle || p.categoria_moto_china === categoriaDetalle))
         );
       }
       let label = categoria === 'todos' ? 'Todas las categorías' : categoria === 'auto' ? 'Auto' : categoria === 'moto' ? 'Moto y Cuatriciclos' : categoria === 'moto_enduro' ? 'Moto (Enduro)' : categoria === 'moto_travesias' ? 'Moto (Travesías)' : 'Cuatriciclo';
-      if (categoriaDetalle) {
-        label = `${label} — ${categoriaDetalle}`;
-      }
+      const labelWithDetalle = categoriaDetalle ? `${label} — ${categoriaDetalle}` : label;
       const useLandscape = ['auto', 'moto', 'moto_enduro', 'moto_travesias', 'cuatri'].includes(categoria);
-      const buffer = await generatePlanillaInscripcionPDF(pilots, label, useLandscape);
+      const buffer = await generatePlanillaInscripcionPDF(pilots, labelWithDetalle, useLandscape);
       if (!buffer || buffer.length === 0) {
         return res.status(500).json({ error: 'No se pudo generar el PDF (buffer vacío)' });
       }
-      const base64 = buffer.toString('base64');
-      return res.status(200).json({ pdf: base64, filename: `planilla-inscripcion-${categoria}.pdf` });
+      const filenamePart = categoriaDetalle
+        ? `planilla-inscripcion-${categoria}-${categoriaDetalle.replace(/[^a-z0-9\u00C0-\u024F\-]/gi, '-')}.pdf`
+        : `planilla-inscripcion-${categoria}.pdf`;
+      const safeFilename = encodeURIComponent(filenamePart);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filenamePart}"; filename*=UTF-8''${safeFilename}`);
+      res.setHeader('X-Filename', filenamePart);
+      res.setHeader('Content-Length', String(buffer.length));
+      return res.status(200).end(buffer);
     } catch (e: any) {
       console.error('Planilla inscripcion error:', e);
       return res.status(500).json({ error: e?.message || 'Error al generar la planilla' });

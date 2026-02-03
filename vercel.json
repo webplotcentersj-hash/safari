@@ -36,6 +36,10 @@
       "destination": "/api/admin?__route=pilots"
     },
     {
+      "source": "/api/admin/planilla-inscripcion",
+      "destination": "/api/admin?__route=planilla-inscripcion"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
