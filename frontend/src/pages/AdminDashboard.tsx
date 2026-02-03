@@ -108,6 +108,8 @@ export default function AdminDashboard() {
   });
   const [filterTimeCategoria, setFilterTimeCategoria] = useState<string>('todos');
   const [filterTimeCategoriaDetalle, setFilterTimeCategoriaDetalle] = useState<string>('todos');
+  const [planillaCategoria, setPlanillaCategoria] = useState<string>('todos');
+  const [downloadingPlanilla, setDownloadingPlanilla] = useState(false);
   // Tabla pilotos: orden y paginación
   type PilotSortField = 'nombre' | 'apellido' | 'estado' | 'created_at' | 'numero' | 'categoria';
   const [pilotsSort, setPilotsSort] = useState<{ field: PilotSortField; dir: 'asc' | 'desc' }>({ field: 'created_at', dir: 'desc' });
@@ -685,6 +687,45 @@ export default function AdminDashboard() {
                                 </select>
                               ) : null;
                             })()}
+                            <select
+                              value={planillaCategoria}
+                              onChange={(e) => setPlanillaCategoria(e.target.value)}
+                              className="filter-select pilots-nav-filter"
+                              title="Categoría para planilla PDF"
+                            >
+                              <option value="todos">Planilla: Todas</option>
+                              <option value="auto">Planilla: Auto</option>
+                              <option value="moto">Planilla: Moto</option>
+                              <option value="cuatri">Planilla: Cuatriciclo</option>
+                            </select>
+                            <button
+                              type="button"
+                              disabled={downloadingPlanilla}
+                              onClick={async () => {
+                                setDownloadingPlanilla(true);
+                                try {
+                                  const response = await axios.get('/admin/planilla-inscripcion', {
+                                    params: { categoria: planillaCategoria },
+                                    responseType: 'blob'
+                                  });
+                                  const blob = new Blob([response.data], { type: 'application/pdf' });
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = `planilla-inscripcion-${planillaCategoria}.pdf`;
+                                  a.click();
+                                  URL.revokeObjectURL(url);
+                                } catch (err: any) {
+                                  setErrorMessage(err.response?.data?.error || err.message || 'Error al descargar la planilla');
+                                } finally {
+                                  setDownloadingPlanilla(false);
+                                }
+                              }}
+                              className="btn btn-secondary pilots-nav-btn-scan"
+                              title="Descargar planilla de inscripción en PDF"
+                            >
+                              {downloadingPlanilla ? '⏳ Generando…' : '📄 Descargar planilla PDF'}
+                            </button>
                             <button
                               type="button"
                               onClick={() => navigate('/admin/scan')}

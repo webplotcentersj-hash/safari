@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabaseAdmin } from './_utils/supabase';
 import { authenticateToken, requireAdmin } from './_utils/auth';
-import { generateTicketPDF } from './_utils/pdfGenerator';
+import { generateTicketPDF, generatePlanillaInscripcionPDF } from './_utils/pdfGenerator';
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -333,6 +333,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const user = await authenticateToken(req);
   if (!user || !requireAdmin(user)) {
     return res.status(403).json({ error: 'Acceso denegado' });
+  } else if (method === 'GET' && (path === '/api/admin/planilla-inscripcion' || path.endsWith('/admin/planilla-inscripcion'))) {
+    try {
+      const categoria = String((q as any).categoria || 'todos').toLowerCase();
+      let queryBuilder = supabaseAdmin
+        .from('pilots')
+        .select('*')
+        .order('numero', { ascending: true, nullsFirst: true })
+        .order('apellido', { ascending: true })
+        .order('nombre', { ascending: true });
+      if (categoria !== 'todos') {
+        if (!['auto', 'moto', 'cuatri'].includes(categoria)) {
+          return res.status(400).json({ error: 'Categoría debe ser todos, auto, moto o cuatri' });
+        }
+        queryBuilder = queryBuilder.eq('categoria', categoria);
+      }
+      const { data: pilots, error } = await queryBuilder;
+      if (error) throw error;
+      const label = categoria === 'todos' ? 'Todas las categorías' : categoria === 'auto' ? 'Auto' : categoria === 'moto' ? 'Moto' : 'Cuatriciclo';
+      const buffer = await generatePlanillaInscripcionPDF(pilots || [], label);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="planilla-inscripcion-${categoria}.pdf"`);
+      res.setHeader('Content-Length', String(buffer.length));
+      res.end(buffer);
+    } catch (e: any) {
+      console.error('Planilla inscripcion error:', e);
+      res.status(500).json({ error: 'Error al generar la planilla' });
+    }
   } else if (method === 'GET' && path.includes('/admin/pilots/') && !path.includes('/status') && !path.includes('/pdf')) {
     // Obtener piloto por ID — usar siempre supabaseAdmin (ya verificamos admin con nuestro JWT; RLS bloquearía con token de usuario)
     try {
