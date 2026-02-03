@@ -358,6 +358,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.status(400).json({ error: 'Categoría debe ser todos, auto, moto, moto_enduro, moto_travesias o cuatri' });
         } else {
           queryBuilder = queryBuilder.eq('categoria', categoria);
+          if (categoria === 'auto' && categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_auto', categoriaDetalle);
+          if (categoria === 'cuatri' && categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_cuatri', categoriaDetalle);
         }
       }
       const { data: rawPilots, error } = await queryBuilder;
@@ -371,7 +373,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         );
       }
       let label = categoria === 'todos' ? 'Todas las categorías' : categoria === 'auto' ? 'Auto' : categoria === 'moto' ? 'Moto y Cuatriciclos' : categoria === 'moto_enduro' ? 'Moto (Enduro)' : categoria === 'moto_travesias' ? 'Moto (Travesías)' : 'Cuatriciclo';
-      if (categoriaDetalle && (categoria === 'moto' || categoria === 'moto_enduro' || categoria === 'moto_travesias')) {
+      if (categoriaDetalle) {
         label = `${label} — ${categoriaDetalle}`;
       }
       const useLandscape = ['auto', 'moto', 'moto_enduro', 'moto_travesias', 'cuatri'].includes(categoria);

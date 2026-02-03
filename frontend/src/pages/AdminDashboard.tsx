@@ -658,35 +658,49 @@ export default function AdminDashboard() {
                               <option value="cuatri">🛞 Cuatriciclo</option>
                             </select>
                             {(() => {
-                              const subcats = Array.from(new Set(pilots
+                              const subcatsAuto = Array.from(new Set(pilots
                                 .filter(p => p.categoria === 'auto' && p.categoria_auto)
                                 .map(p => p.categoria_auto!)
                               )).sort();
-                              const subcatsMoto = Array.from(new Set(pilots
-                                .filter(p => p.categoria === 'moto' && (p.categoria_moto || p.categoria_moto_china || p.categoria_enduro || p.categoria_travesia_moto))
-                                .map(p => p.categoria_enduro || p.categoria_travesia_moto || p.categoria_moto || p.categoria_moto_china!)
+                              const subcatsEnduro = Array.from(new Set(pilots
+                                .filter(p => p.categoria === 'moto' && p.tipo_campeonato === 'enduro' && p.categoria_enduro)
+                                .map(p => p.categoria_enduro!)
+                              )).sort();
+                              const subcatsTravesias = Array.from(new Set(pilots
+                                .filter(p => p.categoria === 'moto' && p.tipo_campeonato === 'travesias' && p.categoria_travesia_moto)
+                                .map(p => p.categoria_travesia_moto!)
+                              )).sort();
+                              const subcatsMotoLegacy = Array.from(new Set(pilots
+                                .filter(p => p.categoria === 'moto' && (p.categoria_moto || p.categoria_moto_china) && !p.categoria_enduro && !p.categoria_travesia_moto)
+                                .map(p => p.categoria_moto || p.categoria_moto_china!)
                               )).sort();
                               const subcatsCuatri = Array.from(new Set(pilots
                                 .filter(p => p.categoria === 'cuatri' && p.categoria_cuatri)
                                 .map(p => p.categoria_cuatri!)
                               )).sort();
-                              const allSubcats = [...subcats.map(s => `auto:${s}`), ...subcatsMoto.map(s => `moto:${s}`), ...subcatsCuatri.map(s => `cuatri:${s}`)];
-                              return allSubcats.length > 0 ? (
+                              const hasAny = subcatsAuto.length + subcatsEnduro.length + subcatsTravesias.length + subcatsMotoLegacy.length + subcatsCuatri.length > 0;
+                              return hasAny ? (
                                 <select
                                   value={filterCategoriaDetalle}
                                   onChange={(e) => setFilterCategoriaDetalle(e.target.value)}
                                   className="filter-select pilots-nav-filter"
-                                  title="Filtrar por categoría detalle"
+                                  title="Filtrar por subcategoría (clase)"
                                 >
                                   <option value="todos">Todas las clases</option>
-                                  {subcats.map(s => (
-                                    <option key={s} value={`auto:${s}`}>Auto — {s}</option>
+                                  {subcatsAuto.map(s => (
+                                    <option key={`auto:${s}`} value={`auto:${s}`}>Auto — {s}</option>
                                   ))}
-                                  {subcatsMoto.map(s => (
-                                    <option key={s} value={`moto:${s}`}>Moto — {s}</option>
+                                  {subcatsEnduro.map(s => (
+                                    <option key={`moto_enduro:${s}`} value={`moto_enduro:${s}`}>Moto Enduro — {s}</option>
+                                  ))}
+                                  {subcatsTravesias.map(s => (
+                                    <option key={`moto_travesias:${s}`} value={`moto_travesias:${s}`}>Moto Travesías — {s}</option>
+                                  ))}
+                                  {subcatsMotoLegacy.map(s => (
+                                    <option key={`moto:${s}`} value={`moto:${s}`}>Moto — {s}</option>
                                   ))}
                                   {subcatsCuatri.map(s => (
-                                    <option key={s} value={`cuatri:${s}`}>Cuatri — {s}</option>
+                                    <option key={`cuatri:${s}`} value={`cuatri:${s}`}>Cuatri — {s}</option>
                                   ))}
                                 </select>
                               ) : null;
@@ -704,27 +718,41 @@ export default function AdminDashboard() {
                               <option value="moto_travesias">Planilla: Moto Travesías</option>
                               <option value="cuatri">Planilla: Solo Cuatriciclos</option>
                             </select>
-                            {['moto', 'moto_enduro', 'moto_travesias'].includes(planillaCategoria) && (() => {
-                              const motoPilots = pilots.filter(p => p.categoria === 'moto');
-                              const cuatriPilots = pilots.filter(p => p.categoria === 'cuatri');
-                              const enduroSubs = Array.from(new Set(motoPilots.filter(p => p.tipo_campeonato === 'enduro' && p.categoria_enduro).map(p => p.categoria_enduro!))).sort();
-                              const travesiasSubs = Array.from(new Set(motoPilots.filter(p => p.tipo_campeonato === 'travesias' && p.categoria_travesia_moto).map(p => p.categoria_travesia_moto!))).sort();
-                              const legacyMotoSubs = Array.from(new Set(motoPilots.filter(p => (p.categoria_moto || p.categoria_moto_china) && !p.categoria_enduro && !p.categoria_travesia_moto).map(p => p.categoria_moto || p.categoria_moto_china!))).sort();
-                              const cuatriSubs = Array.from(new Set(cuatriPilots.filter(p => p.categoria_cuatri).map(p => p.categoria_cuatri!))).sort();
-                              const subcats = planillaCategoria === 'moto_enduro' ? enduroSubs : planillaCategoria === 'moto_travesias' ? travesiasSubs : [...new Set([...enduroSubs, ...travesiasSubs, ...legacyMotoSubs, ...cuatriSubs])].sort();
-                              return subcats.length > 0 ? (
-                                <select
-                                  value={planillaSubcategoria}
-                                  onChange={(e) => setPlanillaSubcategoria(e.target.value)}
-                                  className="filter-select pilots-nav-filter"
-                                  title="Subcategoría (clase) para planilla"
-                                >
-                                  <option value="todos">Subcategoría: Todas</option>
-                                  {subcats.map(s => (
-                                    <option key={s} value={s}>{s}</option>
-                                  ))}
-                                </select>
-                              ) : null;
+                            {(() => {
+                              if (planillaCategoria === 'auto') {
+                                const subcats = Array.from(new Set(pilots.filter(p => p.categoria === 'auto' && p.categoria_auto).map(p => p.categoria_auto!))).sort();
+                                return subcats.length > 0 ? (
+                                  <select value={planillaSubcategoria} onChange={(e) => setPlanillaSubcategoria(e.target.value)} className="filter-select pilots-nav-filter" title="Subcategoría Auto">
+                                    <option value="todos">Subcategoría: Todas</option>
+                                    {subcats.map(s => (<option key={s} value={s}>{s}</option>))}
+                                  </select>
+                                ) : null;
+                              }
+                              if (planillaCategoria === 'cuatri') {
+                                const subcats = Array.from(new Set(pilots.filter(p => p.categoria === 'cuatri' && p.categoria_cuatri).map(p => p.categoria_cuatri!))).sort();
+                                return subcats.length > 0 ? (
+                                  <select value={planillaSubcategoria} onChange={(e) => setPlanillaSubcategoria(e.target.value)} className="filter-select pilots-nav-filter" title="Subcategoría Cuatriciclos">
+                                    <option value="todos">Subcategoría: Todas</option>
+                                    {subcats.map(s => (<option key={s} value={s}>{s}</option>))}
+                                  </select>
+                                ) : null;
+                              }
+                              if (['moto', 'moto_enduro', 'moto_travesias'].includes(planillaCategoria)) {
+                                const motoPilots = pilots.filter(p => p.categoria === 'moto');
+                                const cuatriPilots = pilots.filter(p => p.categoria === 'cuatri');
+                                const enduroSubs = Array.from(new Set(motoPilots.filter(p => p.tipo_campeonato === 'enduro' && p.categoria_enduro).map(p => p.categoria_enduro!))).sort();
+                                const travesiasSubs = Array.from(new Set(motoPilots.filter(p => p.tipo_campeonato === 'travesias' && p.categoria_travesia_moto).map(p => p.categoria_travesia_moto!))).sort();
+                                const legacyMotoSubs = Array.from(new Set(motoPilots.filter(p => (p.categoria_moto || p.categoria_moto_china) && !p.categoria_enduro && !p.categoria_travesia_moto).map(p => p.categoria_moto || p.categoria_moto_china!))).sort();
+                                const cuatriSubs = Array.from(new Set(cuatriPilots.filter(p => p.categoria_cuatri).map(p => p.categoria_cuatri!))).sort();
+                                const subcats = planillaCategoria === 'moto_enduro' ? enduroSubs : planillaCategoria === 'moto_travesias' ? travesiasSubs : [...new Set([...enduroSubs, ...travesiasSubs, ...legacyMotoSubs, ...cuatriSubs])].sort();
+                                return subcats.length > 0 ? (
+                                  <select value={planillaSubcategoria} onChange={(e) => setPlanillaSubcategoria(e.target.value)} className="filter-select pilots-nav-filter" title="Subcategoría (clase) para planilla">
+                                    <option value="todos">Subcategoría: Todas</option>
+                                    {subcats.map(s => (<option key={s} value={s}>{s}</option>))}
+                                  </select>
+                                ) : null;
+                              }
+                              return null;
                             })()}
                             <button
                               type="button"
@@ -794,7 +822,9 @@ export default function AdminDashboard() {
                             if (filterCategoriaDetalle !== 'todos') {
                               const [tipo, detalle] = filterCategoriaDetalle.split(':');
                               if (tipo === 'auto' && (pilot.categoria !== 'auto' || pilot.categoria_auto !== detalle)) return false;
-                              if (tipo === 'moto' && (pilot.categoria !== 'moto' || (pilot.categoria_moto !== detalle && pilot.categoria_moto_china !== detalle && pilot.categoria_enduro !== detalle && pilot.categoria_travesia_moto !== detalle))) return false;
+                              if (tipo === 'moto_enduro' && (pilot.categoria !== 'moto' || pilot.tipo_campeonato !== 'enduro' || pilot.categoria_enduro !== detalle)) return false;
+                              if (tipo === 'moto_travesias' && (pilot.categoria !== 'moto' || pilot.tipo_campeonato !== 'travesias' || pilot.categoria_travesia_moto !== detalle)) return false;
+                              if (tipo === 'moto' && (pilot.categoria !== 'moto' || (pilot.categoria_moto !== detalle && pilot.categoria_moto_china !== detalle))) return false;
                               if (tipo === 'cuatri' && (pilot.categoria !== 'cuatri' || pilot.categoria_cuatri !== detalle)) return false;
                             }
                             return true;
