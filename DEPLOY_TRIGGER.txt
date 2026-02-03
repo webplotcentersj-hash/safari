@@ -1,0 +1,2 @@
+Última actualización para deploy: 2025-01-29
+Push este commit a main para que Vercel vuelva a desplegar.
