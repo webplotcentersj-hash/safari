@@ -183,24 +183,30 @@ export async function generatePlanillaInscripcionPDF(pilots: any[], categoriaLab
     const maxY = doc.page.height - doc.page.margins.bottom - rowHeight;
     let isFirstPage = true;
 
-    for (let i = 0; i < pilots.length; i++) {
-      if (!isFirstPage && y <= doc.page.margins.top + headerHeight + rowHeight) {
-        doc.addPage({ layout: landscape ? 'landscape' : 'portrait' });
-        y = doc.page.margins.top;
-        isFirstPage = false;
+    if (pilots.length === 0) {
+      drawHeader(y);
+      y += headerHeight;
+      doc.fontSize(9).fillColor('#666').text('No hay inscriptos para este filtro.', doc.page.margins.left, y);
+    } else {
+      for (let i = 0; i < pilots.length; i++) {
+        if (!isFirstPage && y <= doc.page.margins.top + headerHeight + rowHeight) {
+          doc.addPage({ layout: landscape ? 'landscape' : 'portrait' });
+          y = doc.page.margins.top;
+          isFirstPage = false;
+        }
+        if (y === doc.page.margins.top || (isFirstPage && i === 0)) {
+          drawHeader(y);
+          y += headerHeight;
+        }
+        if (y > maxY) {
+          doc.addPage({ layout: landscape ? 'landscape' : 'portrait' });
+          y = doc.page.margins.top;
+          drawHeader(y);
+          y += headerHeight;
+        }
+        drawRow(pilots[i], y);
+        y += rowHeight;
       }
-      if (y === doc.page.margins.top || (isFirstPage && i === 0)) {
-        drawHeader(y);
-        y += headerHeight;
-      }
-      if (y > maxY) {
-        doc.addPage({ layout: landscape ? 'landscape' : 'portrait' });
-        y = doc.page.margins.top;
-        drawHeader(y);
-        y += headerHeight;
-      }
-      drawRow(pilots[i], y);
-      y += rowHeight;
     }
 
     doc.end();

@@ -26,8 +26,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const query = req.query || {};
-  const categoria = String(query.categoria || 'todos').toLowerCase();
-  const categoriaDetalle = typeof query.categoria_detalle === 'string' ? query.categoria_detalle.trim() : '';
+  const rawCategoria = query.categoria;
+  const rawDetalle = query.categoria_detalle;
+  const categoria = String(Array.isArray(rawCategoria) ? rawCategoria[0] : rawCategoria || 'todos').toLowerCase().trim();
+  const categoriaDetalle = (Array.isArray(rawDetalle) ? rawDetalle[0] : rawDetalle)
+    ? String(Array.isArray(rawDetalle) ? rawDetalle[0] : rawDetalle).trim()
+    : '';
 
   try {
     let queryBuilder = supabaseAdmin
@@ -64,7 +68,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         (p: any) =>
           p.categoria_enduro === categoriaDetalle ||
           p.categoria_travesia_moto === categoriaDetalle ||
-          (p.categoria === 'cuatri' && p.categoria_cuatri === categoriaDetalle)
+          (p.categoria === 'cuatri' && p.categoria_cuatri === categoriaDetalle) ||
+          (p.categoria === 'moto' && (p.categoria_moto === categoriaDetalle || p.categoria_moto_china === categoriaDetalle))
       );
     }
 
@@ -89,7 +94,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const base64 = buffer.toString('base64');
-    return res.status(200).json({ pdf: base64, filename: `planilla-inscripcion-${categoria}.pdf` });
+    const filenamePart = categoriaDetalle
+      ? `planilla-inscripcion-${categoria}-${categoriaDetalle.replace(/[^a-z0-9\u00C0-\u024F\-]/gi, '-')}.pdf`
+      : `planilla-inscripcion-${categoria}.pdf`;
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(200).json({ pdf: base64, filename: filenamePart });
   } catch (e: any) {
     console.error('Planilla inscripcion error:', e);
     return res.status(500).json({ error: e?.message || 'Error al generar la planilla' });
