@@ -333,6 +333,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const user = await authenticateToken(req);
   if (!user || !requireAdmin(user)) {
     return res.status(403).json({ error: 'Acceso denegado' });
+  }
+  const bodySafe = (body as Record<string, unknown>) || {};
+  if (method === 'PATCH' && String((q as any).__route) === 'pilot-status') {
+    // Actualizar estado del piloto (rewrite desde /api/admin/pilots/:id/status)
+    try {
+      const id = String((q as any).__id || '').trim();
+      const estado = bodySafe.estado as string;
+      if (!id) return res.status(400).json({ error: 'ID de piloto requerido' });
+      if (!['pendiente', 'aprobado', 'rechazado'].includes(estado)) return res.status(400).json({ error: 'Estado inválido' });
+      const { data, error } = await supabaseAdmin.from('pilots').update({ estado }).eq('id', id).select().single();
+      if (error) {
+        console.error('❌ Error de Supabase al actualizar estado:', error);
+        return res.status(500).json({ error: 'Error al actualizar el estado', details: error.message });
+      }
+      return res.status(200).json({ message: 'Estado actualizado exitosamente', pilot: data });
+    } catch (e: any) {
+      console.error('❌ Update status error (pilot-status route):', e);
+      return res.status(500).json({ error: 'Error al actualizar el estado', details: e?.message || 'Error desconocido' });
+    }
   } else if (method === 'GET' && ((q as any).__route === 'planilla-inscripcion' || path === '/api/admin/planilla-inscripcion' || path.endsWith('/admin/planilla-inscripcion'))) {
     try {
       const categoria = String((q as any).categoria || 'todos').toLowerCase();
@@ -462,7 +481,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         id = query.id as string;
       }
       
-      const { estado } = body;
+      const estado = (bodySafe.estado as string) || (body as any)?.estado;
 
       console.log('📤 Actualizando estado del piloto:', {
         id: id,

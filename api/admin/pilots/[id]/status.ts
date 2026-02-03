@@ -3,8 +3,20 @@ import { supabaseAdmin } from '../../../_utils/supabase';
 import { authenticateToken, requireAdmin } from '../../../_utils/auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { method, body } = req;
-  const id = req.query.id as string;
+  const { method } = req;
+  const id = (req.query.id as string) || (req.query?.id as string) || '';
+
+  // Body puede venir sin parsear en algunos entornos
+  let body: { estado?: string } = {};
+  if (typeof req.body === 'string') {
+    try {
+      body = JSON.parse(req.body) || {};
+    } catch {
+      body = {};
+    }
+  } else if (req.body && typeof req.body === 'object') {
+    body = req.body as { estado?: string };
+  }
 
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -30,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'ID de piloto requerido' });
     }
 
-    const { estado } = body;
+    const estado = body?.estado;
 
     console.log('📤 Actualizando estado del piloto:', {
       id: id,
@@ -38,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       method: method
     });
 
-    if (!['pendiente', 'aprobado', 'rechazado'].includes(estado)) {
+    if (!estado || !['pendiente', 'aprobado', 'rechazado'].includes(estado)) {
       return res.status(400).json({ error: 'Estado inválido' });
     }
 

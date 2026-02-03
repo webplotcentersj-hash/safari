@@ -32,6 +32,10 @@
       "destination": "/api/admin?__route=planilla-inscripcion"
     },
     {
+      "source": "/api/admin/pilots/:id/status",
+      "destination": "/api/admin?__route=pilot-status&__id=:id"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
