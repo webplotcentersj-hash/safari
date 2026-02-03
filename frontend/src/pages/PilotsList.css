@@ -215,7 +215,73 @@
   text-decoration: underline;
 }
 
-/* Responsive */
+/* Cards móvil: ocultas en desktop */
+.pilots-cards-mobile {
+  display: none;
+}
+
+/* Cards: estilos para lista pública */
+.pilots-cards-mobile .pilot-card-mobile {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(101, 179, 48, 0.3);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.pilots-cards-mobile .pilot-card-mobile-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(101, 179, 48, 0.2);
+}
+
+.pilots-cards-mobile .pilot-card-mobile-num {
+  font-weight: 700;
+  color: #65b330;
+  font-size: 1rem;
+}
+
+.pilots-cards-mobile .pilot-card-mobile-name {
+  font-weight: 600;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.pilots-cards-mobile .pilot-card-mobile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0;
+  font-size: 0.9rem;
+}
+
+.pilots-cards-mobile .pilot-card-mobile-label {
+  color: #8a9a8a;
+}
+
+.pilots-cards-mobile .pilot-card-mobile-value {
+  color: #e8ebe0;
+}
+
+/* Responsive: móvil */
+@media (max-width: 768px) {
+  /* En móvil ocultar tabla y mostrar todas las cards */
+  .pilots-desktop-only {
+    display: none !important;
+  }
+
+  .pilots-cards-mobile {
+    display: block;
+  }
+
+  .pilots-cards-mobile .pilot-card-mobile {
+    min-height: auto;
+  }
+}
+
 @media (max-width: 640px) {
   .pilots-table th,
   .pilots-table td {

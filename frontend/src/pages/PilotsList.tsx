@@ -134,30 +134,54 @@ export default function PilotsList() {
                   No hay pilotos{searchTerm ? ' que coincidan con la búsqueda' : ''}.
                 </div>
               ) : (
-                <div className="pilots-table-wrap">
-                  <table className="pilots-table">
-                    <thead>
-                      <tr>
-                        <th>Nº</th>
-                        <th>Nombre</th>
-                        <th>Vehículo</th>
-                        <th>Categoría</th>
-                        <th>Fecha inscripción</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredPilots.map((pilot) => (
-                        <tr key={pilot.id}>
-                          <td className="col-num">{pilot.numero != null ? pilot.numero.toString().padStart(2, '0') : '—'}</td>
-                          <td className="col-name">{pilot.nombre} {pilot.apellido}</td>
-                          <td className="col-vehiculo">{getVehiculoLabel(pilot)}</td>
-                          <td className="col-categoria">{getCategoriaLabel(pilot)}</td>
-                          <td className="col-fecha">{new Date(pilot.created_at).toLocaleDateString('es-AR')}</td>
+                <>
+                  <div className="pilots-table-wrap pilots-desktop-only">
+                    <table className="pilots-table">
+                      <thead>
+                        <tr>
+                          <th>Nº</th>
+                          <th>Nombre</th>
+                          <th>Vehículo</th>
+                          <th>Categoría</th>
+                          <th>Fecha inscripción</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {filteredPilots.map((pilot) => (
+                          <tr key={pilot.id}>
+                            <td className="col-num">{pilot.numero != null ? pilot.numero.toString().padStart(2, '0') : '—'}</td>
+                            <td className="col-name">{pilot.nombre} {pilot.apellido}</td>
+                            <td className="col-vehiculo">{getVehiculoLabel(pilot)}</td>
+                            <td className="col-categoria">{getCategoriaLabel(pilot)}</td>
+                            <td className="col-fecha">{new Date(pilot.created_at).toLocaleDateString('es-AR')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="pilots-cards-mobile">
+                    {filteredPilots.map((pilot) => (
+                      <div key={pilot.id} className="pilot-card-mobile">
+                        <div className="pilot-card-mobile-row pilot-card-mobile-header">
+                          <span className="pilot-card-mobile-num">{pilot.numero != null ? '#' + pilot.numero.toString().padStart(2, '0') : '—'}</span>
+                          <span className="pilot-card-mobile-name">{pilot.nombre} {pilot.apellido}</span>
+                        </div>
+                        <div className="pilot-card-mobile-row">
+                          <span className="pilot-card-mobile-label">Vehículo</span>
+                          <span className="pilot-card-mobile-value">{getVehiculoLabel(pilot)}</span>
+                        </div>
+                        <div className="pilot-card-mobile-row">
+                          <span className="pilot-card-mobile-label">Categoría</span>
+                          <span className="pilot-card-mobile-value">{getCategoriaLabel(pilot)}</span>
+                        </div>
+                        <div className="pilot-card-mobile-row">
+                          <span className="pilot-card-mobile-label">Fecha inscripción</span>
+                          <span className="pilot-card-mobile-value">{new Date(pilot.created_at).toLocaleDateString('es-AR')}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </>
           )}
