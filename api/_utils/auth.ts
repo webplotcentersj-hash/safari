@@ -12,7 +12,9 @@ export interface AuthUser {
 }
 
 export async function authenticateToken(req: VercelRequest): Promise<AuthUser | null> {
-  const authHeader = req.headers['authorization'];
+  const authHeader =
+    (req.headers['authorization'] as string | undefined) ||
+    (req.headers['Authorization'] as string | undefined);
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
