@@ -613,7 +613,7 @@ export default function PilotRegistration() {
           <Link to="/" className="back-link">← Volver al inicio</Link>
           <div className="registration-card">
             <div className="registration-header">
-              <img src={REGISTRATION_LOGO_URL} alt="Safari Tras las Sierras" className="registration-logo" />
+              <img src="/logo.png" alt="Safari Tras las Sierras" className="registration-logo" />
               <h1>Inscripción de Pilotos</h1>
               <p className="subtitle">Elegí el formulario según tu vehículo</p>
             </div>
@@ -638,7 +638,7 @@ export default function PilotRegistration() {
         
         <div className="registration-card">
           <div className="registration-header">
-            <img src={REGISTRATION_LOGO_URL} alt="Safari Tras las Sierras" className="registration-logo" />
+            <img src={tipo === 'moto' ? REGISTRATION_LOGO_URL : '/logo.png'} alt="Safari Tras las Sierras" className="registration-logo" />
             <h1>Inscripción {tipo === 'auto' ? 'Autos' : 'Motos (y cuatriciclos)'}</h1>
             <p className="subtitle">Completa todos los campos para inscribirte en el Safari Tras las Sierras</p>
             <button
