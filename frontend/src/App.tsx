@@ -1,3 +1,4 @@
+import { Component, ReactNode } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Home from './pages/Home';
@@ -12,10 +13,32 @@ import VerificarTicket from './pages/VerificarTicket';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: unknown) {
+    console.error('ErrorBoundary:', error);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '2rem', fontFamily: 'sans-serif', textAlign: 'center', color: '#333' }}>
+          <p>Algo salió mal al cargar la aplicación.</p>
+          <p><a href="/">Volver al inicio</a></p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   return (
-    <AuthProvider>
-      <Routes>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/inscripcion" element={<PilotRegistration />} />
         <Route path="/inscripcion/auto" element={<PilotRegistration />} />
@@ -53,6 +76,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
