@@ -412,6 +412,14 @@ export default function PilotRegistration() {
     }
   }, [watchCategoria, setValue]);
 
+  // Copiloto solo para autos: al elegir moto/cuatri, limpiar datos de copiloto
+  useEffect(() => {
+    if (effectiveCategoria !== 'auto') {
+      setValue('copiloto_nombre', '');
+      setValue('copiloto_dni', '');
+    }
+  }, [effectiveCategoria, setValue]);
+
   const onSubmit = async (data: PilotFormData) => {
     setLoading(true);
     setMessage(null);
@@ -819,21 +827,23 @@ export default function PilotRegistration() {
               </div>
             </div>
 
-            <div className="form-section">
-              <h2>Datos del Copiloto (Opcional)</h2>
-              
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Nombre del Copiloto</label>
-                  <input type="text" {...register('copiloto_nombre')} />
-                </div>
+            {(tipo === 'auto' || watchCategoria === 'auto') && (
+              <div className="form-section">
+                <h2>Datos del Copiloto (Opcional)</h2>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Nombre del Copiloto</label>
+                    <input type="text" {...register('copiloto_nombre')} />
+                  </div>
 
-                <div className="form-group">
-                  <label>DNI del Copiloto</label>
-                  <input type="text" {...register('copiloto_dni')} />
+                  <div className="form-group">
+                    <label>DNI del Copiloto</label>
+                    <input type="text" {...register('copiloto_dni')} />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="form-section">
               {/* Selector de tipo solo si se entra por /inscripcion sin /auto ni /moto (en ese caso se muestra la página de elección) */}
@@ -999,7 +1009,8 @@ export default function PilotRegistration() {
                       <option value="">Seleccione categoría</option>
                       <option value="200 cc Chino">200 cc Chino</option>
                       <option value="250 chino">250 chino</option>
-                      <option value="450 open kids">450 open kids</option>
+                      <option value="450 cc open">450 cc open</option>
+                      <option value="Kids">Kids</option>
                     </select>
                     {errors.categoria_cuatri && <span className="error">{errors.categoria_cuatri.message}</span>}
                   </div>

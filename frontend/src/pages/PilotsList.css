@@ -1,10 +1,14 @@
+/* Evitar micro cortes en móvil: viewport dinámico, sin recorte, safe area */
 .pilots-list-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: #0f1f14;
   color: #e8ebe0;
   font-family: 'Oswald', sans-serif;
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: visible;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Header */
@@ -61,6 +65,7 @@
 /* Main */
 .pilots-main {
   padding: 2rem 1rem 3rem;
+  padding-bottom: calc(3rem + env(safe-area-inset-bottom, 0));
   max-width: 960px;
   margin: 0 auto;
 }
@@ -237,6 +242,7 @@
 .pilots-footer {
   text-align: center;
   padding: 1.5rem;
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0));
   border-top: 1px solid rgba(101, 179, 48, 0.2);
 }
 

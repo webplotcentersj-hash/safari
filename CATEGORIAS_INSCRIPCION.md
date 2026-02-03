@@ -100,7 +100,8 @@ El piloto elige **Motos** o **Cuatriciclos** y luego la categoría.
 |------------------|--------|
 | 200 cc Chino | 200 cc Chino |
 | 250 chino | 250 chino |
-| 450 open kids | 450 open kids |
+| 450 cc open | 450 cc open |
+| Kids | Kids |
 
 **Link de pago:** mismo que Travesías/Safari — https://mpago.la/16eEYR9
 
