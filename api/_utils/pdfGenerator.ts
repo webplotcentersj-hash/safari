@@ -92,28 +92,46 @@ function getCategoriaDetalle(p: any): string {
   return '—';
 }
 
-/** Genera PDF con la planilla de inscripción (lista de pilotos por categoría). */
-export async function generatePlanillaInscripcionPDF(pilots: any[], categoriaLabel: string): Promise<Buffer> {
+function fmt(val: any, maxLen: number): string {
+  const s = (val != null && val !== '') ? String(val).trim() : '—';
+  return s.slice(0, maxLen);
+}
+
+/** Genera PDF con la planilla de inscripción (lista de pilotos). Incluye todos los datos recogidos; sin email. Auto y Moto/Cuatri: landscape y misma legibilidad. */
+export async function generatePlanillaInscripcionPDF(pilots: any[], categoriaLabel: string, useLandscape = false): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margins: { top: 36, bottom: 36, left: 28, right: 28 } });
+    const landscape = useLandscape;
+    const doc = new PDFDocument({
+      size: 'A4',
+      layout: landscape ? 'landscape' : 'portrait',
+      margins: { top: 32, bottom: 32, left: 24, right: 24 }
+    });
     const buffers: Buffer[] = [];
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
 
     const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-    const fontSize = 8;
-    const rowHeight = 14;
-    const headerHeight = 22;
+    const fontSize = landscape ? 7 : 7.5;
+    const rowHeight = landscape ? 12 : 13;
+    const headerHeight = 18;
+
     const cols = [
-      { key: 'numero', label: 'Nº', w: 0.05 },
-      { key: 'apellido', label: 'Apellido', w: 0.14 },
-      { key: 'nombre', label: 'Nombre', w: 0.12 },
-      { key: 'dni', label: 'DNI', w: 0.12 },
-      { key: 'email', label: 'Email', w: 0.18 },
-      { key: 'telefono', label: 'Teléfono', w: 0.11 },
-      { key: 'categoriaDetalle', label: 'Categoría', w: 0.14 },
-      { key: 'estado', label: 'Estado', w: 0.14 }
+      { label: 'Nº', w: 0.02 },
+      { label: 'Apellido', w: 0.09 },
+      { label: 'Nombre', w: 0.08 },
+      { label: 'DNI', w: 0.06 },
+      { label: 'Domicilio', w: 0.12 },
+      { label: 'Tel', w: 0.06 },
+      { label: 'Edad', w: 0.025 },
+      { label: 'Nac.', w: 0.05 },
+      { label: 'Prov.', w: 0.06 },
+      { label: 'Depto', w: 0.05 },
+      { label: 'Tel.Acomp.', w: 0.055 },
+      { label: 'Licencia', w: 0.05 },
+      { label: '¿Lic?', w: 0.025 },
+      { label: 'Categoría', w: 0.11 },
+      { label: 'Estado', w: 0.055 }
     ];
 
     function drawHeader(y: number) {
@@ -125,21 +143,28 @@ export async function generatePlanillaInscripcionPDF(pilots: any[], categoriaLab
         x += w;
       }
       doc.font('Helvetica');
-      doc.strokeColor('#1a472a').lineWidth(0.5).moveTo(doc.page.margins.left, y + 12).lineTo(doc.page.margins.left + pageWidth, y + 12).stroke();
+      doc.strokeColor('#1a472a').lineWidth(0.4).moveTo(doc.page.margins.left, y + 10).lineTo(doc.page.margins.left + pageWidth, y + 10).stroke();
     }
 
-    function drawRow(p: any, index: number, y: number) {
+    function drawRow(p: any, y: number) {
       let x = doc.page.margins.left;
       doc.fillColor('#333').fontSize(fontSize).font('Helvetica');
       const numero = p.numero != null ? String(p.numero) : '—';
-      const apellido = (p.apellido || '—').toString().slice(0, 22);
-      const nombre = (p.nombre || '—').toString().slice(0, 20);
-      const dni = (p.dni || '—').toString().slice(0, 14);
-      const email = (p.email || '—').toString().slice(0, 28);
-      const telefono = (p.telefono || '—').toString().slice(0, 14);
-      const catDet = getCategoriaDetalle(p).slice(0, 18);
-      const estado = (p.estado || '—').toString();
-      const vals = [numero, apellido, nombre, dni, email, telefono, catDet, estado];
+      const apellido = fmt(p.apellido, 25);
+      const nombre = fmt(p.nombre, 22);
+      const dni = fmt(p.dni, 14);
+      const domicilio = fmt(p.domicilio, 35);
+      const telefono = fmt(p.telefono, 14);
+      const edad = p.edad != null ? String(p.edad) : '—';
+      const nacionalidad = fmt(p.nacionalidad, 12);
+      const provincia = fmt(p.provincia, 14);
+      const departamento = fmt(p.departamento, 12);
+      const telAcomp = fmt(p.telefono_acompanante, 14);
+      const licencia = fmt(p.licencia, 12);
+      const tieneLic = p.tiene_licencia === true || p.tiene_licencia === 'si' || p.tiene_licencia === 'sí' ? 'Sí' : 'No';
+      const catDet = getCategoriaDetalle(p).slice(0, 22);
+      const estado = fmt(p.estado, 10);
+      const vals = [numero, apellido, nombre, dni, domicilio, telefono, edad, nacionalidad, provincia, departamento, telAcomp, licencia, tieneLic, catDet, estado];
       for (let i = 0; i < cols.length; i++) {
         const w = pageWidth * cols[i].w;
         doc.text(vals[i], x, y, { width: w, ellipsis: true });
@@ -147,12 +172,12 @@ export async function generatePlanillaInscripcionPDF(pilots: any[], categoriaLab
       }
     }
 
-    doc.fontSize(18).fillColor('#1a472a').text('SAFARI TRAS LAS SIERRAS', { align: 'center' });
-    doc.fontSize(11).fillColor('#333').text('Valle Fértil - San Juan', { align: 'center' });
+    doc.fontSize(16).fillColor('#1a472a').text('SAFARI TRAS LAS SIERRAS', { align: 'center' });
+    doc.fontSize(10).fillColor('#333').text('Valle Fértil - San Juan', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(12).fillColor('#1a472a').text(`Planilla de inscripción — ${categoriaLabel}`, { align: 'center' });
+    doc.fontSize(8).fillColor('#666').text(`Generado: ${new Date().toLocaleString('es-AR')} · ${pilots.length} inscripto(s)`, { align: 'center' });
     doc.moveDown(0.6);
-    doc.fontSize(14).fillColor('#1a472a').text(`Planilla de inscripción — ${categoriaLabel}`, { align: 'center' });
-    doc.fontSize(9).fillColor('#666').text(`Generado: ${new Date().toLocaleString('es-AR')} · ${pilots.length} inscripto(s)`, { align: 'center' });
-    doc.moveDown(0.8);
 
     let y = doc.y;
     const maxY = doc.page.height - doc.page.margins.bottom - rowHeight;
@@ -160,7 +185,7 @@ export async function generatePlanillaInscripcionPDF(pilots: any[], categoriaLab
 
     for (let i = 0; i < pilots.length; i++) {
       if (!isFirstPage && y <= doc.page.margins.top + headerHeight + rowHeight) {
-        doc.addPage();
+        doc.addPage({ layout: landscape ? 'landscape' : 'portrait' });
         y = doc.page.margins.top;
         isFirstPage = false;
       }
@@ -169,12 +194,12 @@ export async function generatePlanillaInscripcionPDF(pilots: any[], categoriaLab
         y += headerHeight;
       }
       if (y > maxY) {
-        doc.addPage();
+        doc.addPage({ layout: landscape ? 'landscape' : 'portrait' });
         y = doc.page.margins.top;
         drawHeader(y);
         y += headerHeight;
       }
-      drawRow(pilots[i], i, y);
+      drawRow(pilots[i], y);
       y += rowHeight;
     }
 

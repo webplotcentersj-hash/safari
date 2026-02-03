@@ -112,6 +112,7 @@ export default function AdminDashboard() {
   const [filterTimeCategoria, setFilterTimeCategoria] = useState<string>('todos');
   const [filterTimeCategoriaDetalle, setFilterTimeCategoriaDetalle] = useState<string>('todos');
   const [planillaCategoria, setPlanillaCategoria] = useState<string>('todos');
+  const [planillaSubcategoria, setPlanillaSubcategoria] = useState<string>('todos');
   const [downloadingPlanilla, setDownloadingPlanilla] = useState(false);
   // Tabla pilotos: orden y paginación
   type PilotSortField = 'nombre' | 'apellido' | 'estado' | 'created_at' | 'numero' | 'categoria';
@@ -692,17 +693,39 @@ export default function AdminDashboard() {
                             })()}
                             <select
                               value={planillaCategoria}
-                              onChange={(e) => setPlanillaCategoria(e.target.value)}
+                              onChange={(e) => { setPlanillaCategoria(e.target.value); setPlanillaSubcategoria('todos'); }}
                               className="filter-select pilots-nav-filter"
                               title="Categoría para planilla PDF"
                             >
                               <option value="todos">Planilla: Todas</option>
                               <option value="auto">Planilla: Auto</option>
-                              <option value="moto">Planilla: Moto (todas)</option>
+                              <option value="moto">Planilla: Moto y Cuatriciclos</option>
                               <option value="moto_enduro">Planilla: Moto Enduro</option>
                               <option value="moto_travesias">Planilla: Moto Travesías</option>
-                              <option value="cuatri">Planilla: Cuatriciclo</option>
+                              <option value="cuatri">Planilla: Solo Cuatriciclos</option>
                             </select>
+                            {['moto', 'moto_enduro', 'moto_travesias'].includes(planillaCategoria) && (() => {
+                              const motoPilots = pilots.filter(p => p.categoria === 'moto');
+                              const cuatriPilots = pilots.filter(p => p.categoria === 'cuatri');
+                              const enduroSubs = Array.from(new Set(motoPilots.filter(p => p.tipo_campeonato === 'enduro' && p.categoria_enduro).map(p => p.categoria_enduro!))).sort();
+                              const travesiasSubs = Array.from(new Set(motoPilots.filter(p => p.tipo_campeonato === 'travesias' && p.categoria_travesia_moto).map(p => p.categoria_travesia_moto!))).sort();
+                              const legacyMotoSubs = Array.from(new Set(motoPilots.filter(p => (p.categoria_moto || p.categoria_moto_china) && !p.categoria_enduro && !p.categoria_travesia_moto).map(p => p.categoria_moto || p.categoria_moto_china!))).sort();
+                              const cuatriSubs = Array.from(new Set(cuatriPilots.filter(p => p.categoria_cuatri).map(p => p.categoria_cuatri!))).sort();
+                              const subcats = planillaCategoria === 'moto_enduro' ? enduroSubs : planillaCategoria === 'moto_travesias' ? travesiasSubs : [...new Set([...enduroSubs, ...travesiasSubs, ...legacyMotoSubs, ...cuatriSubs])].sort();
+                              return subcats.length > 0 ? (
+                                <select
+                                  value={planillaSubcategoria}
+                                  onChange={(e) => setPlanillaSubcategoria(e.target.value)}
+                                  className="filter-select pilots-nav-filter"
+                                  title="Subcategoría (clase) para planilla"
+                                >
+                                  <option value="todos">Subcategoría: Todas</option>
+                                  {subcats.map(s => (
+                                    <option key={s} value={s}>{s}</option>
+                                  ))}
+                                </select>
+                              ) : null;
+                            })()}
                             <button
                               type="button"
                               disabled={downloadingPlanilla}
@@ -710,9 +733,9 @@ export default function AdminDashboard() {
                                 setDownloadingPlanilla(true);
                                 setErrorMessage(null);
                                 try {
-                                  const response = await axios.get('/admin/planilla-inscripcion', {
-                                    params: { categoria: planillaCategoria }
-                                  });
+                                  const params: { categoria: string; categoria_detalle?: string } = { categoria: planillaCategoria };
+                                  if (planillaSubcategoria !== 'todos') params.categoria_detalle = planillaSubcategoria;
+                                  const response = await axios.get('/admin/planilla-inscripcion', { params });
                                   const data = response?.data;
                                   if (!data || typeof data !== 'object') {
                                     setErrorMessage('La respuesta del servidor no es válida. Reintentá.');
@@ -723,7 +746,7 @@ export default function AdminDashboard() {
                                     setErrorMessage(resError || 'No se pudo generar la planilla');
                                     return;
                                   }
-                                  const binary = atob(data.pdf);
+                                  const binary = atob(pdf);
                                   const bytes = new Uint8Array(binary.length);
                                   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
                                   const blob = new Blob([bytes], { type: 'application/pdf' });

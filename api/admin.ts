@@ -336,6 +336,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } else if (method === 'GET' && ((q as any).__route === 'planilla-inscripcion' || path === '/api/admin/planilla-inscripcion' || path.endsWith('/admin/planilla-inscripcion'))) {
     try {
       const categoria = String((q as any).categoria || 'todos').toLowerCase();
+      const categoriaDetalle = typeof (q as any).categoria_detalle === 'string' ? (q as any).categoria_detalle.trim() : '';
       let queryBuilder = supabaseAdmin
         .from('pilots')
         .select('*')
@@ -345,18 +346,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (categoria !== 'todos') {
         if (categoria === 'moto_enduro') {
           queryBuilder = queryBuilder.eq('categoria', 'moto').eq('tipo_campeonato', 'enduro');
+          if (categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_enduro', categoriaDetalle);
         } else if (categoria === 'moto_travesias') {
           queryBuilder = queryBuilder.eq('categoria', 'moto').eq('tipo_campeonato', 'travesias');
-        } else if (!['auto', 'moto', 'cuatri'].includes(categoria)) {
+          if (categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_travesia_moto', categoriaDetalle);
+        } else if (categoria === 'moto') {
+          // Moto (todas) incluye motos y cuatriciclos (cuatri englobado en motos)
+          queryBuilder = queryBuilder.in('categoria', ['moto', 'cuatri']);
+          // Filtro por subcategoría se aplica después si hay categoriaDetalle
+        } else if (!['auto', 'cuatri'].includes(categoria)) {
           return res.status(400).json({ error: 'Categoría debe ser todos, auto, moto, moto_enduro, moto_travesias o cuatri' });
         } else {
           queryBuilder = queryBuilder.eq('categoria', categoria);
         }
       }
-      const { data: pilots, error } = await queryBuilder;
+      const { data: rawPilots, error } = await queryBuilder;
       if (error) throw error;
-      const label = categoria === 'todos' ? 'Todas las categorías' : categoria === 'auto' ? 'Auto' : categoria === 'moto' ? 'Moto' : categoria === 'moto_enduro' ? 'Moto (Enduro)' : categoria === 'moto_travesias' ? 'Moto (Travesías)' : 'Cuatriciclo';
-      const buffer = await generatePlanillaInscripcionPDF(pilots || [], label);
+      let pilots = rawPilots || [];
+      if (categoria === 'moto' && categoriaDetalle) {
+        pilots = pilots.filter((p: any) =>
+          p.categoria_enduro === categoriaDetalle ||
+          p.categoria_travesia_moto === categoriaDetalle ||
+          (p.categoria === 'cuatri' && p.categoria_cuatri === categoriaDetalle)
+        );
+      }
+      let label = categoria === 'todos' ? 'Todas las categorías' : categoria === 'auto' ? 'Auto' : categoria === 'moto' ? 'Moto y Cuatriciclos' : categoria === 'moto_enduro' ? 'Moto (Enduro)' : categoria === 'moto_travesias' ? 'Moto (Travesías)' : 'Cuatriciclo';
+      if (categoriaDetalle && (categoria === 'moto' || categoria === 'moto_enduro' || categoria === 'moto_travesias')) {
+        label = `${label} — ${categoriaDetalle}`;
+      }
+      const useLandscape = ['auto', 'moto', 'moto_enduro', 'moto_travesias', 'cuatri'].includes(categoria);
+      const buffer = await generatePlanillaInscripcionPDF(pilots, label, useLandscape);
       if (!buffer || buffer.length === 0) {
         return res.status(500).json({ error: 'No se pudo generar el PDF (buffer vacío)' });
       }
