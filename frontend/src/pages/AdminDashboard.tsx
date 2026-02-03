@@ -629,13 +629,26 @@ export default function AdminDashboard() {
                           </div>
                           <div className="pilots-nav-tools">
                             <div className="search-box pilots-nav-search">
+                              <span className="search-icon" aria-hidden>🔍</span>
                               <input
                                 type="text"
-                                placeholder="Buscar nombre, DNI, email..."
+                                placeholder="Buscar nombre, DNI, email, categoría..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="search-input"
+                                className="search-input pilots-search-input"
+                                autoComplete="off"
                               />
+                              {searchTerm && (
+                                <button
+                                  type="button"
+                                  className="search-clear"
+                                  onClick={() => setSearchTerm('')}
+                                  title="Borrar búsqueda"
+                                  aria-label="Borrar búsqueda"
+                                >
+                                  ×
+                                </button>
+                              )}
                             </div>
                             <select
                               value={filterEstado}
