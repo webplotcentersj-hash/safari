@@ -100,6 +100,8 @@ export default function AdminDashboard() {
   const [filterCategoria, setFilterCategoria] = useState<string>('todos');
   const [filterCategoriaDetalle, setFilterCategoriaDetalle] = useState<string>('todos');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const toErrorString = (v: unknown): string =>
+    v == null ? '' : typeof v === 'string' ? v : (typeof v === 'object' && v !== null && 'message' in v ? String((v as { message?: unknown }).message) : String(v));
   const [raceTimes, setRaceTimes] = useState<RaceTime[]>([]);
   const [timeForm, setTimeForm] = useState({
     pilot_id: '',
@@ -203,7 +205,7 @@ export default function AdminDashboard() {
         } catch (error: any) {
           console.error('Error cargando tiempos:', error);
           console.error('Error response:', error.response);
-          setErrorMessage(error.response?.data?.error || error.message || 'Error al cargar los tiempos');
+          setErrorMessage(toErrorString(error.response?.data?.error) || error.message || 'Error al cargar los tiempos');
           setRaceTimes([]);
         }
       } else if (activeTab === 'tickets') {
@@ -285,8 +287,8 @@ export default function AdminDashboard() {
       console.error('Error response:', error.response);
       console.error('Error status:', error.response?.status);
       console.error('Error details:', error.response?.data);
-      const errorMsg = error.response?.data?.error || error.response?.data?.details || error.message || 'Error al cargar los datos';
-      setErrorMessage(errorMsg);
+      const raw = error.response?.data?.error ?? error.response?.data?.details ?? error.message ?? 'Error al cargar los datos';
+      setErrorMessage(toErrorString(raw) || 'Error al cargar los datos');
       // Evitar crash por estados inesperados
       if (activeTab === 'pilots') {
         console.error('Setting pilots to empty array due to error');
@@ -614,7 +616,7 @@ export default function AdminDashboard() {
                   <>
                     {errorMessage && (
                       <div className="alert alert-error" style={{ marginBottom: '20px' }}>
-                        <strong>Error:</strong> {errorMessage}
+                        <strong>Error:</strong> {typeof errorMessage === 'string' ? errorMessage : toErrorString(errorMessage)}
                     <button onClick={() => fetchData(false)} className="btn btn-primary btn-sm" style={{ marginLeft: '10px' }}>
                       Reintentar
                     </button>
@@ -786,7 +788,7 @@ export default function AdminDashboard() {
                                   if (response.status !== 200) {
                                     const text = await (response.data as Blob).text();
                                     const err = (() => { try { return JSON.parse(text); } catch { return {}; } })();
-                                    setErrorMessage(err?.error || 'Error al descargar la planilla');
+                                    setErrorMessage(toErrorString(err?.error) || 'Error al descargar la planilla');
                                     return;
                                   }
                                   const blob = response.data as Blob;
@@ -800,10 +802,10 @@ export default function AdminDashboard() {
                                 } catch (err: any) {
                                   if (err.response?.data instanceof Blob) {
                                     err.response.data.text().then((t: string) => {
-                                      try { setErrorMessage(JSON.parse(t)?.error || 'Error al descargar la planilla'); } catch { setErrorMessage('Error al descargar la planilla'); }
+                                      try { setErrorMessage(toErrorString(JSON.parse(t)?.error) || 'Error al descargar la planilla'); } catch { setErrorMessage('Error al descargar la planilla'); }
                                     });
                                   } else {
-                                    setErrorMessage(err.response?.data?.error || err.message || 'Error al descargar la planilla');
+                                    setErrorMessage(toErrorString(err.response?.data?.error) || err.message || 'Error al descargar la planilla');
                                   }
                                 } finally {
                                   setDownloadingPlanilla(false);
