@@ -18,6 +18,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/inscripcion" element={<PilotRegistration />} />
+        <Route path="/inscripcion/auto" element={<PilotRegistration />} />
+        <Route path="/inscripcion/moto" element={<PilotRegistration />} />
         <Route path="/pilotos" element={<PilotsList />} />
         <Route path="/solicitar-ticket" element={<SolicitudTicket />} />
         <Route path="/verificar" element={<VerificarTicket />} />

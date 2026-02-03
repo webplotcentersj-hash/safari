@@ -6,7 +6,7 @@ import { supabase } from '../config/supabase';
 // Configurar base URL para producción
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 axios.defaults.baseURL = API_BASE_URL;
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './PilotRegistration.css';
 import NumberSelector from '../components/NumberSelector';
 
@@ -263,12 +263,24 @@ interface PilotFormData {
   categoria_moto?: string;
   categoria_moto_china?: string;
   categoria_cuatri?: string;
+  tipo_campeonato?: string;
+  categoria_enduro?: string;
+  categoria_travesia_moto?: string;
   numero?: number;
-  // estos campos no los completa el usuario, los llenamos nosotros con las URLs
+  edad?: number;
+  nacionalidad?: string;
+  provincia?: string;
+  departamento?: string;
+  domicilio?: string;
+  telefono_acompanante?: string;
+  tiene_licencia?: boolean | string;
   comprobante_pago_url?: string;
 }
 
 export default function PilotRegistration() {
+  const location = useLocation();
+  const tipo = location.pathname === '/inscripcion/auto' ? 'auto' : location.pathname === '/inscripcion/moto' ? 'moto' : undefined;
+
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<PilotFormData>();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -279,10 +291,45 @@ export default function PilotRegistration() {
   const [loadingNumbers, setLoadingNumbers] = useState(false);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [tipoMoto, setTipoMoto] = useState<'estandar' | 'china' | null>(null);
+  /** Bajo "Moto": Campeonato Sanjuanino de Enduro o Travesías/Safari */
+  const [tipoCampeonato, setTipoCampeonato] = useState<'enduro' | 'travesias' | null>(null);
+  /** Solo cuando tipoCampeonato === 'travesias': Motos o Cuatriciclos */
+  const [travesiasSub, setTravesiasSub] = useState<'moto' | 'cuatri' | null>(null);
+  const [subTipoMoto, setSubTipoMoto] = useState<'moto' | 'cuatri' | null>(null);
   const categoryRequestedRef = useRef<string | null>(null);
 
   const watchDni = watch('dni');
   const watchCategoria = watch('categoria');
+
+  // Formulario por ruta: /inscripcion/auto o /inscripcion/moto fijan la categoría
+  useEffect(() => {
+    if (tipo === 'auto') setValue('categoria', 'auto');
+    if (tipo === 'moto') setValue('categoria', 'moto');
+  }, [tipo, setValue]);
+
+  /** Categoría efectiva para API: auto; moto (enduro o travesías moto) o cuatri (travesías cuatri). */
+  const effectiveCategoria =
+    tipo === 'auto'
+      ? 'auto'
+      : tipo === 'moto'
+        ? (tipoCampeonato === 'travesias' && travesiasSub === 'cuatri'
+            ? 'cuatri'
+            : tipoCampeonato === 'enduro' || (tipoCampeonato === 'travesias' && travesiasSub === 'moto')
+              ? 'moto'
+              : subTipoMoto === 'cuatri'
+                ? 'cuatri'
+                : subTipoMoto === 'moto'
+                  ? 'moto'
+                  : '')
+        : watchCategoria === 'auto'
+          ? 'auto'
+          : watchCategoria === 'moto' && (subTipoMoto === 'cuatri' || (tipoCampeonato === 'travesias' && travesiasSub === 'cuatri'))
+            ? 'cuatri'
+            : watchCategoria === 'moto' && (subTipoMoto === 'moto' || tipoCampeonato === 'enduro' || (tipoCampeonato === 'travesias' && travesiasSub === 'moto'))
+              ? 'moto'
+              : watchCategoria === 'moto'
+                ? ''
+                : watchCategoria;
 
   // Autos y motos usan números distintos: la API devuelve solo los usados para la categoría indicada.
   const loadUsedNumbers = async (categoria: 'auto' | 'moto' | 'cuatri') => {
@@ -325,15 +372,15 @@ export default function PilotRegistration() {
   };
 
   useEffect(() => {
-    if (watchCategoria === 'auto' || watchCategoria === 'moto' || watchCategoria === 'cuatri') {
-      loadUsedNumbers(watchCategoria as 'auto' | 'moto' | 'cuatri');
+    if (effectiveCategoria === 'auto' || effectiveCategoria === 'moto' || effectiveCategoria === 'cuatri') {
+      loadUsedNumbers(effectiveCategoria as 'auto' | 'moto' | 'cuatri');
     } else {
       categoryRequestedRef.current = null;
       setSelectedNumber(null);
       setValue('numero', undefined);
       setUsedNumbers([]);
     }
-  }, [watchCategoria, setValue]);
+  }, [effectiveCategoria, setValue]);
 
   const handleNumberSelect = (num: number) => {
     setSelectedNumber(num);
@@ -342,16 +389,23 @@ export default function PilotRegistration() {
 
   // Mantener el número seleccionado en el formulario (evita que se pierda al enviar)
   useEffect(() => {
-    if ((watchCategoria === 'auto' || watchCategoria === 'moto' || watchCategoria === 'cuatri') && selectedNumber != null) {
+    if ((effectiveCategoria === 'auto' || effectiveCategoria === 'moto' || effectiveCategoria === 'cuatri') && selectedNumber != null) {
       setValue('numero', selectedNumber, { shouldValidate: false });
     }
-  }, [watchCategoria, selectedNumber, setValue]);
+  }, [effectiveCategoria, selectedNumber, setValue]);
 
-  // Al cambiar de Moto a otro tipo, resetear tipo de moto
+  // Al cambiar de Moto a otro tipo, resetear estado de moto
   useEffect(() => {
     if (watchCategoria !== 'moto') {
       setTipoMoto(null);
+      setSubTipoMoto(null);
+      setTipoCampeonato(null);
+      setTravesiasSub(null);
       setValue('categoria_moto_china', undefined);
+      setValue('categoria_cuatri', undefined);
+      setValue('tipo_campeonato', undefined);
+      setValue('categoria_enduro', undefined);
+      setValue('categoria_travesia_moto', undefined);
     }
   }, [watchCategoria, setValue]);
 
@@ -406,18 +460,34 @@ export default function PilotRegistration() {
 
       const comprobanteUrl = publicUrlData?.publicUrl;
 
-      // Validar que la categoría esté presente
+      // Validar que la categoría esté presente (Auto o Moto; Moto puede ser moto o cuatriciclo)
       if (!data.categoria) {
         setMessage({
           type: 'error',
-          text: 'Debes seleccionar el tipo de vehículo (Auto, Moto o Cuatriciclo).'
+          text: 'Debes seleccionar el tipo de vehículo (Auto o Moto).'
+        });
+        setLoading(false);
+        return;
+      }
+      if (data.categoria === 'moto' && !tipoCampeonato) {
+        setMessage({
+          type: 'error',
+          text: 'Debes elegir campeonato (Enduro o Travesías/Safari).'
+        });
+        setLoading(false);
+        return;
+      }
+      if (data.categoria === 'moto' && tipoCampeonato === 'travesias' && !travesiasSub) {
+        setMessage({
+          type: 'error',
+          text: 'Debes elegir Motos o Cuatriciclos.'
         });
         setLoading(false);
         return;
       }
 
       // Validar campos requeridos para autos
-      if (data.categoria === 'auto') {
+      if (effectiveCategoria === 'auto') {
         if (!data.numero) {
           setMessage({
             type: 'error',
@@ -436,38 +506,22 @@ export default function PilotRegistration() {
         }
       }
 
-      // Validar campos requeridos para motos (estándar o moto china)
-      if (data.categoria === 'moto') {
-        const tieneCategoriaEstandar = !!data.categoria_moto;
-        const tieneCategoriaChina = !!data.categoria_moto_china;
-        if (!tieneCategoriaEstandar && !tieneCategoriaChina) {
-          setMessage({
-            type: 'error',
-            text: 'Debes elegir tipo de moto (Estándar o China) y seleccionar una categoría.'
-          });
+      // Validar motos: según tipo_campeonato
+      if (effectiveCategoria === 'moto') {
+        if (tipoCampeonato === 'enduro' && !data.categoria_enduro) {
+          setMessage({ type: 'error', text: 'Debes seleccionar una categoría del Campeonato Sanjuanino de Enduro.' });
           setLoading(false);
           return;
         }
-        if (tieneCategoriaEstandar && tieneCategoriaChina) {
-          setMessage({
-            type: 'error',
-            text: 'Seleccioná solo un tipo: Estándar o Moto china.'
-          });
-          setLoading(false);
-          return;
-        }
-        if (!data.numero) {
-          setMessage({
-            type: 'error',
-            text: 'Debes seleccionar tu número de competencia (01-250).'
-          });
+        if (tipoCampeonato === 'travesias' && travesiasSub === 'moto' && !data.categoria_travesia_moto) {
+          setMessage({ type: 'error', text: 'Debes seleccionar una categoría de moto (Travesías/Safari).' });
           setLoading(false);
           return;
         }
       }
 
-      // Validar campos requeridos para cuatriciclos
-      if (data.categoria === 'cuatri') {
+      // Validar campos requeridos para cuatriciclos (también cuando eligió Moto y luego Cuatriciclo)
+      if (effectiveCategoria === 'cuatri') {
         if (!data.categoria_cuatri) {
           setMessage({
             type: 'error',
@@ -476,18 +530,10 @@ export default function PilotRegistration() {
           setLoading(false);
           return;
         }
-        if (!data.numero) {
-          setMessage({
-            type: 'error',
-            text: 'Debes seleccionar tu número de competencia (01-250).'
-          });
-          setLoading(false);
-          return;
-        }
       }
 
-      // Asegurar que el número enviado sea el seleccionado (auto/moto/cuatri usan números distintos).
-      const numeroToSend = (data.categoria === 'auto' || data.categoria === 'moto' || data.categoria === 'cuatri')
+      // Número de competencia: solo autos lo eligen; motos y cuatriciclos lo reciben después.
+      const numeroToSend = effectiveCategoria === 'auto'
         ? (typeof data.numero === 'number' && data.numero >= 1 && data.numero <= 250
             ? data.numero
             : selectedNumber != null && selectedNumber >= 1 && selectedNumber <= 250
@@ -495,7 +541,7 @@ export default function PilotRegistration() {
               : null)
         : null;
 
-      if ((data.categoria === 'auto' || data.categoria === 'moto' || data.categoria === 'cuatri') && (numeroToSend == null || numeroToSend < 1 || numeroToSend > 250)) {
+      if (effectiveCategoria === 'auto' && (numeroToSend == null || numeroToSend < 1 || numeroToSend > 250)) {
         setMessage({
           type: 'error',
           text: 'Debes seleccionar tu número de competencia (01-250).'
@@ -504,20 +550,31 @@ export default function PilotRegistration() {
         return;
       }
 
-      // Usamos la baseURL configurada (/api) y acá solo la ruta relativa.
+      // Usamos la baseURL configurada (/api). Enviamos categoría efectiva y nuevos campos.
       const response = await axios.post('/pilots', {
         ...data,
+        categoria: effectiveCategoria,
         numero: numeroToSend,
-        categoria_auto: data.categoria === 'auto' ? data.categoria_auto : null,
-        categoria_moto: data.categoria === 'moto' && !data.categoria_moto_china ? data.categoria_moto : null,
-        categoria_moto_china: data.categoria === 'moto' ? (data.categoria_moto_china || null) : null,
-        categoria_cuatri: data.categoria === 'cuatri' ? data.categoria_cuatri : null,
+        categoria_auto: effectiveCategoria === 'auto' ? data.categoria_auto : null,
+        categoria_moto: tipoCampeonato === 'enduro' ? (data.categoria_enduro || null) : null,
+        categoria_moto_china: null,
+        categoria_cuatri: effectiveCategoria === 'cuatri' ? data.categoria_cuatri : null,
+        tipo_campeonato: tipoCampeonato || data.tipo_campeonato || null,
+        categoria_enduro: tipoCampeonato === 'enduro' ? (data.categoria_enduro || null) : null,
+        categoria_travesia_moto: tipoCampeonato === 'travesias' && travesiasSub === 'moto' ? (data.categoria_travesia_moto || null) : null,
+        edad: data.edad != null && (typeof data.edad !== 'number' || !Number.isNaN(data.edad)) ? (typeof data.edad === 'number' ? data.edad : parseInt(String(data.edad), 10)) : null,
+        nacionalidad: data.nacionalidad || null,
+        provincia: data.provincia || null,
+        departamento: data.departamento || null,
+        domicilio: data.domicilio || null,
+        telefono_acompanante: data.telefono_acompanante || null,
+        tiene_licencia: data.tiene_licencia === 'si' || data.tiene_licencia === true,
         comprobante_pago_url: comprobanteUrl
       });
       const qrFromApi = response.data?.qrDataUrl as string | undefined;
 
-      // Actualizar la lista de números usados después de una inscripción exitosa
-      if ((data.categoria === 'auto' || data.categoria === 'moto' || data.categoria === 'cuatri') && numeroToSend != null) {
+      // Actualizar la lista de números usados después de una inscripción exitosa (solo autos eligen número)
+      if (effectiveCategoria === 'auto' && numeroToSend != null) {
         setUsedNumbers(prev => [...prev, numeroToSend].sort((a, b) => a - b));
       }
 
@@ -545,15 +602,41 @@ export default function PilotRegistration() {
     }
   };
 
+  // Página de elección: /inscripcion (sin /auto ni /moto)
+  if (!tipo) {
+    return (
+      <div className="registration-page">
+        <div className="container">
+          <Link to="/" className="back-link">← Volver al inicio</Link>
+          <div className="registration-card">
+            <div className="registration-header">
+              <img src="/logo.png" alt="Safari Tras las Sierras" className="registration-logo" />
+              <h1>Inscripción de Pilotos</h1>
+              <p className="subtitle">Elegí el formulario según tu vehículo</p>
+            </div>
+            <div className="form-section" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
+              <Link to="/inscripcion/auto" className="btn btn-primary" style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
+                🚗 Inscripción Autos
+              </Link>
+              <Link to="/inscripcion/moto" className="btn btn-primary" style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
+                🏍️ Inscripción Motos (y cuatriciclos)
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="registration-page">
       <div className="container">
-        <Link to="/" className="back-link">← Volver al inicio</Link>
+        <Link to={tipo ? '/inscripcion' : '/'} className="back-link">← {tipo ? 'Elegir tipo de vehículo' : 'Volver al inicio'}</Link>
         
         <div className="registration-card">
           <div className="registration-header">
             <img src="/logo.png" alt="Safari Tras las Sierras" className="registration-logo" />
-            <h1>Inscripción de Pilotos</h1>
+            <h1>Inscripción {tipo === 'auto' ? 'Autos' : 'Motos (y cuatriciclos)'}</h1>
             <p className="subtitle">Completa todos los campos para inscribirte en el Safari Tras las Sierras</p>
             <button
               type="button"
@@ -698,6 +781,52 @@ export default function PilotRegistration() {
                 </div>
               </div>
 
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Edad</label>
+                  <input type="number" min={1} max={120} {...register('edad', { valueAsNumber: true })} placeholder="Años" />
+                </div>
+                <div className="form-group">
+                  <label>Nacionalidad</label>
+                  <input type="text" {...register('nacionalidad')} placeholder="Ej. Argentina" />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Provincia</label>
+                  <input type="text" {...register('provincia')} placeholder="Ej. San Juan" />
+                </div>
+                <div className="form-group">
+                  <label>Departamento</label>
+                  <input type="text" {...register('departamento')} placeholder="Ej. Valle Fértil" />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Domicilio</label>
+                <input type="text" {...register('domicilio')} placeholder="Calle, número, localidad" />
+              </div>
+
+              <div className="form-group">
+                <label>Teléfono del acompañante</label>
+                <input type="tel" {...register('telefono_acompanante')} placeholder="Opcional" />
+              </div>
+
+              <div className="form-group">
+                <label>¿Tiene licencia? *</label>
+                <div className="form-row-options" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="radio" value="si" {...register('tiene_licencia', { required: 'Indicá si tiene licencia' })} />
+                    Sí
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="radio" value="no" {...register('tiene_licencia')} />
+                    No
+                  </label>
+                </div>
+                {errors.tiene_licencia && <span className="error">{errors.tiene_licencia.message}</span>}
+              </div>
             </div>
 
             <div className="form-section">
@@ -717,18 +846,20 @@ export default function PilotRegistration() {
             </div>
 
             <div className="form-section">
-              <div className="form-group">
-                <label>Tipo de Vehículo *</label>
-                <select {...register('categoria', { required: 'El tipo de vehículo es requerido' })}>
-                  <option value="">Seleccione tipo de vehículo</option>
-                  <option value="auto">Auto</option>
-                  <option value="moto">Moto</option>
-                  <option value="cuatri">Cuatriciclo</option>
-                </select>
-                {errors.categoria && <span className="error">{errors.categoria.message}</span>}
-              </div>
+              {/* Selector de tipo solo si se entra por /inscripcion sin /auto ni /moto (en ese caso se muestra la página de elección) */}
+              {!tipo && (
+                <div className="form-group">
+                  <label>Tipo de Vehículo *</label>
+                  <select {...register('categoria', { required: 'El tipo de vehículo es requerido' })}>
+                    <option value="">Seleccione tipo de vehículo</option>
+                    <option value="auto">Auto</option>
+                    <option value="moto">Moto (y cuatriciclos)</option>
+                  </select>
+                  {errors.categoria && <span className="error">{errors.categoria.message}</span>}
+                </div>
+              )}
 
-              {watchCategoria === 'auto' && (
+              {(tipo === 'auto' || watchCategoria === 'auto') && (
                 <>
                   <div className="form-group">
                     <label>Categoría de Auto *</label>
@@ -776,134 +907,127 @@ export default function PilotRegistration() {
                 </>
               )}
 
-              {watchCategoria === 'moto' && (
+              {/* MOTOS: elegir campeonato (Enduro o Travesías/Safari) */}
+              {(tipo === 'moto' || watchCategoria === 'moto') && !tipoCampeonato && (
+                <div className="form-group">
+                  <label>¿Qué campeonato? *</label>
+                  <div className="form-row-options" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input type="radio" name="tipoCampeonato" onChange={() => { setTipoCampeonato('enduro'); setTravesiasSub(null); setValue('tipo_campeonato', 'enduro'); setValue('categoria_travesia_moto', undefined); setValue('categoria_cuatri', undefined); }} />
+                      Campeonato Sanjuanino de Enduro
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input type="radio" name="tipoCampeonato" onChange={() => { setTipoCampeonato('travesias'); setValue('tipo_campeonato', 'travesias'); setValue('categoria_enduro', undefined); }} />
+                      Campeonato de Travesías / Safari
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Enduro: categorías del Campeonato Sanjuanino de Enduro */}
+              {(tipo === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'enduro' && (
                 <>
                   <div className="form-group">
-                    <label>Tipo de moto *</label>
-                    <div className="form-row-options" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <input
-                          type="radio"
-                          name="tipoMoto"
-                          checked={tipoMoto === 'estandar'}
-                          onChange={() => {
-                            setTipoMoto('estandar');
-                            setValue('categoria_moto_china', undefined);
-                          }}
-                        />
-                        Estándar (Enduro Safari)
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <input
-                          type="radio"
-                          name="tipoMoto"
-                          checked={tipoMoto === 'china'}
-                          onChange={() => {
-                            setTipoMoto('china');
-                            setValue('categoria_moto', undefined);
-                          }}
-                        />
-                        Moto china
-                      </label>
-                    </div>
+                    <button type="button" className="back-link" onClick={() => { setTipoCampeonato(null); setValue('tipo_campeonato', undefined); setValue('categoria_enduro', undefined); }} style={{ marginBottom: '0.5rem' }}>← Cambiar campeonato</button>
                   </div>
-
-                  {tipoMoto === 'estandar' && (
-                    <div className="form-group">
-                      <label>Categoría de Moto Enduro Safari *</label>
-                      <select {...register('categoria_moto', { 
-                        required: watchCategoria === 'moto' && tipoMoto === 'estandar' ? 'Debes seleccionar una categoría' : false 
-                      })}>
-                        <option value="">Seleccione categoría</option>
-                        <option value="1 SENIOR">1 SENIOR</option>
-                        <option value="2 JUNIOR">2 JUNIOR</option>
-                        <option value="3 MASTER A">3 MASTER A</option>
-                        <option value="4 MASTER B">4 MASTER B</option>
-                        <option value="5 MASTER C">5 MASTER C</option>
-                        <option value="6 PROMOCIONALES">6 PROMOCIONALES</option>
-                        <option value="7 JUNIOR Kids">7 JUNIOR Kids</option>
-                      </select>
-                      {errors.categoria_moto && <span className="error">{errors.categoria_moto.message}</span>}
-                    </div>
-                  )}
-
-                  {tipoMoto === 'china' && (
-                    <div className="form-group">
-                      <label>Categoría de Moto China *</label>
-                      <select {...register('categoria_moto_china', { 
-                        required: watchCategoria === 'moto' && tipoMoto === 'china' ? 'Debes seleccionar una categoría' : false 
-                      })}>
-                        <option value="">Seleccione categoría</option>
-                        <option value="110 semi">110 semi</option>
-                        <option value="110 libre">110 libre</option>
-                        <option value="150 china">150 china</option>
-                        <option value="200 china">200 china</option>
-                        <option value="250 china">250 china</option>
-                        <option value="250 4v">250 4v</option>
-                      </select>
-                      {errors.categoria_moto_china && <span className="error">{errors.categoria_moto_china.message}</span>}
-                    </div>
-                  )}
-
                   <div className="form-group">
-                    <p className="form-hint">Los números de Moto son independientes de los de Auto y Cuatriciclos.</p>
-                    {loadingNumbers ? (
-                      <div style={{ textAlign: 'center', padding: '2rem' }}>
-                        <p>Cargando números disponibles...</p>
-                      </div>
-                    ) : (
-                      <NumberSelector
-                        selectedNumber={selectedNumber}
-                        onSelect={handleNumberSelect}
-                        usedNumbers={usedNumbers}
-                      />
-                    )}
-                    {errors.numero && <span className="error">{errors.numero.message}</span>}
+                    <label>Categoría (Campeonato Sanjuanino de Enduro) *</label>
+                    <select {...register('categoria_enduro', { required: tipoCampeonato === 'enduro' ? 'Debes seleccionar una categoría' : false })}>
+                      <option value="">Seleccione categoría</option>
+                      <option value="Senior A">Senior A</option>
+                      <option value="Junior A">Junior A</option>
+                      <option value="Junior B">Junior B</option>
+                      <option value="Master Senior (39 a 49 años)">Master Senior (39 a 49 años)</option>
+                      <option value="Master A (39 a 49 años)">Master A (39 a 49 años)</option>
+                      <option value="Master B (39 a 49 años)">Master B (39 a 49 años)</option>
+                      <option value="Master C (desde 50 años)">Master C (desde 50 años)</option>
+                      <option value="Master D (desde 50 años)">Master D (desde 50 años)</option>
+                      <option value="Promocional">Promocional</option>
+                      <option value="Principiante">Principiante</option>
+                      <option value="Enduro">Enduro</option>
+                      <option value="Junior Kids">Junior Kids</option>
+                    </select>
+                    {errors.categoria_enduro && <span className="error">{errors.categoria_enduro.message}</span>}
+                  </div>
+                  <div className="form-group">
+                    <p className="form-hint" style={{ padding: '0.75rem', background: '#f0f7f0', borderRadius: '8px', color: '#2d5a2d' }}>El número de competencia se te asignará luego.</p>
                   </div>
                 </>
               )}
 
-              {watchCategoria === 'cuatri' && (
+              {/* Travesías: Motos o Cuatriciclos */}
+              {(tipo === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'travesias' && !travesiasSub && (
+                <div className="form-group">
+                  <label>¿Motos o Cuatriciclos? *</label>
+                  <div className="form-row-options" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input type="radio" name="travesiasSub" onChange={() => { setTravesiasSub('moto'); setValue('categoria_cuatri', undefined); }} />
+                      Motos
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input type="radio" name="travesiasSub" onChange={() => { setTravesiasSub('cuatri'); setValue('categoria_travesia_moto', undefined); setValue('categoria', 'cuatri'); }} />
+                      Cuatriciclos
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Travesías - Motos: categorías */}
+              {(tipo === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'travesias' && travesiasSub === 'moto' && (
                 <>
                   <div className="form-group">
-                    <label>Categoría de Cuatriciclo *</label>
-                    <select {...register('categoria_cuatri', { 
-                      required: watchCategoria === 'cuatri' ? 'Debes seleccionar una categoría' : false 
-                    })}>
+                    <button type="button" className="back-link" onClick={() => { setTravesiasSub(null); setValue('categoria_travesia_moto', undefined); setValue('categoria', 'moto'); }} style={{ marginBottom: '0.5rem' }}>← Motos / Cuatriciclos</button>
+                  </div>
+                  <div className="form-group">
+                    <label>Categoría de Moto (Travesías / Safari) *</label>
+                    <select {...register('categoria_travesia_moto', { required: travesiasSub === 'moto' ? 'Debes seleccionar una categoría' : false })}>
                       <option value="">Seleccione categoría</option>
-                      <option value="200 chino">200 chino</option>
+                      <option value="110 cc semi">110 cc semi</option>
+                      <option value="110 cc libre">110 cc libre</option>
+                      <option value="150 cc china">150 cc china</option>
+                      <option value="200 cc China">200 cc China</option>
+                      <option value="250 cc China">250 cc China</option>
+                      <option value="250 cc 4v">250 cc 4v</option>
+                    </select>
+                    {errors.categoria_travesia_moto && <span className="error">{errors.categoria_travesia_moto.message}</span>}
+                  </div>
+                  <div className="form-group">
+                    <p className="form-hint" style={{ padding: '0.75rem', background: '#f0f7f0', borderRadius: '8px', color: '#2d5a2d' }}>El número de competencia se te asignará luego.</p>
+                  </div>
+                </>
+              )}
+
+              {/* Travesías - Cuatriciclos: categorías */}
+              {(tipo === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'travesias' && travesiasSub === 'cuatri' && (
+                <>
+                  <div className="form-group">
+                    <button type="button" className="back-link" onClick={() => { setTravesiasSub(null); setValue('categoria_cuatri', undefined); setValue('categoria', 'moto'); }} style={{ marginBottom: '0.5rem' }}>← Motos / Cuatriciclos</button>
+                  </div>
+                  <div className="form-group">
+                    <label>Categoría de Cuatriciclo (Travesías / Safari) *</label>
+                    <select {...register('categoria_cuatri', { required: effectiveCategoria === 'cuatri' ? 'Debes seleccionar una categoría' : false })}>
+                      <option value="">Seleccione categoría</option>
+                      <option value="200 cc Chino">200 cc Chino</option>
                       <option value="250 chino">250 chino</option>
-                      <option value="450 open (450cc a 700cc, ingresa banshee)">450 open (450cc a 700cc, ingresa banshee)</option>
+                      <option value="450 open kids">450 open kids</option>
                     </select>
                     {errors.categoria_cuatri && <span className="error">{errors.categoria_cuatri.message}</span>}
                   </div>
                   <div className="form-group">
-                    <p className="form-hint">Los números de Cuatriciclos son independientes de Auto y Moto.</p>
-                    {loadingNumbers ? (
-                      <div style={{ textAlign: 'center', padding: '2rem' }}>
-                        <p>Cargando números disponibles...</p>
-                      </div>
-                    ) : (
-                      <NumberSelector
-                        selectedNumber={selectedNumber}
-                        onSelect={handleNumberSelect}
-                        usedNumbers={usedNumbers}
-                      />
-                    )}
-                    {errors.numero && <span className="error">{errors.numero.message}</span>}
+                    <p className="form-hint" style={{ padding: '0.75rem', background: '#f0f7f0', borderRadius: '8px', color: '#2d5a2d' }}>El número de competencia se te asignará luego.</p>
                   </div>
                 </>
               )}
 
-              {/* Un solo input oculto para numero (auto, moto, cuatri) — evita que se pierda el valor al enviar */}
-              {(watchCategoria === 'auto' || watchCategoria === 'moto' || watchCategoria === 'cuatri') && (
+              {/* Input oculto para numero solo en autos (motos/cuatris no eligen número) */}
+              {effectiveCategoria === 'auto' && (
                 <input
                   type="hidden"
                   {...register('numero', {
-                    required: (watchCategoria === 'auto' || watchCategoria === 'moto' || watchCategoria === 'cuatri') ? 'Debes seleccionar un número' : false,
+                    required: effectiveCategoria === 'auto' ? 'Debes seleccionar un número' : false,
                     validate: (value) => {
                       const n = value != null ? Number(value) : NaN;
-                      if ((watchCategoria === 'auto' || watchCategoria === 'moto' || watchCategoria === 'cuatri') && (!value || isNaN(n) || n < 1 || n > 250)) {
+                      if (effectiveCategoria === 'auto' && (!value || isNaN(n) || n < 1 || n > 250)) {
                         return 'El número debe estar entre 01 y 250';
                       }
                       return true;
@@ -968,10 +1092,10 @@ export default function PilotRegistration() {
                         const nombre = watch('nombre') || '';
                         const apellido = watch('apellido') || '';
                         const numero = watch('numero');
-                        const categoria = watch('categoria') || '';
-                        const categoriaDetalle = categoria === 'auto' 
+                        const cat = effectiveCategoria || watch('categoria') || '';
+                        const categoriaDetalle = cat === 'auto' 
                           ? watch('categoria_auto') || ''
-                          : categoria === 'moto'
+                          : cat === 'moto'
                             ? (watch('categoria_moto') || watch('categoria_moto_china') || '')
                             : watch('categoria_cuatri') || '';
                         
@@ -980,7 +1104,7 @@ export default function PilotRegistration() {
                           nombre,
                           apellido,
                           numero || null,
-                          categoria,
+                          cat,
                           categoriaDetalle || null
                         );
                         

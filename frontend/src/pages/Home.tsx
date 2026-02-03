@@ -21,10 +21,18 @@ export default function Home() {
           <div className="container">
             <div className="home-content">
             <div className="home-card">
-              <h2>Inscripción de Pilotos</h2>
-              <p>Completa el formulario para inscribirte como piloto en la competencia.</p>
-              <Link to="/inscripcion" className="btn btn-primary">
-                Inscribirse
+              <h2>Inscripción Autos</h2>
+              <p>Formulario de inscripción para pilotos de auto en la competencia.</p>
+              <Link to="/inscripcion/auto" className="btn btn-primary">
+                Inscribir Auto
+              </Link>
+            </div>
+
+            <div className="home-card">
+              <h2>Inscripción Motos (y cuatriciclos)</h2>
+              <p>Formulario de inscripción para pilotos de moto o cuatriciclo.</p>
+              <Link to="/inscripcion/moto" className="btn btn-primary">
+                Inscribir Moto / Cuatri
               </Link>
             </div>
 

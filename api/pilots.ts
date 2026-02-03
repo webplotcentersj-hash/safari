@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { supabaseAdmin } from './_utils/supabase';
+import { parsePilotNumber, isValidPilotNumber, isCategoriaNumerada, processUsedNumbers, getCategoriaTextoFromNumeroConstraint, buildNumeroDuplicadoError } from './_utils/pilotNumbers';
 import { createClient } from '@supabase/supabase-js';
 import QRCode from 'qrcode';
 import { Resend } from 'resend';
@@ -220,16 +221,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         categoria_moto,
         categoria_moto_china,
         categoria_cuatri,
+        tipo_campeonato,
+        categoria_enduro,
+        categoria_travesia_moto,
         numero: numeroRaw,
         comprobante_pago_url,
-        certificado_medico_url
+        certificado_medico_url,
+        edad,
+        nacionalidad,
+        provincia,
+        departamento,
+        domicilio,
+        telefono_acompanante,
+        tiene_licencia
       } = req.body;
 
-      // Normalizar número (puede llegar como string desde el JSON)
-      const numero = numeroRaw != null && numeroRaw !== ''
-        ? (typeof numeroRaw === 'number' ? numeroRaw : parseInt(String(numeroRaw), 10))
-        : undefined;
-      const numeroValid = typeof numero === 'number' && !isNaN(numero) && numero >= 1 && numero <= 250;
+      // Normalizar número (puede llegar como string desde el JSON); rango 1-250
+      const numero = parsePilotNumber(numeroRaw);
+      const numeroValid = numero != null && isValidPilotNumber(numero);
 
       if (!nombre || !apellido || !dni || !email || !telefono || !fecha_nacimiento) {
         return res.status(400).json({ error: 'Campos requeridos faltantes' });
@@ -272,61 +281,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
-      // Validar campos requeridos para motos (estándar o china: una u otra categoría)
+      // Validar motos: según tipo_campeonato (enduro vs travesías)
       if (categoria === 'moto') {
-        if (!numeroValid) {
-          return res.status(400).json({ error: 'Para motos, debes seleccionar un número entre 01 y 250' });
-        }
-        const tieneCategoriaMoto = !!categoria_moto;
-        const tieneCategoriaMotoChina = !!categoria_moto_china;
-        if (!tieneCategoriaMoto && !tieneCategoriaMotoChina) {
-          return res.status(400).json({ error: 'Para motos, debes seleccionar una categoría (estándar o moto china)' });
-        }
-        if (tieneCategoriaMoto && tieneCategoriaMotoChina) {
-          return res.status(400).json({ error: 'Seleccioná solo una categoría: estándar o moto china' });
-        }
-        
-        // Verificar si el número ya está asignado a otro piloto de MOTO
-        // Los números son únicos solo dentro de la misma categoría
-        const { data: existingPilot, error: checkError } = await supabaseAdmin
-          .from('pilots')
-          .select('id, nombre, apellido, dni')
-          .eq('numero', numero)
-          .eq('categoria', 'moto')
-          .maybeSingle();
-        
-        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
-          console.error('Error verificando número:', checkError);
-        }
-        
-        if (existingPilot) {
-          return res.status(400).json({ 
-            error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto de moto (${existingPilot.nombre} ${existingPilot.apellido}). Por favor, selecciona otro número.` 
-          });
+        const tipoCamp = (tipo_campeonato || '').toLowerCase();
+        if (tipoCamp === 'enduro') {
+          if (!categoria_enduro) {
+            return res.status(400).json({ error: 'Debes seleccionar una categoría del Campeonato Sanjuanino de Enduro' });
+          }
+        } else if (tipoCamp === 'travesias') {
+          if (!categoria_travesia_moto) {
+            return res.status(400).json({ error: 'Debes seleccionar una categoría de moto (Travesías/Safari)' });
+          }
+        } else {
+          // Compatibilidad: si no envían tipo_campeonato, aceptar categoria_moto o categoria_moto_china
+          const tieneCategoriaMoto = !!categoria_moto;
+          const tieneCategoriaMotoChina = !!categoria_moto_china;
+          if (!tieneCategoriaMoto && !tieneCategoriaMotoChina && !categoria_enduro && !categoria_travesia_moto) {
+            return res.status(400).json({ error: 'Para motos, debes elegir campeonato y categoría' });
+          }
         }
       }
 
-      // Validar campos requeridos para cuatriciclos
+      // Validar cuatriciclos (Travesías/Safari). Número no se elige: se asigna después.
       if (categoria === 'cuatri') {
-        if (!numeroValid) {
-          return res.status(400).json({ error: 'Para cuatriciclos, debes seleccionar un número entre 01 y 250' });
-        }
         if (!categoria_cuatri) {
           return res.status(400).json({ error: 'Para cuatriciclos, debes seleccionar una categoría' });
-        }
-        const { data: existingPilot, error: checkError } = await supabaseAdmin
-          .from('pilots')
-          .select('id, nombre, apellido, dni')
-          .eq('numero', numero)
-          .eq('categoria', 'cuatri')
-          .maybeSingle();
-        if (checkError && checkError.code !== 'PGRST116') {
-          console.error('Error verificando número cuatri:', checkError);
-        }
-        if (existingPilot) {
-          return res.status(400).json({ 
-            error: `El número ${numero.toString().padStart(2, '0')} ya está asignado a otro piloto de cuatriciclo (${existingPilot.nombre} ${existingPilot.apellido}). Por favor, selecciona otro número.` 
-          });
         }
       }
 
@@ -353,12 +332,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         copiloto_dni: copiloto_dni || null,
         categoria: categoria || null,
         categoria_auto: categoria === 'auto' ? categoria_auto : null,
-        categoria_moto: categoria === 'moto' && !categoria_moto_china ? categoria_moto : null,
+        categoria_moto: categoria === 'moto' ? (categoria_moto || null) : null,
         categoria_moto_china: categoria === 'moto' ? (categoria_moto_china || null) : null,
         categoria_cuatri: categoria === 'cuatri' ? categoria_cuatri : null,
-        numero: (categoria === 'auto' || categoria === 'moto' || categoria === 'cuatri') ? numero : null,
+        tipo_campeonato: tipo_campeonato || null,
+        categoria_enduro: categoria_enduro || null,
+        categoria_travesia_moto: categoria_travesia_moto || null,
+        numero: categoria === 'auto' ? (numero ?? null) : null,
         comprobante_pago_url: comprobante_pago_url || null,
-        certificado_medico_url: certificado_medico_url,
+        certificado_medico_url: certificado_medico_url || null,
+        edad: edad != null && edad !== '' ? (typeof edad === 'number' ? edad : parseInt(String(edad), 10)) : null,
+        nacionalidad: nacionalidad || null,
+        provincia: provincia || null,
+        departamento: departamento || null,
+        domicilio: domicilio || null,
+        telefono_acompanante: telefono_acompanante || null,
+        tiene_licencia: tiene_licencia === true || tiene_licencia === 'si' || tiene_licencia === 'sí',
         estado: 'pendiente'
       };
 
@@ -383,9 +372,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(400).json({ error: 'Ya existe una inscripción con este DNI. Si ya te inscribiste, verifica tu email o contacta a los organizadores.' });
           }
           if (error.message?.includes('numero') || error.message?.includes('pilots_numero_key') || error.message?.includes('pilots_numero_auto_unique') || error.message?.includes('pilots_numero_moto_unique') || error.message?.includes('pilots_numero_cuatri_unique')) {
-            const categoriaTexto = categoria === 'auto' ? 'auto' : categoria === 'moto' ? 'moto' : 'cuatriciclo';
-            return res.status(400).json({ 
-              error: `El número ${numero ? numero.toString().padStart(2, '0') : ''} ya está asignado a otro piloto de ${categoriaTexto}. Por favor, selecciona otro número disponible.` 
+            const categoriaTexto = getCategoriaTextoFromNumeroConstraint(error.message || '', categoria);
+            return res.status(400).json({
+              error: buildNumeroDuplicadoError(numero ?? undefined, categoriaTexto),
             });
           }
         }
@@ -524,7 +513,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Autos, motos y cuatriciclos usan números distintos: categoria es obligatoria.
     try {
       const categoria = (query.categoria as string)?.toLowerCase();
-      if (categoria !== 'auto' && categoria !== 'moto' && categoria !== 'cuatri') {
+      if (!isCategoriaNumerada(categoria)) {
         return res.status(400).json({ error: 'categoria es obligatoria y debe ser "auto", "moto" o "cuatri"' });
       }
 
@@ -543,25 +532,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log('📋 Pilotos encontrados con números:', pilots);
       console.log('📋 Categoría filtrada:', categoria);
 
-      const usedNumbers = pilots
-        .map((p: any) => {
-          // Asegurar que el número sea un entero
-          const num = typeof p.numero === 'string' ? parseInt(p.numero, 10) : Number(p.numero);
-          console.log('🔢 Procesando número:', p.numero, '->', num, '(tipo:', typeof num, ')');
-          return num;
-        })
-        .filter((num: number | null) => {
-          const isValid = num !== null && !isNaN(num) && num >= 1 && num <= 250;
-          if (!isValid) {
-            console.log('⚠️ Número inválido filtrado:', num);
-          }
-          return isValid;
-        })
-        .sort((a: number, b: number) => a - b);
+      const usedNumbers = processUsedNumbers(pilots || []);
 
       console.log('📊 Números usados encontrados para categoría', categoria, ':', usedNumbers);
-      console.log('📊 Tipo de array:', Array.isArray(usedNumbers));
-      console.log('📊 Primer elemento tipo:', typeof usedNumbers[0]);
       res.json(usedNumbers);
     } catch (error: any) {
       console.error('Used numbers error:', error);
