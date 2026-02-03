@@ -118,6 +118,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Rewrite: GET /api/admin/pilots → /api/admin?__route=pilots (listado público para el dashboard)
+  if (method === 'GET' && String((q as any).__route) === 'pilots') {
+    try {
+      const numeroParam = (q.numero as string) || (Array.isArray(q.numero) ? q.numero[0] : undefined);
+      let queryBuilder = supabaseAdmin.from('pilots').select('*');
+      if (numeroParam) {
+        const numero = parseInt(String(numeroParam), 10);
+        if (!isNaN(numero)) queryBuilder = queryBuilder.eq('numero', numero);
+      } else {
+        queryBuilder = queryBuilder.order('created_at', { ascending: false });
+      }
+      const { data: pilots, error } = await queryBuilder;
+      if (error) {
+        console.error('Get pilots (__route=pilots) error:', error);
+        return res.status(500).json({ error: 'Error al obtener pilotos', details: error.message });
+      }
+      const pilotsArray = Array.isArray(pilots) ? pilots : [];
+      if (numeroParam && pilotsArray.length > 0) return res.status(200).json(pilotsArray[0]);
+      return res.status(200).json(pilotsArray);
+    } catch (e: any) {
+      console.error('Get pilots (__route=pilots) catch:', e);
+      return res.status(500).json({ error: 'Error al obtener pilotos', details: e?.message });
+    }
+  }
+
   // Crear cliente con token del usuario autenticado para consultas que respetan RLS
   const supabaseUrl = process.env.SUPABASE_URL || '';
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';

@@ -32,6 +32,10 @@
       "destination": "/api/admin?__route=pilot-status&__id=:id"
     },
     {
+      "source": "/api/admin/pilots",
+      "destination": "/api/admin?__route=pilots"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

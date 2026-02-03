@@ -130,40 +130,12 @@ export default function AdminDashboard() {
     setErrorMessage(null);
     try {
       if (activeTab === 'pilots') {
-        // Consultar directamente desde Supabase usando el cliente del frontend
-        console.log('=== FETCHING PILOTS DIRECTLY FROM SUPABASE ===');
-        console.log('Supabase client available:', !!supabase);
-        
-        if (!supabase) {
-          const errorMsg = 'Supabase client no está configurado. Verificá que VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY estén configuradas en Vercel.';
-          console.error('❌', errorMsg);
-          throw new Error(errorMsg);
-        }
-
-        const { data: pilotsData, error: supabaseError } = await supabase
-          .from('pilots')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        console.log('Supabase query result - error:', supabaseError);
-        console.log('Supabase query result - data:', pilotsData);
-        console.log('Supabase query result - data length:', pilotsData?.length);
-
-        if (supabaseError) {
-          console.error('Supabase error:', supabaseError);
-          throw new Error(supabaseError.message || 'Error al cargar los pilotos desde Supabase');
-        }
-
-        const pilotsArray = Array.isArray(pilotsData) ? pilotsData : [];
-        console.log(`✅ Successfully loaded ${pilotsArray.length} pilots`);
-        
-        if (pilotsArray.length > 0) {
-          console.log('First pilot:', pilotsArray[0]);
-          console.log('All pilots:', pilotsArray);
-        } else {
-          console.warn('No pilots found in database');
-        }
-        
+        // Cargar pilotos desde la API (usa supabaseAdmin en el servidor; evita RLS/errores del cliente Supabase)
+        const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+        const response = await axios.get<unknown>('/admin/pilots', { headers });
+        const data = response?.data;
+        const pilotsArray = Array.isArray(data) ? data : [];
         setPilots(pilotsArray);
       } else if (activeTab === 'times') {
         // Cargar pilotos aprobados para el selector (si no están cargados)
