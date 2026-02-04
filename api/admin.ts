@@ -361,6 +361,58 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(403).json({ error: 'Acceso denegado' });
   }
   const bodySafe = (body as Record<string, unknown>) || {};
+  if (method === 'GET' && String((q as any).__route) === 'race-status') {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('race_status')
+        .select('id, semaphore, stop_message, updated_at')
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return res.status(200).json({
+        id: data?.id,
+        semaphore: data?.semaphore ?? 'green',
+        stop_message: data?.stop_message ?? '',
+        updated_at: data?.updated_at ?? null
+      });
+    } catch (e: any) {
+      console.error('GET race-status error:', e);
+      return res.status(500).json({ error: 'Error al obtener el estado' });
+    }
+  }
+  if (method === 'PATCH' && String((q as any).__route) === 'race-status') {
+    try {
+      const semaphore = bodySafe.semaphore as string | undefined;
+      const stop_message = bodySafe.stop_message as string | undefined;
+      if (!semaphore || !['green', 'red'].includes(semaphore)) {
+        return res.status(400).json({ error: 'semaphore debe ser "green" o "red"' });
+      }
+      const { data: row } = await supabaseAdmin.from('race_status').select('id').limit(1).maybeSingle();
+      if (!row?.id) {
+        const { data: inserted, error: insErr } = await supabaseAdmin
+          .from('race_status')
+          .insert({ semaphore, stop_message: stop_message ?? null })
+          .select('id, semaphore, stop_message, updated_at')
+          .single();
+        if (insErr) throw insErr;
+        return res.status(200).json(inserted);
+      }
+      const { data: updated, error } = await supabaseAdmin
+        .from('race_status')
+        .update({
+          semaphore,
+          stop_message: stop_message != null ? String(stop_message).trim() || null : null
+        })
+        .eq('id', row.id)
+        .select('id, semaphore, stop_message, updated_at')
+        .single();
+      if (error) throw error;
+      return res.status(200).json(updated);
+    } catch (e: any) {
+      console.error('PATCH race-status error:', e);
+      return res.status(500).json({ error: 'Error al actualizar el estado' });
+    }
+  }
   if (method === 'PATCH' && String((q as any).__route) === 'pilot-status') {
     // Actualizar estado del piloto (rewrite desde /api/admin/pilots/:id/status)
     try {

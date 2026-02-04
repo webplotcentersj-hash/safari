@@ -44,6 +44,10 @@
       "destination": "/api/admin?__route=planilla-inscripcion-excel"
     },
     {
+      "source": "/api/admin/race-status",
+      "destination": "/api/admin?__route=race-status"
+    },
+    {
       "source": "/admin/planilla-inscripcion",
       "destination": "/api/admin?__route=planilla-inscripcion"
     },

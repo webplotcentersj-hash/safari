@@ -1,0 +1,175 @@
+.tiempos-carrera {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #1a2f1a 0%, #0d1a0d 100%);
+  color: #eee;
+}
+
+.tiempos-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  font-size: 1.25rem;
+  color: #8ab88a;
+}
+
+.tiempos-header {
+  background: linear-gradient(135deg, #65b330 0%, #4a8f28 100%);
+  padding: 1.5rem 1rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tiempos-header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.tiempos-logo {
+  max-width: 120px;
+  height: auto;
+  margin-bottom: 0.75rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.tiempos-header h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.tiempos-semaphore-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tiempos-semaphore {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  box-shadow: 0 0 20px currentColor, inset 0 0 8px rgba(255, 255, 255, 0.3);
+  animation: tiempos-glow 2s ease-in-out infinite;
+}
+
+.semaphore-green {
+  background: #22c55e;
+  color: #22c55e;
+}
+
+.semaphore-red {
+  background: #ef4444;
+  color: #ef4444;
+  animation: tiempos-glow-red 1.5s ease-in-out infinite;
+}
+
+@keyframes tiempos-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 20px currentColor, inset 0 0 8px rgba(255, 255, 255, 0.3); }
+  50% { opacity: 0.85; box-shadow: 0 0 28px currentColor, inset 0 0 8px rgba(255, 255, 255, 0.4); }
+}
+
+@keyframes tiempos-glow-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.tiempos-semaphore-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.tiempos-stop-banner {
+  background: rgba(239, 68, 68, 0.95);
+  color: #fff;
+  padding: 1rem 1.5rem;
+  text-align: center;
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tiempos-stop-banner strong {
+  margin-right: 0.5rem;
+}
+
+.tiempos-error {
+  background: rgba(200, 80, 80, 0.3);
+  color: #ffb3b3;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.tiempos-main {
+  flex: 1;
+  padding: 1.5rem 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.tiempos-table-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.tiempos-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(0.85rem, 2vw, 1rem);
+}
+
+.tiempos-table th,
+.tiempos-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tiempos-table th {
+  background: rgba(101, 179, 48, 0.25);
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tiempos-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tiempos-table .col-pos {
+  font-weight: 600;
+  color: #8ab88a;
+  width: 3rem;
+}
+
+.tiempos-table .col-num {
+  width: 3rem;
+}
+
+.tiempos-table .col-tiempo strong {
+  color: #a5d6a5;
+}
+
+.tiempos-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #8ab88a;
+  font-size: 1.1rem;
+}
+
+.tiempos-footer {
+  padding: 0.75rem 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #6b8f6b;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}

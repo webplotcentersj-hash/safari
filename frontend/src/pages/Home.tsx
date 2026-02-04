@@ -37,6 +37,14 @@ export default function Home() {
             </div>
 
             <div className="home-card">
+              <h2>Tiempos en vivo</h2>
+              <p>Mirá los tiempos de carrera y el estado (semáforo en vivo).</p>
+              <Link to="/tiempos" className="btn btn-primary">
+                Ver tiempos
+              </Link>
+            </div>
+
+            <div className="home-card">
               <h2>Pilotos Inscritos</h2>
               <p>Consulta la lista de todos los pilotos inscritos en la competencia.</p>
               <Link to="/pilotos" className="btn btn-primary">

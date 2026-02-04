@@ -81,7 +81,7 @@ interface RaceTime {
 export default function AdminDashboard() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'pilots' | 'tickets' | 'stats' | 'times' | 'solicitudes'>('stats');
+  const [activeTab, setActiveTab] = useState<'pilots' | 'tickets' | 'stats' | 'times' | 'solicitudes' | 'pantalla'>('stats');
   const [pilots, setPilots] = useState<Pilot[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [solicitudes, setSolicitudes] = useState<any[]>([]);
@@ -117,6 +117,9 @@ export default function AdminDashboard() {
   const [planillaSubcategoria, setPlanillaSubcategoria] = useState<string>('todos');
   const [downloadingPlanilla, setDownloadingPlanilla] = useState(false);
   const [downloadingPlanillaExcel, setDownloadingPlanillaExcel] = useState(false);
+  const [raceStatus, setRaceStatus] = useState<{ semaphore: string; stop_message: string }>({ semaphore: 'green', stop_message: '' });
+  const [raceStatusSaving, setRaceStatusSaving] = useState(false);
+  const [raceStatusLoaded, setRaceStatusLoaded] = useState(false);
   // Tabla pilotos: orden y paginación
   type PilotSortField = 'nombre' | 'apellido' | 'estado' | 'created_at' | 'numero' | 'categoria';
   const [pilotsSort, setPilotsSort] = useState<{ field: PilotSortField; dir: 'asc' | 'desc' }>({ field: 'created_at', dir: 'desc' });
@@ -138,6 +141,21 @@ export default function AdminDashboard() {
         const data = response?.data;
         const pilotsArray = Array.isArray(data) ? data : [];
         setPilots(pilotsArray);
+      } else if (activeTab === 'pantalla') {
+        const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
+        const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+        try {
+          const response = await axios.get<{ semaphore: string; stop_message: string | null }>('/api/admin/race-status', { headers });
+          const d = response?.data;
+          setRaceStatus({
+            semaphore: d?.semaphore ?? 'green',
+            stop_message: d?.stop_message ?? ''
+          });
+          setRaceStatusLoaded(true);
+        } catch (err) {
+          console.error('Error loading race status:', err);
+          setRaceStatusLoaded(true);
+        }
       } else if (activeTab === 'times') {
         // Cargar pilotos aprobados para el selector (si no están cargados)
         if (pilots.length === 0) {
@@ -479,6 +497,12 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('times')}
           >
             Tiempos
+          </button>
+          <button
+            className={activeTab === 'pantalla' ? 'active' : ''}
+            onClick={() => setActiveTab('pantalla')}
+          >
+            Pantalla pública
           </button>
         </div>
 
@@ -1364,6 +1388,86 @@ export default function AdminDashboard() {
                       </>
                     );
                   })()}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'pantalla' && (
+              <div className="admin-content">
+                <div className="card" style={{ marginBottom: '2rem' }}>
+                  <h2>Pantalla pública — Semáforo de carrera</h2>
+                  <p style={{ color: '#666', marginBottom: '1rem' }}>
+                    Configurá el estado que se muestra en la página pública de tiempos. Verde = carrera en curso, Rojo = carrera parada (con motivo).
+                  </p>
+                  {raceStatusLoaded && (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        setRaceStatusSaving(true);
+                        try {
+                          const authToken = token || localStorage.getItem('token');
+                          const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+                          await axios.patch('/api/admin/race-status', {
+                            semaphore: raceStatus.semaphore,
+                            stop_message: raceStatus.semaphore === 'red' ? raceStatus.stop_message : ''
+                          }, { headers });
+                          alert('Estado guardado. La pantalla pública se actualizará.');
+                        } catch (err: any) {
+                          alert(err.response?.data?.error || 'Error al guardar');
+                        } finally {
+                          setRaceStatusSaving(false);
+                        }
+                      }}
+                      className="ticket-form"
+                    >
+                      <div className="form-group">
+                        <label>Estado del semáforo</label>
+                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input
+                              type="radio"
+                              name="semaphore"
+                              value="green"
+                              checked={raceStatus.semaphore === 'green'}
+                              onChange={() => setRaceStatus((s) => ({ ...s, semaphore: 'green' }))}
+                            />
+                            <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px #22c55e' }} title="Verde" />
+                            <span>Verde — Carrera en curso</span>
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input
+                              type="radio"
+                              name="semaphore"
+                              value="red"
+                              checked={raceStatus.semaphore === 'red'}
+                              onChange={() => setRaceStatus((s) => ({ ...s, semaphore: 'red' }))}
+                            />
+                            <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }} title="Rojo" />
+                            <span>Rojo — Carrera parada</span>
+                          </label>
+                        </div>
+                      </div>
+                      {raceStatus.semaphore === 'red' && (
+                        <div className="form-group">
+                          <label>Motivo de parada (se muestra en la pantalla pública)</label>
+                          <textarea
+                            value={raceStatus.stop_message}
+                            onChange={(e) => setRaceStatus((s) => ({ ...s, stop_message: e.target.value }))}
+                            placeholder="Ej: Parada por incidente en pista / Cambio de condiciones climáticas"
+                            rows={3}
+                            style={{ width: '100%', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd' }}
+                          />
+                        </div>
+                      )}
+                      <button type="submit" className="btn btn-primary" disabled={raceStatusSaving}>
+                        {raceStatusSaving ? 'Guardando…' : 'Guardar estado'}
+                      </button>
+                    </form>
+                  )}
+                  {!raceStatusLoaded && activeTab === 'pantalla' && <div className="loading">Cargando…</div>}
+                  <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666' }}>
+                    Vista pública: <a href="/tiempos" target="_blank" rel="noopener noreferrer">/tiempos</a>
+                  </p>
                 </div>
               </div>
             )}
