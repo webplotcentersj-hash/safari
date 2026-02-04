@@ -43,7 +43,11 @@ export default function TiemposCarrera() {
       const url = API_BASE
         ? `${API_BASE.replace(/\/$/, '')}/api/admin?__route=public-race-display&_t=${Date.now()}`
         : `/api/admin?__route=public-race-display&_t=${Date.now()}`;
-      const res = await axios.get<RaceDisplayData>(url, { baseURL: '', timeout: 8000 });
+      const res = await axios.get<RaceDisplayData>(url, {
+        baseURL: '',
+        timeout: 8000,
+        headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
+      });
       setData(res.data);
       setError(null);
     } catch (e: unknown) {
@@ -60,7 +64,7 @@ export default function TiemposCarrera() {
   }, [fetchDisplay]);
 
   useEffect(() => {
-    const interval = setInterval(fetchDisplay, 10000);
+    const interval = setInterval(fetchDisplay, 5000);
     return () => clearInterval(interval);
   }, [fetchDisplay]);
 
@@ -184,7 +188,7 @@ export default function TiemposCarrera() {
       </main>
 
       <footer className="tp-footer">
-        <p>Actualización cada 10 s · Safari Tras las Sierras</p>
+        <p>Actualización cada 5 s · Safari Tras las Sierras</p>
       </footer>
     </div>
   );

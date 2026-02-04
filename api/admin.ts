@@ -28,9 +28,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     try {
       res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       const [statusRes, timesRes] = await Promise.all([
-        supabaseAdmin.from('race_status').select('semaphore, stop_message, updated_at').limit(1).maybeSingle(),
+        supabaseAdmin.from('race_status').select('semaphore, stop_message, updated_at').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
         supabaseAdmin.from('race_times').select(`
           id, pilot_id, categoria, categoria_detalle, tiempo_segundos, tiempo_formato, etapa, fecha,
           pilots (id, nombre, apellido, numero, categoria, categoria_auto, categoria_moto)
