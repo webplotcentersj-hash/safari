@@ -7,6 +7,9 @@ import { supabase } from '../config/supabase';
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 axios.defaults.baseURL = API_BASE_URL;
 
+// URL principal del sitio público
+const SITE_HOME = 'https://safaritraslassierras.com.ar/';
+
 // Logo del formulario de inscripción (solo este formulario)
 const REGISTRATION_LOGO_URL = 'https://plotcenter.com.ar/wp-content/uploads/2026/02/ASER-logos-01-scaled.png';
 import { Link, useLocation } from 'react-router-dom';
@@ -618,7 +621,7 @@ export default function PilotRegistration() {
     return (
       <div className="registration-page">
         <div className="container">
-          <Link to="/" className="back-link">← Volver al inicio</Link>
+          <a href={SITE_HOME} className="back-link" rel="noopener noreferrer">← Volver al inicio</a>
           <div className="registration-card">
             <div className="registration-header">
               <img src="/logo.png" alt="Safari Tras las Sierras" className="registration-logo" />
@@ -642,7 +645,9 @@ export default function PilotRegistration() {
   return (
     <div className={`registration-page${tipo === 'moto' ? ' registration-page--moto' : ''}`}>
       <div className="container">
-        <Link to={tipo ? '/inscripcion' : '/'} className="back-link">← {tipo ? 'Elegir tipo de vehículo' : 'Volver al inicio'}</Link>
+        <Link to={tipo ? '/inscripcion' : SITE_HOME} className="back-link">
+          ← {tipo ? 'Elegir tipo de vehículo' : 'Volver al inicio'}
+        </Link>
         
         <div className="registration-card">
           <div className="registration-header">
