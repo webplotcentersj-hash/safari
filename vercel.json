@@ -48,6 +48,10 @@
       "destination": "/api/admin?__route=race-status"
     },
     {
+      "source": "/api/public/race-display",
+      "destination": "/api/admin?__route=public-race-display"
+    },
+    {
       "source": "/admin/planilla-inscripcion",
       "destination": "/api/admin?__route=planilla-inscripcion"
     },
