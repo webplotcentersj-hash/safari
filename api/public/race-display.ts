@@ -61,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       semaphore: status?.semaphore ?? 'green',
       stop_message: status?.stop_message ?? null,
       updated_at: status?.updated_at ?? null,
-      times: statusError ? [] : times
+      times: timesError ? [] : (times || [])
     });
   } catch (e: unknown) {
     console.error('race-display error:', e);

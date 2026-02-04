@@ -40,8 +40,8 @@ export default function TiemposCarrera() {
 
   const fetchDisplay = useCallback(async () => {
     try {
-      const url = API_BASE ? `${API_BASE}/api/public/race-display` : '/api/public/race-display';
-      const res = await axios.get<RaceDisplayData>(url);
+      const url = API_BASE ? `${API_BASE.replace(/\/$/, '')}/api/public/race-display` : '/api/public/race-display';
+      const res = await axios.get<RaceDisplayData>(url, { baseURL: '' });
       setData(res.data);
       setError(null);
     } catch (e: unknown) {
