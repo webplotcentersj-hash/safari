@@ -116,6 +116,7 @@ export default function AdminDashboard() {
   const [planillaCategoria, setPlanillaCategoria] = useState<string>('todos');
   const [planillaSubcategoria, setPlanillaSubcategoria] = useState<string>('todos');
   const [downloadingPlanilla, setDownloadingPlanilla] = useState(false);
+  const [downloadingPlanillaExcel, setDownloadingPlanillaExcel] = useState(false);
   // Tabla pilotos: orden y paginación
   type PilotSortField = 'nombre' | 'apellido' | 'estado' | 'created_at' | 'numero' | 'categoria';
   const [pilotsSort, setPilotsSort] = useState<{ field: PilotSortField; dir: 'asc' | 'desc' }>({ field: 'created_at', dir: 'desc' });
@@ -794,6 +795,60 @@ export default function AdminDashboard() {
                               title="Descargar planilla de inscripción en PDF"
                             >
                               {downloadingPlanilla ? '⏳ Generando…' : '📄 Descargar planilla PDF'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={downloadingPlanillaExcel}
+                              onClick={async () => {
+                                setDownloadingPlanillaExcel(true);
+                                setErrorMessage(null);
+                                try {
+                                  const params: { categoria: string; categoria_detalle?: string } = { categoria: planillaCategoria };
+                                  if (planillaSubcategoria !== 'todos') params.categoria_detalle = planillaSubcategoria;
+                                  const authToken = token || localStorage.getItem('token');
+                                  const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+                                  const response = await axios.get('/admin/planilla-inscripcion-excel', {
+                                    params,
+                                    headers,
+                                    responseType: 'blob'
+                                  });
+                                  if (response.status !== 200) {
+                                    const text = await (response.data as Blob).text();
+                                    const err = (() => { try { return JSON.parse(text); } catch { return {}; } })();
+                                    setErrorMessage(toErrorString(err?.error) || 'Error al descargar la planilla Excel');
+                                    return;
+                                  }
+                                  const blob = response.data as Blob;
+                                  if (!blob || blob.size === 0) {
+                                    setErrorMessage('El archivo Excel llegó vacío. Reintentá.');
+                                    return;
+                                  }
+                                  const resFilename = (response.headers['x-filename'] as string) || `planilla-inscripcion-${planillaCategoria}.xlsx`;
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = resFilename;
+                                  a.style.display = 'none';
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  document.body.removeChild(a);
+                                  URL.revokeObjectURL(url);
+                                } catch (err: any) {
+                                  if (err.response?.data instanceof Blob) {
+                                    err.response.data.text().then((t: string) => {
+                                      try { setErrorMessage(toErrorString(JSON.parse(t)?.error) || 'Error al descargar la planilla Excel'); } catch { setErrorMessage('Error al descargar la planilla Excel'); }
+                                    });
+                                  } else {
+                                    setErrorMessage(toErrorString(err.response?.data?.error) || err.message || 'Error al descargar la planilla Excel');
+                                  }
+                                } finally {
+                                  setDownloadingPlanillaExcel(false);
+                                }
+                              }}
+                              className="btn btn-secondary pilots-nav-btn-scan"
+                              title="Descargar planilla de inscripción en Excel"
+                            >
+                              {downloadingPlanillaExcel ? '⏳ Generando…' : '📊 Descargar planilla Excel'}
                             </button>
                             <button
                               type="button"

@@ -3,6 +3,7 @@ import { supabaseAdmin } from './_utils/supabase';
 import { authenticateToken, requireAdmin } from './_utils/auth';
 import { generateTicketPDF, generatePlanillaInscripcionPDF } from './_utils/pdfGenerator';
 import { createClient } from '@supabase/supabase-js';
+import ExcelJS from 'exceljs';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { method, url, query, body } = req;
@@ -436,6 +437,133 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (e: any) {
       console.error('Planilla inscripcion error:', e);
       return res.status(500).json({ error: e?.message || 'Error al generar la planilla' });
+    }
+  } else if (method === 'GET' && ((q as any).__route === 'planilla-inscripcion-excel' || path === '/api/admin/planilla-inscripcion-excel' || path.endsWith('/admin/planilla-inscripcion-excel'))) {
+    try {
+      const rawCat = (q as any).categoria;
+      const rawDet = (q as any).categoria_detalle;
+      const categoria = String(Array.isArray(rawCat) ? rawCat[0] : rawCat || 'todos').toLowerCase().trim();
+      const categoriaDetalle = (Array.isArray(rawDet) ? rawDet[0] : rawDet) ? String(Array.isArray(rawDet) ? rawDet[0] : rawDet).trim() : '';
+
+      let queryBuilder = supabaseAdmin
+        .from('pilots')
+        .select('*')
+        .order('numero', { ascending: true, nullsFirst: true })
+        .order('apellido', { ascending: true })
+        .order('nombre', { ascending: true });
+
+      if (categoria !== 'todos') {
+        if (categoria === 'moto_enduro') {
+          queryBuilder = queryBuilder.eq('categoria', 'moto').eq('tipo_campeonato', 'enduro');
+          if (categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_enduro', categoriaDetalle);
+        } else if (categoria === 'moto_travesias') {
+          queryBuilder = queryBuilder.eq('categoria', 'moto').eq('tipo_campeonato', 'travesias');
+          if (categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_travesia_moto', categoriaDetalle);
+        } else if (categoria === 'moto') {
+          queryBuilder = queryBuilder.in('categoria', ['moto', 'cuatri']);
+        } else if (!['auto', 'cuatri'].includes(categoria)) {
+          return res.status(400).json({ error: 'Categoría debe ser todos, auto, moto, moto_enduro, moto_travesias o cuatri' });
+        } else {
+          queryBuilder = queryBuilder.eq('categoria', categoria);
+          if (categoria === 'auto' && categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_auto', categoriaDetalle);
+          if (categoria === 'cuatri' && categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_cuatri', categoriaDetalle);
+        }
+      }
+
+      const { data: rawPilots, error } = await queryBuilder;
+      if (error) throw error;
+      let pilots = rawPilots || [];
+
+      if (categoria === 'moto' && categoriaDetalle) {
+        pilots = pilots.filter((p: any) =>
+          p.categoria_enduro === categoriaDetalle ||
+          p.categoria_travesia_moto === categoriaDetalle ||
+          (p.categoria === 'cuatri' && p.categoria_cuatri === categoriaDetalle) ||
+          (p.categoria === 'moto' && (p.categoria_moto === categoriaDetalle || p.categoria_moto_china === categoriaDetalle))
+        );
+      }
+
+      let label = categoria === 'todos' ? 'Todas las categorías' : categoria === 'auto' ? 'Auto' : categoria === 'moto' ? 'Moto y Cuatriciclos' : categoria === 'moto_enduro' ? 'Moto (Enduro)' : categoria === 'moto_travesias' ? 'Moto (Travesías)' : 'Cuatriciclo';
+      const labelWithDetalle = categoriaDetalle ? `${label} — ${categoriaDetalle}` : label;
+
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Planilla');
+
+      sheet.columns = [
+        { header: 'Nº', key: 'numero', width: 6 },
+        { header: 'Apellido', key: 'apellido', width: 18 },
+        { header: 'Nombre', key: 'nombre', width: 18 },
+        { header: 'DNI', key: 'dni', width: 14 },
+        { header: 'Domicilio', key: 'domicilio', width: 28 },
+        { header: 'Teléfono', key: 'telefono', width: 16 },
+        { header: 'Edad', key: 'edad', width: 6 },
+        { header: 'Nacionalidad', key: 'nacionalidad', width: 14 },
+        { header: 'Provincia', key: 'provincia', width: 14 },
+        { header: 'Departamento', key: 'departamento', width: 14 },
+        { header: 'Tel. acompañante', key: 'telefono_acompanante', width: 18 },
+        { header: 'Licencia', key: 'licencia', width: 14 },
+        { header: '¿Tiene licencia?', key: 'tiene_licencia', width: 16 },
+        { header: 'Tipo vehículo', key: 'categoria', width: 14 },
+        { header: 'Categoría detalle', key: 'categoria_detalle', width: 24 },
+        { header: 'Estado', key: 'estado', width: 12 },
+        { header: 'Fecha inscripción', key: 'created_at', width: 18 }
+      ];
+
+      sheet.addRow([]);
+      sheet.addRow(['SAFARI TRAS LAS SIERRAS']);
+      sheet.addRow(['Planilla de inscripción', labelWithDetalle]);
+      sheet.addRow([`Generado: ${new Date().toLocaleString('es-AR')} · ${pilots.length} inscripto(s)`]);
+      sheet.addRow([]);
+
+      for (const p of pilots) {
+        const tieneLic = p.tiene_licencia === true || p.tiene_licencia === 'si' || p.tiene_licencia === 'sí' ? 'Sí' : 'No';
+        let catDetalle: string;
+        if (p.categoria === 'auto') {
+          catDetalle = p.categoria_auto || '—';
+        } else if (p.categoria === 'moto') {
+          catDetalle = p.categoria_enduro || p.categoria_travesia_moto || p.categoria_moto || p.categoria_moto_china || '—';
+        } else if (p.categoria === 'cuatri') {
+          catDetalle = p.categoria_cuatri || '—';
+        } else {
+          catDetalle = '—';
+        }
+        sheet.addRow({
+          numero: p.numero != null ? String(p.numero).padStart(2, '0') : '',
+          apellido: p.apellido || '',
+          nombre: p.nombre || '',
+          dni: p.dni || '',
+          domicilio: p.domicilio || '',
+          telefono: p.telefono || '',
+          edad: p.edad != null ? p.edad : '',
+          nacionalidad: p.nacionalidad || '',
+          provincia: p.provincia || '',
+          departamento: p.departamento || '',
+          telefono_acompanante: p.telefono_acompanante || '',
+          licencia: p.licencia || '',
+          tiene_licencia: tieneLic,
+          categoria: p.categoria || '',
+          categoria_detalle: catDetalle,
+          estado: p.estado || '',
+          created_at: p.created_at ? new Date(p.created_at).toLocaleString('es-AR') : ''
+        });
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const nodeBuffer = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer as ArrayBuffer);
+
+      const filenamePart = categoriaDetalle
+        ? `planilla-inscripcion-${categoria}-${categoriaDetalle.replace(/[^a-z0-9\u00C0-\u024F\-]/gi, '-')}.xlsx`
+        : `planilla-inscripcion-${categoria}.xlsx`;
+      const safeFilename = encodeURIComponent(filenamePart);
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${filenamePart}"; filename*=UTF-8''${safeFilename}`);
+      res.setHeader('X-Filename', filenamePart);
+      res.setHeader('Content-Length', String(nodeBuffer.length));
+      return res.status(200).end(nodeBuffer);
+    } catch (e: any) {
+      console.error('Planilla inscripcion Excel error:', e);
+      return res.status(500).json({ error: e?.message || 'Error al generar la planilla Excel' });
     }
   } else if (method === 'GET' && path.includes('/admin/pilots/') && !path.includes('/status') && !path.includes('/pdf')) {
     // Obtener piloto por ID — usar siempre supabaseAdmin (ya verificamos admin con nuestro JWT; RLS bloquearía con token de usuario)
