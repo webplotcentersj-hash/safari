@@ -1,10 +1,9 @@
-/* Variables */
+/* Variables – fondo negro fijo solo en esta página */
 .tp-page {
   --tp-green: #22c55e;
   --tp-green-dim: #16a34a;
   --tp-red: #ef4444;
   --tp-red-dim: #dc2626;
-  --tp-bg: #0a0a0a;
   --tp-surface: rgba(255, 255, 255, 0.06);
   --tp-surface-strong: rgba(255, 255, 255, 0.1);
   --tp-text: #f0fdf4;
@@ -19,7 +18,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--tp-bg);
+  background: #000 !important;
   color: var(--tp-text);
   position: relative;
   overflow-x: hidden;
@@ -28,10 +27,7 @@
 .tp-bg {
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(34, 197, 94, 0.12), transparent),
-    radial-gradient(ellipse 80% 50% at 100% 50%, rgba(34, 197, 94, 0.05), transparent),
-    radial-gradient(ellipse 80% 50% at 0% 80%, rgba(34, 197, 94, 0.05), transparent);
+  background: transparent;
   pointer-events: none;
   z-index: 0;
 }

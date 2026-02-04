@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { supabase } from '../config/supabase';
 import './TiemposCarrera.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -38,7 +39,38 @@ export default function TiemposCarrera() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDisplay = useCallback(async () => {
+  const fetchFromSupabase = useCallback(async (): Promise<RaceDisplayData | null> => {
+    if (!supabase) return null;
+    try {
+      const [statusRes, timesRes] = await Promise.all([
+        supabase
+          .from('race_status')
+          .select('semaphore, stop_message, updated_at')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('race_times')
+          .select(`
+            id, pilot_id, categoria, categoria_detalle, tiempo_segundos, tiempo_formato, etapa, fecha,
+            pilots (id, nombre, apellido, numero, categoria, categoria_auto, categoria_moto)
+          `)
+          .order('tiempo_segundos', { ascending: true })
+      ]);
+      const status = statusRes.data;
+      const times = timesRes.error ? [] : (timesRes.data || []);
+      return {
+        semaphore: (status?.semaphore === 'red' ? 'red' : 'green') as 'green' | 'red',
+        stop_message: status?.stop_message ?? null,
+        updated_at: status?.updated_at ?? null,
+        times: times as RaceTimeRow[]
+      };
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const fetchFromApi = useCallback(async (): Promise<RaceDisplayData | null> => {
     try {
       const url = API_BASE
         ? `${API_BASE.replace(/\/$/, '')}/api/admin?__route=public-race-display&_t=${Date.now()}`
@@ -48,16 +80,29 @@ export default function TiemposCarrera() {
         timeout: 8000,
         headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
       });
-      setData(res.data);
-      setError(null);
-    } catch (e: unknown) {
-      const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message: unknown }).message) : 'Error al cargar';
-      setError(msg);
-      setData((prev) => prev);
-    } finally {
-      setLoading(false);
+      return res.data;
+    } catch {
+      return null;
     }
   }, []);
+
+  const fetchDisplay = useCallback(async () => {
+    const fromDb = await fetchFromSupabase();
+    if (fromDb) {
+      setData(fromDb);
+      setError(null);
+    } else {
+      const fromApi = await fetchFromApi();
+      if (fromApi) {
+        setData(fromApi);
+        setError(null);
+      } else {
+        setError('Error al cargar');
+        setData((prev) => prev);
+      }
+    }
+    setLoading(false);
+  }, [fetchFromSupabase, fetchFromApi]);
 
   useEffect(() => {
     fetchDisplay();
