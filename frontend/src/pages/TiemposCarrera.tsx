@@ -3,6 +3,15 @@ import axios from 'axios';
 import { supabase } from '../config/supabase';
 import './TiemposCarrera.css';
 
+function ClockIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  );
+}
+
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 interface PilotInfo {
@@ -126,21 +135,22 @@ export default function TiemposCarrera() {
       <div className="tp-bg" aria-hidden />
 
       <header className="tp-header">
-        <div className="tp-header-inner">
-          <img src="/logo.png" alt="Safari" className="tp-logo" />
-          <h1 className="tp-title">Tiempos en vivo</h1>
-          <div className="tp-semaphore-block">
-            <div
-              className={`tp-semaphore ${isRed ? 'tp-semaphore--red' : 'tp-semaphore--green'}`}
-              role="status"
-              aria-live="polite"
-              aria-label={isRed ? 'Carrera parada' : 'Carrera en curso'}
-            />
-            <span className="tp-semaphore-text">
-              {isRed ? 'Carrera parada' : 'Carrera en curso'}
-            </span>
-            <span className="tp-live" aria-hidden>● LIVE</span>
+        <div className="tp-header-top">
+          <a href="https://safaritraslassierras.com.ar/" className="tp-back" rel="noopener noreferrer">← VOLVER AL INICIO</a>
+          <div
+            className={`tp-status-btn ${isRed ? 'tp-status-btn--red' : 'tp-status-btn--green'}`}
+            role="status"
+            aria-live="polite"
+            aria-label={isRed ? 'Carrera parada' : 'Carrera en curso'}
+          >
+            <ClockIcon className="tp-status-icon" />
           </div>
+        </div>
+        <h1 className="tp-title">Tiempos</h1>
+        <p className="tp-subtitle">Resultados oficiales del Safari Tras las Sierras. Actualizados en vivo desde la app.</p>
+        <div className="tp-header-line" aria-hidden>
+          <span className="tp-dot" />
+          <span className="tp-dot" />
         </div>
       </header>
 
@@ -230,18 +240,22 @@ export default function TiemposCarrera() {
           </>
         ) : (
           <div className="tp-empty">
-            <p>Aún no hay tiempos cargados.</p>
-            <p className="tp-empty-hint">Se actualizará automáticamente.</p>
+            <div className="tp-empty-box">
+              <ClockIcon className="tp-empty-icon" />
+              <p className="tp-empty-title">Aún no hay tiempos publicados.</p>
+              <p className="tp-empty-hint">Cuando la app Safari publique resultados, aparecerán aquí automáticamente.</p>
+            </div>
           </div>
         )}
       </main>
 
       <footer className="tp-footer">
+        <p className="tp-footer-support">CON EL APOYO DE</p>
         <div className="tp-footer-logos">
           <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-04-scaled.png" alt="" />
           <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-05-2-scaled.png" alt="" />
         </div>
-        <p>Actualización cada 5 s · Safari Tras las Sierras</p>
+        <p className="tp-footer-update">Actualización cada 5 s · Safari Tras las Sierras</p>
       </footer>
     </div>
   );
