@@ -363,7 +363,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const bodySafe = (body as Record<string, unknown>) || {};
   if (method === 'GET' && String((q as any).__route) === 'race-status') {
     try {
-      const { data, error } = await supabaseAdmin
+      const client = supabaseWithAuth || supabaseAdmin;
+      const { data, error } = await client
         .from('race_status')
         .select('id, semaphore, stop_message, updated_at')
         .limit(1)
@@ -377,7 +378,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     } catch (e: any) {
       console.error('GET race-status error:', e);
-      return res.status(500).json({ error: 'Error al obtener el estado' });
+      return res.status(500).json({ error: 'Error al obtener el estado', details: e?.message });
     }
   }
   if (method === 'PATCH' && String((q as any).__route) === 'race-status') {
@@ -387,17 +388,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!semaphore || !['green', 'red'].includes(semaphore)) {
         return res.status(400).json({ error: 'semaphore debe ser "green" o "red"' });
       }
-      const { data: row } = await supabaseAdmin.from('race_status').select('id').limit(1).maybeSingle();
+      const client = supabaseWithAuth || supabaseAdmin;
+      const { data: row, error: selectErr } = await client.from('race_status').select('id').limit(1).maybeSingle();
+      if (selectErr) {
+        console.error('PATCH race-status select error:', selectErr);
+        return res.status(500).json({ error: 'Error al leer el estado', details: selectErr.message });
+      }
       if (!row?.id) {
-        const { data: inserted, error: insErr } = await supabaseAdmin
+        const { data: inserted, error: insErr } = await client
           .from('race_status')
           .insert({ semaphore, stop_message: stop_message ?? null })
           .select('id, semaphore, stop_message, updated_at')
           .single();
-        if (insErr) throw insErr;
+        if (insErr) {
+          console.error('PATCH race-status insert error:', insErr);
+          return res.status(500).json({ error: 'Error al guardar el estado', details: insErr.message });
+        }
         return res.status(200).json(inserted);
       }
-      const { data: updated, error } = await supabaseAdmin
+      const { data: updated, error } = await client
         .from('race_status')
         .update({
           semaphore,
@@ -406,11 +415,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .eq('id', row.id)
         .select('id, semaphore, stop_message, updated_at')
         .single();
-      if (error) throw error;
+      if (error) {
+        console.error('PATCH race-status update error:', error);
+        return res.status(500).json({ error: 'Error al actualizar el estado', details: error.message });
+      }
       return res.status(200).json(updated);
     } catch (e: any) {
       console.error('PATCH race-status error:', e);
-      return res.status(500).json({ error: 'Error al actualizar el estado' });
+      return res.status(500).json({ error: 'Error al actualizar el estado', details: e?.message });
     }
   }
   if (method === 'PATCH' && String((q as any).__route) === 'pilot-status') {

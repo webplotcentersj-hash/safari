@@ -1413,7 +1413,9 @@ export default function AdminDashboard() {
                           }, { headers });
                           alert('Estado guardado. La pantalla pública se actualizará.');
                         } catch (err: any) {
-                          alert(err.response?.data?.error || 'Error al guardar');
+                          const data = err.response?.data;
+                          const msg = data?.details || data?.error || err.message || 'Error al guardar';
+                          alert(typeof msg === 'string' ? msg : 'Error al guardar');
                         } finally {
                           setRaceStatusSaving(false);
                         }
