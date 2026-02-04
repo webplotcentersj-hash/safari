@@ -145,7 +145,7 @@ export default function AdminDashboard() {
         const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
         const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
         try {
-          const response = await axios.get<{ semaphore: string; stop_message: string | null }>('/api/admin/race-status', { headers });
+          const response = await axios.get<{ semaphore: string; stop_message: string | null }>('/api/admin/race-status', { headers, baseURL: '' });
           const d = response?.data;
           setRaceStatus({
             semaphore: d?.semaphore ?? 'green',
@@ -1410,7 +1410,7 @@ export default function AdminDashboard() {
                           await axios.patch('/api/admin/race-status', {
                             semaphore: raceStatus.semaphore,
                             stop_message: raceStatus.semaphore === 'red' ? raceStatus.stop_message : ''
-                          }, { headers });
+                          }, { headers, baseURL: '' });
                           alert('Estado guardado. La pantalla pública se actualizará.');
                         } catch (err: any) {
                           const data = err.response?.data;
