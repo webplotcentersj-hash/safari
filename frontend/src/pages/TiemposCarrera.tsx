@@ -58,12 +58,16 @@ export default function TiemposCarrera() {
           .order('tiempo_segundos', { ascending: true })
       ]);
       const status = statusRes.data;
-      const times = timesRes.error ? [] : (timesRes.data || []);
+      const rawTimes = timesRes.error ? [] : (timesRes.data || []);
+      const times: RaceTimeRow[] = rawTimes.map((row: { pilots?: PilotInfo | PilotInfo[] | null; [key: string]: unknown }) => ({
+        ...row,
+        pilots: Array.isArray(row.pilots) ? row.pilots[0] ?? null : row.pilots ?? null
+      })) as RaceTimeRow[];
       return {
         semaphore: (status?.semaphore === 'red' ? 'red' : 'green') as 'green' | 'red',
         stop_message: status?.stop_message ?? null,
         updated_at: status?.updated_at ?? null,
-        times: times as RaceTimeRow[]
+        times
       };
     } catch {
       return null;
