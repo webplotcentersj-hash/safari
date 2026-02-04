@@ -40,6 +40,18 @@
       "destination": "/api/admin?__route=planilla-inscripcion"
     },
     {
+      "source": "/api/admin/planilla-inscripcion-excel",
+      "destination": "/api/admin?__route=planilla-inscripcion-excel"
+    },
+    {
+      "source": "/admin/planilla-inscripcion",
+      "destination": "/api/admin?__route=planilla-inscripcion"
+    },
+    {
+      "source": "/admin/planilla-inscripcion-excel",
+      "destination": "/api/admin?__route=planilla-inscripcion-excel"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
