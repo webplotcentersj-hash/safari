@@ -135,6 +135,23 @@
   color: #e8ebe0;
 }
 
+.pilots-category-select {
+  min-width: 200px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(101, 179, 48, 0.4);
+  border-radius: 8px;
+  color: #e8ebe0;
+}
+
+.pilots-category-select:focus {
+  outline: none;
+  border-color: #65b330;
+  box-shadow: 0 0 0 2px rgba(101, 179, 48, 0.2);
+}
+
 .pilots-search::placeholder {
   color: #6b7b6b;
 }
@@ -354,6 +371,12 @@
     min-width: 0;
     padding: 0.55rem 0.5rem;
     font-size: 0.85rem;
+  }
+
+   .pilots-category-select {
+    width: 100%;
+    min-width: 0;
+    margin-top: 0.5rem;
   }
 
   .pilots-search {

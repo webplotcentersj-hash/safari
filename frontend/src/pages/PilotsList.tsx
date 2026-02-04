@@ -25,6 +25,7 @@ interface Pilot {
 }
 
 type VehiculoFilter = 'all' | 'auto' | 'moto' | 'cuatri';
+type CategoriaFilter = 'all' | string;
 
 export default function PilotsList() {
   const [pilots, setPilots] = useState<Pilot[]>([]);
@@ -32,6 +33,7 @@ export default function PilotsList() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [vehiculoFilter, setVehiculoFilter] = useState<VehiculoFilter>('all');
+  const [categoriaFilter, setCategoriaFilter] = useState<CategoriaFilter>('all');
 
   const fetchPilots = useCallback(async () => {
     setLoading(true);
@@ -56,10 +58,32 @@ export default function PilotsList() {
 
   useEffect(() => {
     fetchPilots();
-    // Actualizar cada 10 segundos
-    const interval = setInterval(fetchPilots, 10000);
+    // Actualizar cada 30 segundos (menos agresivo)
+    const interval = setInterval(fetchPilots, 30000);
     return () => clearInterval(interval);
   }, [fetchPilots]);
+
+  const getCategoriaLabel = (p: Pilot) => {
+    if (p.categoria === 'auto' && p.categoria_auto) return p.categoria_auto;
+    if (p.categoria === 'moto') {
+      if (p.tipo_campeonato === 'enduro' && p.categoria_enduro) return `Enduro — ${p.categoria_enduro}`;
+      if (p.tipo_campeonato === 'travesias' && p.categoria_travesia_moto) return `Travesías — ${p.categoria_travesia_moto}`;
+      if (p.categoria_moto) return p.categoria_moto;
+      return 'Moto';
+    }
+    if (p.categoria === 'cuatri' && p.categoria_cuatri) return p.categoria_cuatri;
+    if (p.categoria === 'auto') return 'Auto';
+    if (p.categoria === 'cuatri') return 'Cuatriciclo';
+    return p.categoria_auto || p.categoria_moto || '—';
+  };
+
+  const categoriaOptions = Array.from(
+    new Set(
+      pilots
+        .map((p) => getCategoriaLabel(p))
+        .filter((label) => label && label !== '—'),
+    ),
+  ).sort();
 
   const filteredPilots = pilots.filter((pilot) => {
     if (vehiculoFilter !== 'all') {
@@ -68,6 +92,11 @@ export default function PilotsList() {
       if (vehiculoFilter === 'moto' && cat !== 'moto') return false;
       if (vehiculoFilter === 'cuatri' && cat !== 'cuatri') return false;
     }
+
+    if (categoriaFilter !== 'all') {
+      if (getCategoriaLabel(pilot) !== categoriaFilter) return false;
+    }
+
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
@@ -83,20 +112,6 @@ export default function PilotsList() {
       pilot.numero?.toString().includes(search)
     );
   });
-
-  const getCategoriaLabel = (p: Pilot) => {
-    if (p.categoria === 'auto' && p.categoria_auto) return p.categoria_auto;
-    if (p.categoria === 'moto') {
-      if (p.tipo_campeonato === 'enduro' && p.categoria_enduro) return `Enduro — ${p.categoria_enduro}`;
-      if (p.tipo_campeonato === 'travesias' && p.categoria_travesia_moto) return `Travesías — ${p.categoria_travesia_moto}`;
-      if (p.categoria_moto) return p.categoria_moto;
-      return 'Moto';
-    }
-    if (p.categoria === 'cuatri' && p.categoria_cuatri) return p.categoria_cuatri;
-    if (p.categoria === 'auto') return 'Auto';
-    if (p.categoria === 'cuatri') return 'Cuatriciclo';
-    return p.categoria_auto || p.categoria_moto || '—';
-  };
 
   const getVehiculoLabel = (p: Pilot) => {
     if (p.categoria === 'auto') return 'Auto';
@@ -159,6 +174,18 @@ export default function PilotsList() {
                     Cuatriciclos
                   </button>
                 </div>
+                <select
+                  className="pilots-category-select"
+                  value={categoriaFilter}
+                  onChange={(e) => setCategoriaFilter(e.target.value as CategoriaFilter)}
+                >
+                  <option value="all">Todas las categorías</option>
+                  {categoriaOptions.map((label) => (
+                    <option key={label} value={label}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="text"
                   placeholder="Buscar por nombre, categoría o número..."
@@ -170,7 +197,10 @@ export default function PilotsList() {
 
               {filteredPilots.length === 0 ? (
                 <div className="pilots-empty">
-                  No hay pilotos{searchTerm || vehiculoFilter !== 'all' ? ' que coincidan con el filtro' : ''}.
+                  No hay pilotos
+                  {searchTerm || vehiculoFilter !== 'all' || categoriaFilter !== 'all'
+                    ? ' que coincidan con el filtro'
+                    : ''}.
                 </div>
               ) : (
                 <>
