@@ -548,9 +548,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      const buffer = await workbook.xlsx.writeBuffer();
-      const nodeBuffer = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer as ArrayBuffer);
-
       const filenamePart = categoriaDetalle
         ? `planilla-inscripcion-${categoria}-${categoriaDetalle.replace(/[^a-z0-9\u00C0-\u024F\-]/gi, '-')}.xlsx`
         : `planilla-inscripcion-${categoria}.xlsx`;
@@ -559,8 +556,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', `attachment; filename="${filenamePart}"; filename*=UTF-8''${safeFilename}`);
       res.setHeader('X-Filename', filenamePart);
-      res.setHeader('Content-Length', String(nodeBuffer.length));
-      return res.status(200).end(nodeBuffer);
+      res.statusCode = 200;
+      await workbook.xlsx.write(res);
+      return res.end();
     } catch (e: any) {
       console.error('Planilla inscripcion Excel error:', e);
       return res.status(500).json({ error: e?.message || 'Error al generar la planilla Excel' });
