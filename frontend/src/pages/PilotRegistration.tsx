@@ -869,6 +869,7 @@ export default function PilotRegistration() {
                       <option value="">Seleccione categoría</option>
                       <option value="1 A libres">1 A libres</option>
                       <option value="2 B 1000">2 B 1000</option>
+                      <option value="3 D">3 D</option>
                       <option value="4 C">4 C</option>
                       <option value="5 C plus">5 C plus</option>
                       <option value="6 D Plus">6 D Plus</option>

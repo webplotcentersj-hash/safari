@@ -15,6 +15,7 @@ Referencia de todas las categorías disponibles en el formulario de inscripción
 |------------------|--------|
 | 1 A libres | 1 A libres |
 | 2 B 1000 | 2 B 1000 |
+| 3 D | 3 D |
 | 4 C | 4 C |
 | 5 C plus | 5 C plus |
 | 6 D Plus | 6 D Plus |
