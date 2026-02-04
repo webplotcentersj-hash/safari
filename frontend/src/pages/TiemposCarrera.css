@@ -1,47 +1,76 @@
-.tiempos-carrera {
+/* Variables */
+.tp-page {
+  --tp-green: #22c55e;
+  --tp-green-dim: #16a34a;
+  --tp-red: #ef4444;
+  --tp-red-dim: #dc2626;
+  --tp-bg: #0c1410;
+  --tp-surface: rgba(255, 255, 255, 0.06);
+  --tp-surface-strong: rgba(255, 255, 255, 0.1);
+  --tp-text: #f0fdf4;
+  --tp-text-muted: #86efac;
+  --tp-radius: 16px;
+  --tp-radius-sm: 10px;
+  --tp-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --tp-transition: 0.25s ease;
+}
+
+.tp-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #1a2f1a 0%, #0d1a0d 100%);
-  color: #eee;
+  background: var(--tp-bg);
+  color: var(--tp-text);
+  position: relative;
+  overflow-x: hidden;
 }
 
-.tiempos-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  font-size: 1.25rem;
-  color: #8ab88a;
+.tp-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(34, 197, 94, 0.15), transparent),
+    radial-gradient(ellipse 80% 50% at 100% 50%, rgba(34, 197, 94, 0.06), transparent),
+    radial-gradient(ellipse 80% 50% at 0% 80%, rgba(34, 197, 94, 0.06), transparent);
+  pointer-events: none;
+  z-index: 0;
 }
 
-.tiempos-header {
-  background: linear-gradient(135deg, #65b330 0%, #4a8f28 100%);
-  padding: 1.5rem 1rem;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+.tp-header {
+  position: relative;
+  z-index: 1;
+  padding: clamp(1rem, 4vw, 1.75rem) clamp(1rem, 5vw, 2rem);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.95) 0%, rgba(22, 163, 74, 0.95) 100%);
+  box-shadow: var(--tp-shadow);
 }
 
-.tiempos-header-inner {
-  max-width: 900px;
+.tp-header-inner {
+  max-width: 1000px;
   margin: 0 auto;
+  text-align: center;
 }
 
-.tiempos-logo {
-  max-width: 120px;
+.tp-logo {
+  max-width: clamp(80px, 18vw, 130px);
   height: auto;
-  margin-bottom: 0.75rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.tiempos-header h1 {
+.tp-title {
+  font-family: 'Fendesert Sans', system-ui, sans-serif;
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  font-weight: 700;
   margin: 0 0 1rem;
-  font-size: clamp(1.5rem, 4vw, 2.25rem);
   color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.02em;
 }
 
-.tiempos-semaphore-wrap {
+.tp-semaphore-block {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
@@ -49,127 +78,286 @@
   justify-content: center;
 }
 
-.tiempos-semaphore {
-  width: 32px;
-  height: 32px;
+.tp-semaphore {
+  width: clamp(28px, 8vw, 44px);
+  height: clamp(28px, 8vw, 44px);
   border-radius: 50%;
-  box-shadow: 0 0 20px currentColor, inset 0 0 8px rgba(255, 255, 255, 0.3);
-  animation: tiempos-glow 2s ease-in-out infinite;
+  flex-shrink: 0;
+  transition: transform var(--tp-transition), box-shadow var(--tp-transition);
+  animation: tp-pulse 2s ease-in-out infinite;
 }
 
-.semaphore-green {
-  background: #22c55e;
-  color: #22c55e;
+.tp-semaphore--green {
+  background: radial-gradient(circle at 35% 35%, #86efac, var(--tp-green));
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.4),
+    0 0 28px var(--tp-green),
+    0 0 48px rgba(34, 197, 94, 0.4),
+    inset 0 0 16px rgba(255, 255, 255, 0.25);
 }
 
-.semaphore-red {
-  background: #ef4444;
-  color: #ef4444;
-  animation: tiempos-glow-red 1.5s ease-in-out infinite;
+.tp-semaphore--red {
+  background: radial-gradient(circle at 35% 35%, #fca5a5, var(--tp-red));
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.4),
+    0 0 28px var(--tp-red),
+    0 0 48px rgba(239, 68, 68, 0.4),
+    inset 0 0 16px rgba(255, 255, 255, 0.2);
+  animation: tp-pulse-red 1.2s ease-in-out infinite;
 }
 
-@keyframes tiempos-glow {
-  0%, 100% { opacity: 1; box-shadow: 0 0 20px currentColor, inset 0 0 8px rgba(255, 255, 255, 0.3); }
-  50% { opacity: 0.85; box-shadow: 0 0 28px currentColor, inset 0 0 8px rgba(255, 255, 255, 0.4); }
+@keyframes tp-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.05); }
 }
 
-@keyframes tiempos-glow-red {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+@keyframes tp-pulse-red {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 4px rgba(255,255,255,0.4), 0 0 28px var(--tp-red), 0 0 48px rgba(239,68,68,0.4), inset 0 0 16px rgba(255,255,255,0.2); }
+  50% { opacity: 0.9; transform: scale(1.06); box-shadow: 0 0 0 6px rgba(255,255,255,0.3), 0 0 36px var(--tp-red), 0 0 56px rgba(239,68,68,0.5), inset 0 0 16px rgba(255,255,255,0.25); }
 }
 
-.tiempos-semaphore-label {
-  font-size: 1rem;
+.tp-semaphore-text {
+  font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.tp-live {
+  font-size: 0.7rem;
   font-weight: 600;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.9);
+  animation: tp-blink 1.5s ease-in-out infinite;
 }
 
-.tiempos-stop-banner {
-  background: rgba(239, 68, 68, 0.95);
+@keyframes tp-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.tp-alert {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(135deg, var(--tp-red) 0%, var(--tp-red-dim) 100%);
   color: #fff;
-  padding: 1rem 1.5rem;
+  padding: clamp(0.875rem, 3vw, 1.25rem) clamp(1rem, 5vw, 2rem);
   text-align: center;
-  font-size: clamp(1rem, 2.5vw, 1.25rem);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
 }
 
-.tiempos-stop-banner strong {
-  margin-right: 0.5rem;
+.tp-alert-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.95;
+  margin-bottom: 0.35rem;
 }
 
-.tiempos-error {
-  background: rgba(200, 80, 80, 0.3);
-  color: #ffb3b3;
+.tp-alert-message {
+  margin: 0;
+  font-size: clamp(1rem, 2.8vw, 1.25rem);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.tp-error {
+  position: relative;
+  z-index: 1;
+  background: rgba(239, 68, 68, 0.2);
+  color: #fecaca;
   padding: 0.75rem 1rem;
   text-align: center;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
-.tiempos-main {
+.tp-main {
+  position: relative;
+  z-index: 1;
   flex: 1;
-  padding: 1.5rem 1rem;
+  padding: clamp(1rem, 4vw, 1.5rem);
   max-width: 1100px;
   margin: 0 auto;
   width: 100%;
 }
 
-.tiempos-table-wrap {
-  overflow-x: auto;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+.tp-skeleton {
+  padding: 1.5rem 0;
 }
 
-.tiempos-table {
+.tp-skeleton-line {
+  height: 48px;
+  background: linear-gradient(90deg, var(--tp-surface) 25%, var(--tp-surface-strong) 50%, var(--tp-surface) 75%);
+  background-size: 200% 100%;
+  animation: tp-shimmer 1.2s ease-in-out infinite;
+  border-radius: var(--tp-radius-sm);
+  margin-bottom: 0.75rem;
+}
+
+@keyframes tp-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.tp-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--tp-radius);
+  background: var(--tp-surface);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--tp-shadow);
+  -webkit-overflow-scrolling: touch;
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .tp-table-wrap {
+    display: block;
+  }
+}
+
+.tp-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: clamp(0.85rem, 2vw, 1rem);
+  font-size: clamp(0.8rem, 1.5vw, 0.95rem);
 }
 
-.tiempos-table th,
-.tiempos-table td {
-  padding: 0.75rem 1rem;
+.tp-table th,
+.tp-table td {
+  padding: clamp(0.6rem, 1.5vw, 0.9rem) clamp(0.75rem, 2vw, 1rem);
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.tiempos-table th {
-  background: rgba(101, 179, 48, 0.25);
+.tp-table th {
+  background: rgba(34, 197, 94, 0.2);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
+  font-size: 0.8em;
+  letter-spacing: 0.03em;
 }
 
-.tiempos-table tbody tr:hover {
+.tp-table tbody tr {
+  transition: background var(--tp-transition);
+}
+
+.tp-table tbody tr:hover {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.tiempos-table .col-pos {
-  font-weight: 600;
-  color: #8ab88a;
+.tp-col-pos {
+  font-weight: 700;
+  color: var(--tp-text-muted);
   width: 3rem;
 }
 
-.tiempos-table .col-num {
+.tp-col-num {
   width: 3rem;
 }
 
-.tiempos-table .col-tiempo strong {
-  color: #a5d6a5;
+.tp-col-tiempo strong {
+  color: #86efac;
+  font-size: 1.05em;
 }
 
-.tiempos-empty {
+.tp-cards {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 768px) {
+  .tp-cards {
+    display: none;
+  }
+}
+
+.tp-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 1rem;
+  background: var(--tp-surface);
+  backdrop-filter: blur(12px);
+  border-radius: var(--tp-radius-sm);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform var(--tp-transition), box-shadow var(--tp-transition);
+}
+
+.tp-card:active {
+  transform: scale(0.98);
+}
+
+.tp-card-pos {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--tp-text-muted);
+  min-width: 2.5rem;
   text-align: center;
-  padding: 3rem 1rem;
-  color: #8ab88a;
-  font-size: 1.1rem;
 }
 
-.tiempos-footer {
+.tp-card-body {
+  min-width: 0;
+}
+
+.tp-card-piloto {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fff;
+  margin-bottom: 0.25rem;
+}
+
+.tp-card-meta {
+  font-size: 0.8rem;
+  color: var(--tp-text-muted);
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.tp-card-tiempo {
+  font-size: 1rem;
+}
+
+.tp-card-tiempo strong {
+  color: #86efac;
+}
+
+.tp-card-tiempo small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--tp-text-muted);
+  margin-top: 0.15rem;
+}
+
+.tp-empty {
+  text-align: center;
+  padding: clamp(2rem, 8vw, 4rem) 1rem;
+}
+
+.tp-empty p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--tp-text-muted);
+}
+
+.tp-empty-hint {
+  margin-top: 0.5rem !important;
+  font-size: 0.9rem !important;
+  opacity: 0.8;
+}
+
+.tp-footer {
+  position: relative;
+  z-index: 1;
   padding: 0.75rem 1rem;
   text-align: center;
-  font-size: 0.85rem;
-  color: #6b8f6b;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.8rem;
+  color: var(--tp-text-muted);
+  opacity: 0.85;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }

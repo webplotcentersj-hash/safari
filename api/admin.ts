@@ -28,6 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     try {
       res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
       const [statusRes, timesRes] = await Promise.all([
         supabaseAdmin.from('race_status').select('semaphore, stop_message, updated_at').limit(1).maybeSingle(),
         supabaseAdmin.from('race_times').select(`
