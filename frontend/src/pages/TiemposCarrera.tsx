@@ -137,14 +137,6 @@ export default function TiemposCarrera() {
       <header className="tp-header">
         <div className="tp-header-top">
           <a href="https://safaritraslassierras.com.ar/" className="tp-back" rel="noopener noreferrer">← VOLVER AL INICIO</a>
-          <div
-            className={`tp-status-btn ${isRed ? 'tp-status-btn--red' : 'tp-status-btn--green'}`}
-            role="status"
-            aria-live="polite"
-            aria-label={isRed ? 'Carrera parada' : 'Carrera en curso'}
-          >
-            <ClockIcon className="tp-status-icon" />
-          </div>
         </div>
         <h1 className="tp-title">Tiempos</h1>
         <p className="tp-subtitle">Resultados oficiales del Safari Tras las Sierras. Actualizados en vivo desde la app.</p>
@@ -153,6 +145,16 @@ export default function TiemposCarrera() {
           <span className="tp-dot" />
         </div>
       </header>
+
+      <div
+        className={`tp-status-block ${isRed ? 'tp-status-block--red' : 'tp-status-block--green'}`}
+        role="status"
+        aria-live="polite"
+        aria-label={isRed ? 'Carrera parada' : 'Carrera en curso'}
+      >
+        <ClockIcon className="tp-status-block-icon" />
+        <span className="tp-status-block-text">{isRed ? 'Carrera parada' : 'Carrera en curso'}</span>
+      </div>
 
       {isRed && stopMessage && (
         <div className="tp-alert" role="alert">
