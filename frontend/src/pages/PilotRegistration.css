@@ -732,5 +732,27 @@
   }
 }
 
+/* Footer con logos */
+.registration-footer {
+  text-align: center;
+  padding: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.registration-footer-logos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.registration-footer-logos img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
 
 

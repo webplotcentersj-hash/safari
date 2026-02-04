@@ -237,6 +237,10 @@ export default function TiemposCarrera() {
       </main>
 
       <footer className="tp-footer">
+        <div className="tp-footer-logos">
+          <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-04-scaled.png" alt="" />
+          <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-05-2-scaled.png" alt="" />
+        </div>
         <p>Actualización cada 5 s · Safari Tras las Sierras</p>
       </footer>
     </div>

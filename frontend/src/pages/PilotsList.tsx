@@ -258,6 +258,10 @@ export default function PilotsList() {
       </main>
 
       <footer className="pilots-footer">
+        <div className="pilots-footer-logos">
+          <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-04-scaled.png" alt="" />
+          <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-05-2-scaled.png" alt="" />
+        </div>
         <a href={SITE_HOME} rel="noopener noreferrer">safaritraslassierras.com.ar</a>
       </footer>
     </div>

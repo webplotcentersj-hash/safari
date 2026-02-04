@@ -263,6 +263,21 @@
   border-top: 1px solid rgba(101, 179, 48, 0.2);
 }
 
+.pilots-footer-logos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.pilots-footer-logos img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
 .pilots-footer a {
   color: #65b330;
   text-decoration: none;

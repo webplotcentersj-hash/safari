@@ -433,3 +433,18 @@
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   letter-spacing: 0.03em;
 }
+
+.tp-footer-logos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.tp-footer-logos img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}

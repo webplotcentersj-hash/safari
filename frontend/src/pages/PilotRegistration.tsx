@@ -1172,6 +1172,12 @@ export default function PilotRegistration() {
           )}
         </div>
       </div>
+      <footer className="registration-footer">
+        <div className="registration-footer-logos">
+          <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-04-scaled.png" alt="" />
+          <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-05-2-scaled.png" alt="" />
+        </div>
+      </footer>
     </div>
   );
 }
