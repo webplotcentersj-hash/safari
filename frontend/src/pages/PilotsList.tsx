@@ -126,8 +126,12 @@ export default function PilotsList() {
         <div className="pilots-header-inner">
           <a href={SITE_HOME} className="back-link" rel="noopener noreferrer">← Volver al sitio</a>
           <img src="/logo.png" alt="Safari Tras las Sierras" className="pilots-logo" />
-          <h1>Pilotos Inscritos</h1>
+          <h1>Pilotos Inscriptos</h1>
           <p className="subtitle">Safari Tras las Sierras — Valle Fértil, San Juan</p>
+          <div className="pilots-header-logos">
+            <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-04-scaled.png" alt="" />
+            <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-05-2-scaled.png" alt="" />
+          </div>
         </div>
       </header>
 
