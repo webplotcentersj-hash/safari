@@ -52,6 +52,14 @@ export default function Home() {
               </Link>
             </div>
 
+            <div className="home-card">
+              <h2>Prensa</h2>
+              <p>Información y descarga de inscriptos aprobados por categoría (Excel con resumen).</p>
+              <Link to="/prensa" className="btn btn-primary">
+                Ir a Prensa
+              </Link>
+            </div>
+
             <div className="home-card home-card-ticket">
               <h2>Ticket de entrada</h2>
               <p>Pedí tu ticket y subí el comprobante de pago. Cuando lo aprobemos podrás descargarlo.</p>

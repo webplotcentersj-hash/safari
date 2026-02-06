@@ -1,0 +1,300 @@
+.prensa-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #0f1f14;
+  color: #e8ebe0;
+  font-family: 'Oswald', sans-serif;
+  overflow-x: clip;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.prensa-header {
+  background: linear-gradient(180deg, #1a3d28 0%, #0f1f14 100%);
+  padding: 2rem 1rem 2.5rem;
+  text-align: center;
+  border-bottom: 2px solid #65b330;
+}
+
+.prensa-header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.prensa-back-link {
+  display: inline-block;
+  color: #8bc34a;
+  text-decoration: none;
+  font-size: 0.95rem;
+  margin-bottom: 1.25rem;
+  letter-spacing: 0.02em;
+  transition: color 0.2s;
+}
+
+.prensa-back-link:hover {
+  color: #c5e1a5;
+}
+
+.prensa-logo {
+  max-width: 140px;
+  height: auto;
+  display: block;
+  margin: 0 auto 1rem;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
+.prensa-header h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.prensa-subtitle {
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  color: #9eaf9e;
+  font-weight: 400;
+}
+
+.prensa-header-logos,
+.prensa-footer-logos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+}
+
+.prensa-header-logos img,
+.prensa-footer-logos img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.prensa-main {
+  padding: 2rem 1rem 3rem;
+  padding-bottom: calc(3rem + env(safe-area-inset-bottom, 0));
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.prensa-main-inner {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(101, 179, 48, 0.25);
+}
+
+.prensa-info {
+  margin-bottom: 2rem;
+}
+
+.prensa-info p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #b8c9b8;
+}
+
+.prensa-loading,
+.prensa-error {
+  text-align: center;
+  padding: 2rem;
+  color: #9eaf9e;
+}
+
+.prensa-error p {
+  margin-bottom: 1rem;
+}
+
+.prensa-retry {
+  padding: 0.5rem 1.25rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: rgba(101, 179, 48, 0.25);
+  border: 1px solid #65b330;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.prensa-retry:hover {
+  background: rgba(101, 179, 48, 0.4);
+}
+
+.prensa-resumen {
+  margin-bottom: 2rem;
+}
+
+.prensa-resumen h2,
+.prensa-filtros h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.03em;
+}
+
+.prensa-resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.prensa-resumen-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(101, 179, 48, 0.2);
+}
+
+.prensa-resumen-label {
+  font-size: 0.95rem;
+  color: #e8ebe0;
+}
+
+.prensa-resumen-count {
+  font-weight: 600;
+  color: #65b330;
+  font-size: 1.1rem;
+}
+
+.prensa-resumen-empty {
+  margin: 0;
+  color: #6b7b6b;
+  grid-column: 1 / -1;
+}
+
+.prensa-filtros {
+  margin-bottom: 1rem;
+}
+
+.prensa-filtros-desc {
+  margin: 0 0 1.25rem;
+  font-size: 0.95rem;
+  color: #9eaf9e;
+}
+
+.prensa-filtros-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+}
+
+.prensa-filtros-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.prensa-filtros-group label {
+  font-size: 0.9rem;
+  color: #9eaf9e;
+}
+
+.prensa-filtros-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.prensa-filter-btn {
+  padding: 0.5rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(101, 179, 48, 0.4);
+  border-radius: 8px;
+  color: #b8c9b8;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.prensa-filter-btn:hover {
+  background: rgba(101, 179, 48, 0.15);
+  border-color: rgba(101, 179, 48, 0.5);
+  color: #e8ebe0;
+}
+
+.prensa-filter-btn.active {
+  background: rgba(101, 179, 48, 0.25);
+  border-color: #65b330;
+  color: #fff;
+}
+
+.prensa-select {
+  min-width: 200px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(101, 179, 48, 0.4);
+  border-radius: 8px;
+  color: #e8ebe0;
+}
+
+.prensa-select:focus {
+  outline: none;
+  border-color: #65b330;
+  box-shadow: 0 0 0 2px rgba(101, 179, 48, 0.2);
+}
+
+.prensa-download-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 0.5rem;
+}
+
+.prensa-count {
+  font-size: 0.95rem;
+  color: #8bc34a;
+  font-weight: 500;
+}
+
+.prensa-download-btn {
+  padding: 0.65rem 1.5rem;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  background: #65b330;
+  border: none;
+  border-radius: 8px;
+  color: #0f1f14;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.prensa-download-btn:hover {
+  background: #7bc73a;
+  transform: translateY(-1px);
+}
+
+.prensa-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  border-top: 1px solid rgba(101, 179, 48, 0.2);
+}
+
+.prensa-footer a {
+  display: inline-block;
+  margin-top: 1rem;
+  color: #8bc34a;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.prensa-footer a:hover {
+  text-decoration: underline;
+}

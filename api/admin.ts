@@ -55,6 +55,168 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  // Rewrite: /api/public/prensa/pilots → todos los inscriptos (aprobados y pendientes), para página Prensa (sin auth)
+  if (String((q as any).__route) === 'public-prensa-pilots') {
+    if (req.method === 'OPTIONS') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      return res.status(200).end();
+    }
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+    try {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      const { data: pilots, error } = await supabaseAdmin
+        .from('pilots')
+        .select('id, nombre, apellido, numero, categoria, categoria_auto, categoria_moto, categoria_enduro, categoria_travesia_moto, categoria_cuatri, tipo_campeonato, provincia, departamento, copiloto_nombre')
+        .order('categoria', { ascending: true })
+        .order('numero', { ascending: true });
+      if (error) {
+        console.error('public-prensa-pilots error:', error);
+        return res.status(500).json({ error: 'Error al obtener datos para prensa' });
+      }
+      return res.status(200).json(Array.isArray(pilots) ? pilots : []);
+    } catch (e: unknown) {
+      console.error('public-prensa-pilots error:', e);
+      return res.status(500).json({ error: 'Error al obtener datos para prensa' });
+    }
+  }
+
+  // Rewrite: /api/public/prensa/planilla-excel → Excel para prensa (todos los inscriptos, orden por categoría, resumen)
+  if (String((q as any).__route) === 'public-prensa-planilla-excel') {
+    if (req.method === 'OPTIONS') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      return res.status(200).end();
+    }
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+    try {
+      const rawCat = (q as any).categoria;
+      const rawDet = (q as any).categoria_detalle;
+      const categoria = String(Array.isArray(rawCat) ? rawCat[0] : rawCat || 'todos').toLowerCase().trim();
+      const categoriaDetalle = (Array.isArray(rawDet) ? rawDet[0] : rawDet) ? String(Array.isArray(rawDet) ? rawDet[0] : rawDet).trim() : '';
+
+      let queryBuilder = supabaseAdmin
+        .from('pilots')
+        .select('*');
+
+      if (categoria !== 'todos') {
+        if (categoria === 'moto_enduro') {
+          queryBuilder = queryBuilder.eq('categoria', 'moto').eq('tipo_campeonato', 'enduro');
+          if (categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_enduro', categoriaDetalle);
+        } else if (categoria === 'moto_travesias') {
+          queryBuilder = queryBuilder.eq('categoria', 'moto').eq('tipo_campeonato', 'travesias');
+          if (categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_travesia_moto', categoriaDetalle);
+        } else if (categoria === 'moto') {
+          queryBuilder = queryBuilder.in('categoria', ['moto', 'cuatri']);
+        } else {
+          queryBuilder = queryBuilder.eq('categoria', categoria);
+          if (categoria === 'auto' && categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_auto', categoriaDetalle);
+          if (categoria === 'cuatri' && categoriaDetalle) queryBuilder = queryBuilder.eq('categoria_cuatri', categoriaDetalle);
+        }
+      }
+
+      const { data: rawPilots, error } = await queryBuilder;
+      if (error) {
+        console.error('public-prensa-planilla-excel query error:', error);
+        return res.status(500).json({ error: 'Error al obtener pilotos' });
+      }
+      let pilots = (rawPilots || []) as any[];
+
+      if (categoria === 'moto' && categoriaDetalle) {
+        pilots = pilots.filter((p: any) =>
+          p.categoria_enduro === categoriaDetalle ||
+          p.categoria_travesia_moto === categoriaDetalle ||
+          (p.categoria === 'cuatri' && p.categoria_cuatri === categoriaDetalle) ||
+          (p.categoria === 'moto' && (p.categoria_moto === categoriaDetalle || p.categoria_moto_china === categoriaDetalle))
+        );
+      }
+
+      const catOrder: Record<string, number> = { auto: 1, moto: 2, cuatri: 3 };
+      const getCatDetalle = (p: any) => {
+        if (p.categoria === 'auto') return p.categoria_auto || '';
+        if (p.categoria === 'moto') return p.categoria_enduro || p.categoria_travesia_moto || p.categoria_moto || p.categoria_moto_china || '';
+        if (p.categoria === 'cuatri') return p.categoria_cuatri || '';
+        return '';
+      };
+      pilots.sort((a, b) => {
+        const oA = catOrder[a.categoria] ?? 9;
+        const oB = catOrder[b.categoria] ?? 9;
+        if (oA !== oB) return oA - oB;
+        const dA = getCatDetalle(a);
+        const dB = getCatDetalle(b);
+        if (dA !== dB) return dA.localeCompare(dB);
+        const nA = a.numero != null ? Number(a.numero) : 9999;
+        const nB = b.numero != null ? Number(b.numero) : 9999;
+        return nA - nB;
+      });
+
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Inscriptos prensa', { views: [{ state: 'frozen', ySplit: 1 }] });
+      sheet.columns = [
+        { header: 'Nombre', key: 'nombre', width: 28 },
+        { header: 'Categoría', key: 'categoria', width: 22 },
+        { header: 'Número', key: 'numero', width: 10 },
+        { header: 'Provincia', key: 'provincia', width: 18 },
+        { header: 'Departamento', key: 'departamento', width: 18 },
+        { header: 'Copiloto', key: 'copiloto_nombre', width: 22 }
+      ];
+
+      sheet.addRow([]);
+      sheet.addRow(['SAFARI TRAS LAS SIERRAS — PRENSA']);
+      sheet.addRow(['Listado de inscriptos']);
+      sheet.addRow([`Generado: ${new Date().toLocaleString('es-AR')} · ${pilots.length} inscripto(s)`]);
+      sheet.addRow([]);
+      sheet.addRow(['Nombre', 'Categoría', 'Número', 'Provincia', 'Departamento', 'Copiloto']);
+
+      for (const p of pilots) {
+        let catLabel = p.categoria === 'auto' ? (p.categoria_auto || 'Auto') : p.categoria === 'moto' ? (p.categoria_enduro || p.categoria_travesia_moto || p.categoria_moto || p.categoria_moto_china || 'Moto') : p.categoria === 'cuatri' ? (p.categoria_cuatri || 'Cuatriciclo') : p.categoria || '';
+        sheet.addRow({
+          nombre: `${(p.nombre || '').trim()} ${(p.apellido || '').trim()}`.trim(),
+          categoria: catLabel,
+          numero: p.numero != null ? String(p.numero) : '',
+          provincia: p.provincia || '',
+          departamento: p.departamento || '',
+          copiloto_nombre: p.copiloto_nombre || ''
+        });
+      }
+
+      const byCat: Record<string, number> = {};
+      for (const p of pilots) {
+        let k = p.categoria === 'auto' ? 'Auto' : p.categoria === 'moto' ? 'Moto' : p.categoria === 'cuatri' ? 'Cuatriciclo' : p.categoria || 'Otro';
+        const det = getCatDetalle(p);
+        if (det) k += ` — ${det}`;
+        byCat[k] = (byCat[k] || 0) + 1;
+      }
+      sheet.addRow([]);
+      sheet.addRow(['Resumen por categoría']);
+      for (const [label, count] of Object.entries(byCat).sort(([a], [b]) => a.localeCompare(b))) {
+        sheet.addRow([label, count]);
+      }
+
+      const filenamePart = categoriaDetalle
+        ? `prensa-inscriptos-${categoria}-${categoriaDetalle.replace(/[^a-z0-9\u00C0-\u024F\-]/gi, '-')}.xlsx`
+        : `prensa-inscriptos-${categoria}.xlsx`;
+      const safeFilename = encodeURIComponent(filenamePart);
+
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${filenamePart}"; filename*=UTF-8''${safeFilename}`);
+      res.setHeader('X-Filename', filenamePart);
+      res.status(200);
+      await workbook.xlsx.write(res);
+      return res.end();
+    } catch (e: any) {
+      console.error('public-prensa-planilla-excel error:', e);
+      return res.status(500).json({ error: e?.message || 'Error al generar el Excel' });
+    }
+  }
+
   // Rewrite: /api/admin-setup → /api/admin?__route=admin-setup (reduce Serverless Functions)
   if (String((q as any).__route) === 'admin-setup') {
     if (req.method !== 'POST') {

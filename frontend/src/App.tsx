@@ -49,6 +49,7 @@ function App() {
         <Route path="/verificar" element={<VerificarTicket />} />
         <Route path="/verificar/:codigo" element={<VerificarTicket />} />
         <Route path="/tiempos" element={<TiemposCarrera />} />
+        <Route path="/prensa" element={<Prensa />} />
         <Route path="/tickets" element={<Navigate to="/admin" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
