@@ -58,8 +58,8 @@ export default function PilotsList() {
 
   useEffect(() => {
     fetchPilots();
-    // Actualizar cada 30 segundos (menos agresivo)
-    const interval = setInterval(fetchPilots, 30000);
+    // Actualizar cada 2 minutos
+    const interval = setInterval(fetchPilots, 120000);
     return () => clearInterval(interval);
   }, [fetchPilots]);
 
