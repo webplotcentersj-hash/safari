@@ -11,6 +11,7 @@ import AdminApprove from './pages/AdminApprove';
 import SolicitudTicket from './pages/SolicitudTicket';
 import VerificarTicket from './pages/VerificarTicket';
 import TiemposCarrera from './pages/TiemposCarrera';
+import Prensa from './pages/Prensa';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
