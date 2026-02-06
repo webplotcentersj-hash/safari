@@ -493,18 +493,7 @@
 }
 
 .tp-footer-logos {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
   margin-bottom: 0.75rem;
-}
-
-.tp-footer-logos img {
-  height: 40px;
-  width: auto;
-  object-fit: contain;
-  display: block;
 }
 
 .tp-footer-update {

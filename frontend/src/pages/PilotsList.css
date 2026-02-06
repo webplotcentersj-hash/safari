@@ -63,18 +63,7 @@
 }
 
 .pilots-header-logos {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
   margin-top: 1.25rem;
-}
-
-.pilots-header-logos img {
-  height: 40px;
-  width: auto;
-  object-fit: contain;
-  display: block;
 }
 
 /* Main */
@@ -279,18 +268,7 @@
 }
 
 .pilots-footer-logos {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
   margin-bottom: 0.75rem;
-}
-
-.pilots-footer-logos img {
-  height: 40px;
-  width: auto;
-  object-fit: contain;
-  display: block;
 }
 
 .pilots-footer a {

@@ -164,5 +164,37 @@
   }
 }
 
+/* Carrusel de logos (infinito, sin flechas) */
+.logos-carousel {
+  overflow: hidden;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.logos-carousel-track {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  width: max-content;
+  animation: logos-scroll 30s linear infinite;
+}
+
+.logos-carousel-track img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+}
+
+@keyframes logos-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
 
 
