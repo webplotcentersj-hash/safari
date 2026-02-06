@@ -149,22 +149,6 @@ export default function Prensa() {
             </div>
           ) : (
             <>
-              <section className="prensa-resumen">
-                <h2>Resumen por categoría</h2>
-                <div className="prensa-resumen-grid">
-                  {summaryEntries.length === 0 ? (
-                    <p className="prensa-resumen-empty">No hay inscriptos.</p>
-                  ) : (
-                    summaryEntries.map(([label, count]) => (
-                      <div key={label} className="prensa-resumen-item">
-                        <span className="prensa-resumen-label">{label}</span>
-                        <span className="prensa-resumen-count">{count}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </section>
-
               <section className="prensa-filtros">
                 <h2>Descargar planilla</h2>
                 <p className="prensa-filtros-desc">
@@ -212,6 +196,22 @@ export default function Prensa() {
                   <button type="button" className="prensa-download-btn" onClick={downloadExcel}>
                     Descargar Excel
                   </button>
+                </div>
+              </section>
+
+              <section className="prensa-resumen">
+                <h2>Resumen por categoría</h2>
+                <div className="prensa-resumen-grid">
+                  {summaryEntries.length === 0 ? (
+                    <p className="prensa-resumen-empty">No hay inscriptos.</p>
+                  ) : (
+                    summaryEntries.map(([label, count]) => (
+                      <div key={label} className="prensa-resumen-item">
+                        <span className="prensa-resumen-label">{label}</span>
+                        <span className="prensa-resumen-count">{count}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </section>
             </>
