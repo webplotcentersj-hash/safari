@@ -77,6 +77,7 @@ export default function Home() {
           <div className="home-footer-logos">
             <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-04-scaled.png" alt="" />
             <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-05-2-scaled.png" alt="" />
+            <img src="https://plotcenter.com.ar/wp-content/uploads/2026/02/insumos-para-figma-12.png" alt="" />
           </div>
           <nav className="home-social" aria-label="Redes sociales">
             <a href="https://www.facebook.com/apivavallefertil2017?locale=es_LA" target="_blank" rel="noopener noreferrer" className="home-social-link" title="Facebook">

@@ -131,6 +131,7 @@ export default function PilotsList() {
           <div className="pilots-header-logos">
             <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-04-scaled.png" alt="" />
             <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-05-2-scaled.png" alt="" />
+            <img src="https://plotcenter.com.ar/wp-content/uploads/2026/02/insumos-para-figma-12.png" alt="" />
           </div>
         </div>
       </header>
@@ -265,6 +266,7 @@ export default function PilotsList() {
         <div className="pilots-footer-logos">
           <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-04-scaled.png" alt="" />
           <img src="https://plotcenter.com.ar/wp-content/uploads/2026/01/Logos-marcas-05-2-scaled.png" alt="" />
+          <img src="https://plotcenter.com.ar/wp-content/uploads/2026/02/insumos-para-figma-12.png" alt="" />
         </div>
         <a href={SITE_HOME} rel="noopener noreferrer">safaritraslassierras.com.ar</a>
       </footer>
