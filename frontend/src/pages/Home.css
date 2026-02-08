@@ -118,6 +118,26 @@
   color: #fff;
 }
 
+.home-card--closed {
+  opacity: 0.85;
+  background: #f5f5f5;
+}
+
+.home-card--closed:hover {
+  transform: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.home-card--closed h2 {
+  color: #888;
+}
+
+.home-card-closed-text {
+  color: #999 !important;
+  font-weight: 600;
+  margin-bottom: 0 !important;
+}
+
 .home-footer {
   background-color: #333;
   color: white;

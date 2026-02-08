@@ -63,6 +63,17 @@
   font-size: 1.1rem;
 }
 
+.registration-closed-hint,
+.registration-closed-message {
+  color: #999;
+  font-weight: 600;
+  margin: 0;
+}
+
+.registration-closed-message {
+  font-size: 1.1rem;
+}
+
 .registration-security-link {
   display: inline-flex;
   align-items: center;

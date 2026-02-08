@@ -616,7 +616,7 @@ export default function PilotRegistration() {
     }
   };
 
-  // Página de elección: /inscripcion (sin /auto ni /moto)
+  // Página de elección: /inscripcion (sin /auto ni /moto) — solo autos disponible
   if (!tipo) {
     return (
       <div className="registration-page">
@@ -626,15 +626,31 @@ export default function PilotRegistration() {
             <div className="registration-header">
               <img src="/logo.png" alt="Safari Tras las Sierras" className="registration-logo" />
               <h1>Inscripción de Pilotos</h1>
-              <p className="subtitle">Elegí el formulario según tu vehículo</p>
+              <p className="subtitle">Inscripción de motos cerrada.</p>
             </div>
             <div className="form-section" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
               <Link to="/inscripcion/auto" className="btn btn-primary" style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
                 🚗 Inscripción Autos
               </Link>
-              <Link to="/inscripcion/moto" className="btn btn-primary" style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
-                🏍️ Inscripción Motos (y cuatriciclos)
-              </Link>
+              <p className="registration-closed-hint">Inscripción de motos cerrada.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Ruta /inscripcion/moto: mostrar aviso de inscripción cerrada
+  if (tipo === 'moto') {
+    return (
+      <div className="registration-page">
+        <div className="container">
+          <Link to="/" className="back-link">← Volver al inicio</Link>
+          <div className="registration-card">
+            <div className="registration-header">
+              <img src="/logo.png" alt="Safari Tras las Sierras" className="registration-logo" />
+              <h1>Inscripción Motos (y cuatriciclos)</h1>
+              <p className="subtitle registration-closed-message">Inscripción de motos cerrada.</p>
             </div>
           </div>
         </div>

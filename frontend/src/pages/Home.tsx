@@ -28,12 +28,9 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="home-card">
+            <div className="home-card home-card--closed">
               <h2>Inscripción Motos (y cuatriciclos)</h2>
-              <p>Formulario de inscripción para pilotos de moto o cuatriciclo.</p>
-              <Link to="/inscripcion/moto" className="btn btn-primary">
-                Inscribir Moto / Cuatri
-              </Link>
+              <p className="home-card-closed-text">Inscripción de motos cerrada.</p>
             </div>
 
             <div className="home-card">
