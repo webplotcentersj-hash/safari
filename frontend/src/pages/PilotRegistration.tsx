@@ -658,17 +658,20 @@ export default function PilotRegistration() {
     );
   }
 
+  // Tras el return de moto cerrada, tipo es solo 'auto'; se mantiene union para el JSX
+  const tipoDisplay = tipo as 'auto' | 'moto';
+
   return (
-    <div className={`registration-page${tipo === 'moto' ? ' registration-page--moto' : ''}`}>
+    <div className={`registration-page${tipoDisplay === 'moto' ? ' registration-page--moto' : ''}`}>
       <div className="container">
-        <Link to={tipo ? '/inscripcion' : SITE_HOME} className="back-link">
-          ← {tipo ? 'Elegir tipo de vehículo' : 'Volver al inicio'}
+        <Link to={tipoDisplay ? '/inscripcion' : SITE_HOME} className="back-link">
+          ← {tipoDisplay ? 'Elegir tipo de vehículo' : 'Volver al inicio'}
         </Link>
         
         <div className="registration-card">
           <div className="registration-header">
-            <img src={tipo === 'moto' ? REGISTRATION_LOGO_URL : '/logo.png'} alt="Safari Tras las Sierras" className="registration-logo" />
-            <h1>Inscripción {tipo === 'auto' ? 'Autos' : 'Motos (y cuatriciclos)'}</h1>
+            <img src={tipoDisplay === 'moto' ? REGISTRATION_LOGO_URL : '/logo.png'} alt="Safari Tras las Sierras" className="registration-logo" />
+            <h1>Inscripción {tipoDisplay === 'auto' ? 'Autos' : 'Motos (y cuatriciclos)'}</h1>
             <p className="subtitle">Completa todos los campos para inscribirte en el Safari Tras las Sierras</p>
             <button
               type="button"
@@ -930,7 +933,7 @@ export default function PilotRegistration() {
               )}
 
               {/* MOTOS: elegir campeonato (Enduro o Travesías/Safari) */}
-              {(tipo === 'moto' || watchCategoria === 'moto') && !tipoCampeonato && (
+              {(tipoDisplay === 'moto' || watchCategoria === 'moto') && !tipoCampeonato && (
                 <div className="form-group">
                   <label>¿Qué campeonato? *</label>
                   <div className="form-row-options" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
@@ -947,7 +950,7 @@ export default function PilotRegistration() {
               )}
 
               {/* Enduro: categorías del Campeonato Sanjuanino de Enduro */}
-              {(tipo === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'enduro' && (
+              {(tipoDisplay === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'enduro' && (
                 <>
                   <div className="form-group">
                     <button type="button" className="back-link" onClick={() => { setTipoCampeonato(null); setValue('tipo_campeonato', undefined); setValue('categoria_enduro', undefined); }} style={{ marginBottom: '0.5rem' }}>← Cambiar campeonato</button>
@@ -978,7 +981,7 @@ export default function PilotRegistration() {
               )}
 
               {/* Travesías: Motos o Cuatriciclos */}
-              {(tipo === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'travesias' && !travesiasSub && (
+              {(tipoDisplay === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'travesias' && !travesiasSub && (
                 <div className="form-group">
                   <label>¿Motos o Cuatriciclos? *</label>
                   <div className="form-row-options" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
@@ -995,7 +998,7 @@ export default function PilotRegistration() {
               )}
 
               {/* Travesías - Motos: categorías */}
-              {(tipo === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'travesias' && travesiasSub === 'moto' && (
+              {(tipoDisplay === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'travesias' && travesiasSub === 'moto' && (
                 <>
                   <div className="form-group">
                     <button type="button" className="back-link" onClick={() => { setTravesiasSub(null); setValue('categoria_travesia_moto', undefined); setValue('categoria', 'moto'); }} style={{ marginBottom: '0.5rem' }}>← Motos / Cuatriciclos</button>
@@ -1020,7 +1023,7 @@ export default function PilotRegistration() {
               )}
 
               {/* Travesías - Cuatriciclos: categorías */}
-              {(tipo === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'travesias' && travesiasSub === 'cuatri' && (
+              {(tipoDisplay === 'moto' || watchCategoria === 'moto') && tipoCampeonato === 'travesias' && travesiasSub === 'cuatri' && (
                 <>
                   <div className="form-group">
                     <button type="button" className="back-link" onClick={() => { setTravesiasSub(null); setValue('categoria_cuatri', undefined); setValue('categoria', 'moto'); }} style={{ marginBottom: '0.5rem' }}>← Motos / Cuatriciclos</button>
@@ -1081,17 +1084,17 @@ export default function PilotRegistration() {
 
             </div>
 
-            {(tipo === 'auto' || (tipo === 'moto' && tipoCampeonato)) && (
+            {(tipoDisplay === 'auto' || (tipoDisplay === 'moto' && tipoCampeonato)) && (
               <div className="registration-payment-box" style={{ marginBottom: '1.5rem' }}>
                 <span className="registration-payment-icon">💳</span>
                 <p className="registration-payment-text">Pagá acá la inscripción</p>
                 <a
-                  href={tipo === 'auto' ? 'https://mpago.la/1ccAJk9' : tipoCampeonato === 'enduro' ? 'https://mpago.la/1zfu8A9' : 'https://mpago.la/16eEYR9'}
+                  href={tipoDisplay === 'auto' ? 'https://mpago.la/1ccAJk9' : tipoCampeonato === 'enduro' ? 'https://mpago.la/1zfu8A9' : 'https://mpago.la/16eEYR9'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="registration-payment-link"
                 >
-                  {tipo === 'auto' ? 'Mercado Pago · Inscripción Autos' : tipoCampeonato === 'enduro' ? 'Mercado Pago · Inscripción Enduro' : 'Mercado Pago · Inscripción Travesías / Safari'}
+                  {tipoDisplay === 'auto' ? 'Mercado Pago · Inscripción Autos' : tipoCampeonato === 'enduro' ? 'Mercado Pago · Inscripción Enduro' : 'Mercado Pago · Inscripción Travesías / Safari'}
                 </a>
               </div>
             )}
