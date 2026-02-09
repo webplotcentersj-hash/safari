@@ -24,7 +24,6 @@ interface Pilot {
   numero?: number;
 }
 
-type VehiculoFilter = 'all' | 'auto' | 'moto' | 'cuatri';
 type CategoriaFilter = 'all' | string;
 
 export default function PilotsList() {
@@ -32,7 +31,6 @@ export default function PilotsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [vehiculoFilter, setVehiculoFilter] = useState<VehiculoFilter>('all');
   const [categoriaFilter, setCategoriaFilter] = useState<CategoriaFilter>('all');
 
   const fetchPilots = useCallback(async () => {
@@ -47,7 +45,7 @@ export default function PilotsList() {
       }
       const data = await res.json();
       const pilotsArray = Array.isArray(data) ? data : [];
-      setPilots(pilotsArray);
+      setPilots(pilotsArray.filter((p: Pilot) => (p.categoria || '').toLowerCase() === 'auto'));
     } catch (err: any) {
       console.error('Error fetching pilots:', err);
       setError(err.message || 'Error al cargar los pilotos');
@@ -86,13 +84,6 @@ export default function PilotsList() {
   ).sort();
 
   const filteredPilots = pilots.filter((pilot) => {
-    if (vehiculoFilter !== 'all') {
-      const cat = pilot.categoria?.toLowerCase();
-      if (vehiculoFilter === 'auto' && cat !== 'auto') return false;
-      if (vehiculoFilter === 'moto' && cat !== 'moto') return false;
-      if (vehiculoFilter === 'cuatri' && cat !== 'cuatri') return false;
-    }
-
     if (categoriaFilter !== 'all') {
       if (getCategoriaLabel(pilot) !== categoriaFilter) return false;
     }
@@ -126,7 +117,7 @@ export default function PilotsList() {
         <div className="pilots-header-inner">
           <a href={SITE_HOME} className="back-link" rel="noopener noreferrer">← Volver al sitio</a>
           <img src="/logo.png" alt="Safari Tras las Sierras" className="pilots-logo" />
-          <h1>Pilotos Inscriptos</h1>
+          <h1>Pilotos Inscriptos (Autos)</h1>
           <p className="subtitle">Safari Tras las Sierras — Valle Fértil, San Juan</p>
           <div className="pilots-header-logos logos-carousel">
             <div className="logos-carousel-track" aria-hidden="true">
@@ -154,36 +145,6 @@ export default function PilotsList() {
             <>
               <div className="pilots-toolbar">
                 <span className="pilots-count">{filteredPilots.length} inscripto{filteredPilots.length !== 1 ? 's' : ''}</span>
-                <div className="pilots-filters">
-                  <button
-                    type="button"
-                    className={`pilots-filter-btn ${vehiculoFilter === 'all' ? 'active' : ''}`}
-                    onClick={() => setVehiculoFilter('all')}
-                  >
-                    Todos
-                  </button>
-                  <button
-                    type="button"
-                    className={`pilots-filter-btn ${vehiculoFilter === 'auto' ? 'active' : ''}`}
-                    onClick={() => setVehiculoFilter('auto')}
-                  >
-                    Autos
-                  </button>
-                  <button
-                    type="button"
-                    className={`pilots-filter-btn ${vehiculoFilter === 'moto' ? 'active' : ''}`}
-                    onClick={() => setVehiculoFilter('moto')}
-                  >
-                    Motos
-                  </button>
-                  <button
-                    type="button"
-                    className={`pilots-filter-btn ${vehiculoFilter === 'cuatri' ? 'active' : ''}`}
-                    onClick={() => setVehiculoFilter('cuatri')}
-                  >
-                    Cuatriciclos
-                  </button>
-                </div>
                 <select
                   className="pilots-category-select"
                   value={categoriaFilter}
@@ -208,7 +169,7 @@ export default function PilotsList() {
               {filteredPilots.length === 0 ? (
                 <div className="pilots-empty">
                   No hay pilotos
-                  {searchTerm || vehiculoFilter !== 'all' || categoriaFilter !== 'all'
+                  {searchTerm || categoriaFilter !== 'all'
                     ? ' que coincidan con el filtro'
                     : ''}.
                 </div>
