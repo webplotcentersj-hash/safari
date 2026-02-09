@@ -115,6 +115,68 @@
   background: rgba(101, 179, 48, 0.4);
 }
 
+/* Clasificaciones motos (nota + sábado/domingo) */
+.prensa-clasificaciones-motos {
+  margin-bottom: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(101, 179, 48, 0.2);
+}
+
+.prensa-clasificaciones-motos h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.03em;
+}
+
+.prensa-nota {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #b8c9b8;
+}
+
+.prensa-clasif-sub {
+  margin: 1rem 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #65b330;
+}
+
+.prensa-clasif-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.prensa-clasif-cat {
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(101, 179, 48, 0.2);
+}
+
+.prensa-clasif-cat strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #e8ebe0;
+}
+
+.prensa-clasif-cat ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.85rem;
+  color: #b8c9b8;
+  line-height: 1.5;
+}
+
+.prensa-clasif-cat li {
+  margin-bottom: 0.15rem;
+}
+
 .prensa-resumen {
   margin-bottom: 2rem;
 }

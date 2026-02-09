@@ -21,8 +21,6 @@ interface PilotPrensa {
   copiloto_nombre?: string | null;
 }
 
-type VehiculoFilter = 'all' | 'auto' | 'moto' | 'cuatri';
-
 function getCategoriaLabel(p: PilotPrensa): string {
   if (p.categoria === 'auto' && p.categoria_auto) return p.categoria_auto;
   if (p.categoria === 'moto') {
@@ -41,7 +39,6 @@ export default function Prensa() {
   const [pilots, setPilots] = useState<PilotPrensa[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [vehiculoFilter, setVehiculoFilter] = useState<VehiculoFilter>('all');
   const [categoriaFilter, setCategoriaFilter] = useState<string>('all');
 
   const fetchPilots = useCallback(async () => {
@@ -54,7 +51,8 @@ export default function Prensa() {
         throw new Error(errData?.error || `Error ${res.status}`);
       }
       const data = await res.json();
-      setPilots(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : [];
+      setPilots(list.filter((p: PilotPrensa) => (p.categoria || '').toLowerCase() === 'auto'));
     } catch (err: unknown) {
       console.error('Error fetching prensa pilots:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar datos');
@@ -72,12 +70,6 @@ export default function Prensa() {
   ).sort();
 
   const filteredPilots = pilots.filter((p) => {
-    if (vehiculoFilter !== 'all') {
-      const cat = p.categoria?.toLowerCase();
-      if (vehiculoFilter === 'auto' && cat !== 'auto') return false;
-      if (vehiculoFilter === 'moto' && cat !== 'moto') return false;
-      if (vehiculoFilter === 'cuatri' && cat !== 'cuatri') return false;
-    }
     if (categoriaFilter !== 'all' && getCategoriaLabel(p) !== categoriaFilter) return false;
     return true;
   });
@@ -91,13 +83,8 @@ export default function Prensa() {
   const summaryEntries = Object.entries(summaryByCategory).sort(([a], [b]) => a.localeCompare(b));
 
   const downloadExcel = () => {
-    let categoria = 'todos';
-    if (vehiculoFilter === 'auto') categoria = 'auto';
-    else if (vehiculoFilter === 'moto') categoria = 'moto';
-    else if (vehiculoFilter === 'cuatri') categoria = 'cuatri';
-
     const params = new URLSearchParams();
-    params.set('categoria', categoria);
+    params.set('categoria', 'auto');
     if (categoriaFilter !== 'all') params.set('categoria_detalle', categoriaFilter);
 
     const url = `${API_BASE}/public/prensa/planilla-excel?${params.toString()}`;
@@ -112,7 +99,7 @@ export default function Prensa() {
             ← Volver al sitio
           </a>
           <img src="/logo.png" alt="Safari Tras las Sierras" className="prensa-logo" />
-          <h1>Prensa</h1>
+          <h1>Prensa (Autos)</h1>
           <p className="prensa-subtitle">Safari Tras las Sierras — Valle Fértil, San Juan</p>
           <div className="prensa-header-logos logos-carousel">
             <div className="logos-carousel-track" aria-hidden="true">
@@ -131,10 +118,9 @@ export default function Prensa() {
         <div className="prensa-main-inner">
           <section className="prensa-info">
             <p>
-              En esta sección podés consultar y descargar el listado de inscriptos para la competencia (aprobados y pendientes).
-              El archivo incluye: nombre, categoría, número, provincia, departamento y nombre del copiloto (en autos).
-              Los datos se descargan ordenados por categoría (autos, motos, cuatriciclos) e incluyen un resumen de
-              cantidad de inscriptos por categoría.
+              En esta sección podés consultar y descargar el listado de inscriptos de <strong>autos</strong> para la competencia (aprobados y pendientes).
+              El archivo incluye: nombre, categoría, número, provincia, departamento y nombre del copiloto.
+              Los datos se descargan ordenados por categoría e incluyen un resumen de cantidad de inscriptos por categoría.
             </p>
           </section>
 
@@ -152,27 +138,9 @@ export default function Prensa() {
               <section className="prensa-filtros">
                 <h2>Descargar planilla</h2>
                 <p className="prensa-filtros-desc">
-                  Elegí el tipo de vehículo y, si querés, una categoría específica. Luego hacé clic en Descargar Excel.
+                  Elegí una categoría (opcional) y hacé clic en Descargar Excel para obtener la planilla de autos.
                 </p>
                 <div className="prensa-filtros-row">
-                  <div className="prensa-filtros-group">
-                    <label>Tipo</label>
-                    <div className="prensa-filtros-btns">
-                      {(['all', 'auto', 'moto', 'cuatri'] as const).map((v) => (
-                        <button
-                          key={v}
-                          type="button"
-                          className={`prensa-filter-btn ${vehiculoFilter === v ? 'active' : ''}`}
-                          onClick={() => {
-                            setVehiculoFilter(v);
-                            setCategoriaFilter('all');
-                          }}
-                        >
-                          {v === 'all' ? 'Todos' : v === 'auto' ? 'Autos' : v === 'moto' ? 'Motos' : 'Cuatriciclos'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                   <div className="prensa-filtros-group">
                     <label>Categoría</label>
                     <select
@@ -196,6 +164,103 @@ export default function Prensa() {
                   <button type="button" className="prensa-download-btn" onClick={downloadExcel}>
                     Descargar Excel
                   </button>
+                </div>
+              </section>
+
+              <section className="prensa-clasificaciones-motos">
+                <h2>Competencia de motos — Fin de semana en Valle Fértil</h2>
+                <p className="prensa-nota">
+                  El Safari Tras las Sierras vivió una nueva fecha del campeonato de motos en Valle Fértil, San Juan, 
+                  con pruebas de Travesía y Enduro el sábado y la definición por categorías el domingo 8 de febrero. 
+                  Gran participación de pilotos de la región en las distintas cilindradas y categorías.
+                </p>
+
+                <h3 className="prensa-clasif-sub">Sábado — Campeonato Travesía</h3>
+                <div className="prensa-clasif-grid">
+                  <div className="prensa-clasif-cat">
+                    <strong>110CC Libre</strong>
+                    <ol><li>Norte Cristian (53)</li><li>Davighi Alfredo Daniel (120)</li><li>Elizondo Armando (123)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>150CC China</strong>
+                    <ol><li>Funez Franco (136)</li><li>Reinoso Gerardo (22)</li><li>Fernández Eduardo (76)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>250CC 4V</strong>
+                    <ol><li>León Franco (160)</li><li>Becerra Lucas (163)</li><li>Romero Cesar (164)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Cuadri 450CC Open</strong>
+                    <ol><li>Domínguez Aldo (49)</li><li>Savina Juan Cruz (180)</li><li>Oviedo Ulises (182)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Cuadri 250CC Chino</strong>
+                    <ol><li>Casivar Lautaro (77)</li><li>Gómez Francisco (74)</li><li>Valdez Pablo (93)</li></ol>
+                  </div>
+                </div>
+
+                <h3 className="prensa-clasif-sub">Sábado — Campeonato Enduro</h3>
+                <div className="prensa-clasif-grid">
+                  <div className="prensa-clasif-cat">
+                    <strong>Senior A</strong>
+                    <ol><li>Martínez Juan Cruz (1)</li><li>Hierrezuelo Fernando (4)</li><li>Sosa Luciano (2)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Junior A</strong>
+                    <ol><li>Bolzonella Tomás (234)</li><li>García Santiago (233)</li><li>Martín Mariano (246)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Master Senior</strong>
+                    <ol><li>Vargas Benjamín (41)</li><li>Navarro Ariel (40)</li><li>Del Carril Marcelo (240)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Master A</strong>
+                    <ol><li>García Federico (253)</li><li>Jofre José Luis (51)</li><li>Sirvente Daniel (229)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Promocional</strong>
+                    <ol><li>Carbajal Joaquín (100)</li><li>Berrocal Ismael (281)</li><li>Sosa Máximo (103)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Enduro</strong>
+                    <ol><li>Aurieme Luciano (90)</li><li>Valdez Víctor (119)</li><li>Clever Miguel (92)</li></ol>
+                  </div>
+                </div>
+
+                <h3 className="prensa-clasif-sub">Domingo — Resultados por categorías</h3>
+                <div className="prensa-clasif-grid">
+                  <div className="prensa-clasif-cat">
+                    <strong>110CC Libre</strong>
+                    <ol><li>Elizondo Fabian Andrés (125)</li><li>Norte Cristian (53)</li><li>Giménez Braian (112)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>150CC China</strong>
+                    <ol><li>Funez Franco (136)</li><li>Avanzatti Demian (132)</li><li>Reinoso Gerardo (22)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>250CC 4V</strong>
+                    <ol><li>Becerra Lucas (163)</li><li>León Franco (160)</li><li>Jofre Lucio (13)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Senior A</strong>
+                    <ol><li>Martínez Juan Cruz (1)</li><li>Hierrezuelo Fernando (4)</li><li>Nacusi Elías (3)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Master A</strong>
+                    <ol><li>Sirvente Daniel (229)</li><li>Jofre José Luis (51)</li><li>Blanco David (225)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Promocional</strong>
+                    <ol><li>Carbajal Joaquín (100)</li><li>Berrocal Ismael (281)</li><li>Paredes David (107)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Principiante</strong>
+                    <ol><li>Batezzatti Santiago (114)</li><li>Ferrer Maximiliano (247)</li><li>Balderramo Diego (169)</li></ol>
+                  </div>
+                  <div className="prensa-clasif-cat">
+                    <strong>Enduro</strong>
+                    <ol><li>Valdez Víctor (119)</li><li>Aurieme Luciano (90)</li><li>Marcial José (56)</li></ol>
+                  </div>
                 </div>
               </section>
 
