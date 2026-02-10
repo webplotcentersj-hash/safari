@@ -67,21 +67,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(405).json({ error: 'Method not allowed' });
     }
     const RCCRONOS_URL = 'https://rccronos.com.ar/safari-tras-la-sierra-2026/';
+    const defaultEtapas = [
+      { nombre: 'ETAPA UNO', tramos: [
+        { tramo: 'PE1: USMO - BALDE DE LAS CHILCA', hora: '09:00HS', tiempos: '' },
+        { tramo: 'PE2: BALDE DE LAS CHICA - COQUI QUINTANA', hora: '09:30HS', tiempos: '' }
+      ]},
+      { nombre: 'ETAPA DOS', tramos: [
+        { tramo: 'PE3: BALDE DE LAS CHILCAS - COQUI QUINTANA', hora: '09:00HS', tiempos: '' }
+      ]}
+    ];
     try {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
       const response = await fetch(RCCRONOS_URL, {
-        headers: { 'User-Agent': 'SafariTrasLasSierras/1.0 (compat)' },
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SafariTrasLasSierras/1.0)' },
         signal: AbortSignal.timeout(10000)
       });
       if (!response.ok) {
-        return res.status(502).json({ error: 'No se pudo obtener la página de RC Cronos', source: RCCRONOS_URL });
+        return res.status(200).json({ source: RCCRONOS_URL, updatedAt: new Date().toISOString(), etapas: defaultEtapas });
       }
       const html = await response.text();
       const rows: { tramo: string; hora: string; tiempos: string }[] = [];
-      const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
-      if (tableMatch) {
-        const tableBody = tableMatch[1];
+      const allTables = html.match(/<table[^>]*>([\s\S]*?)<\/table>/gi) || [];
+      let tableBody: string | null = null;
+      for (const tbl of allTables) {
+        const inner = tbl.replace(/^<table[^>]*>|<\/table>$/gi, '');
+        if (/PE1|TRAMO|ETAPA\s+UNO/i.test(inner)) { tableBody = inner; break; }
+      }
+      const firstTable = allTables[0];
+      if (!tableBody && firstTable) tableBody = firstTable.replace(/^<table[^>]*>|<\/table>$/gi, '');
+      if (tableBody) {
         const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
         let trMatch;
         while ((trMatch = trRegex.exec(tableBody)) !== null) {
@@ -118,16 +133,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (etapas.length === 0 && rows.length > 0) {
         etapas.push({ nombre: 'Programa', tramos: rows.filter((r) => !skipHeaders(r.tramo)) });
       }
+      const hasTramos = etapas.some((e) => e.tramos.length > 0);
       return res.status(200).json({
         source: RCCRONOS_URL,
         updatedAt: new Date().toISOString(),
-        etapas
+        etapas: hasTramos ? etapas : defaultEtapas
       });
     } catch (e: unknown) {
       console.error('public-rccronos-schedule error:', e);
-      return res.status(500).json({
-        error: 'Error al obtener programa desde RC Cronos',
-        source: RCCRONOS_URL
+      return res.status(200).json({
+        source: RCCRONOS_URL,
+        updatedAt: new Date().toISOString(),
+        etapas: defaultEtapas
       });
     }
   }

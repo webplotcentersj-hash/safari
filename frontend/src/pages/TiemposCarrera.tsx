@@ -60,11 +60,26 @@ interface RccronosSchedule {
   etapas: RccronosEtapa[];
 }
 
+const RCCRONOS_SOURCE = 'https://rccronos.com.ar/safari-tras-la-sierra-2026/';
+const DEFAULT_SCHEDULE: RccronosSchedule = {
+  source: RCCRONOS_SOURCE,
+  updatedAt: new Date().toISOString(),
+  etapas: [
+    { nombre: 'ETAPA UNO', tramos: [
+      { tramo: 'PE1: USMO - BALDE DE LAS CHILCA', hora: '09:00HS', tiempos: '' },
+      { tramo: 'PE2: BALDE DE LAS CHICA - COQUI QUINTANA', hora: '09:30HS', tiempos: '' }
+    ]},
+    { nombre: 'ETAPA DOS', tramos: [
+      { tramo: 'PE3: BALDE DE LAS CHILCAS - COQUI QUINTANA', hora: '09:00HS', tiempos: '' }
+    ]}
+  ]
+};
+
 export default function TiemposCarrera() {
   const [data, setData] = useState<RaceDisplayData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [schedule, setSchedule] = useState<RccronosSchedule | null>(null);
+  const [schedule, setSchedule] = useState<RccronosSchedule | null>(DEFAULT_SCHEDULE);
   const [scheduleLoading, setScheduleLoading] = useState(true);
 
   const fetchFromSupabase = useCallback(async (): Promise<RaceDisplayData | null> => {
@@ -154,10 +169,10 @@ export default function TiemposCarrera() {
     fetch(`${url}?_t=${Date.now()}`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((json: RccronosSchedule | null) => {
-        if (!cancelled && json?.etapas) setSchedule(json);
+        if (!cancelled) setSchedule(json?.etapas?.length ? json : DEFAULT_SCHEDULE);
       })
       .catch(() => {
-        if (!cancelled) setSchedule(null);
+        if (!cancelled) setSchedule(DEFAULT_SCHEDULE);
       })
       .finally(() => {
         if (!cancelled) setScheduleLoading(false);
