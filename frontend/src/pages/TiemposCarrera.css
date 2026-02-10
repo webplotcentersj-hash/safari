@@ -248,6 +248,94 @@
   border-bottom: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+/* ----- Programa RC Cronos (tramos / hora / tiempos) ----- */
+.tp-rccronos {
+  position: relative;
+  z-index: 1;
+  padding: clamp(1rem, 4vw, 1.5rem) clamp(1.25rem, 5vw, 2rem);
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  border-bottom: 1px solid var(--tp-border);
+}
+
+.tp-rccronos-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--tp-text);
+  letter-spacing: 0.02em;
+}
+
+.tp-rccronos-source {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  color: var(--tp-text-muted);
+}
+
+.tp-rccronos-source a {
+  color: var(--tp-green-bright);
+  text-decoration: none;
+}
+
+.tp-rccronos-source a:hover {
+  text-decoration: underline;
+}
+
+.tp-rccronos-tables {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.tp-rccronos-block {
+  background: var(--tp-surface);
+  border: 1px solid var(--tp-border);
+  border-radius: var(--tp-radius-sm);
+  overflow: hidden;
+}
+
+.tp-rccronos-etapa {
+  margin: 0;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--tp-green-bright);
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--tp-border);
+}
+
+.tp-rccronos-table-wrap {
+  overflow-x: auto;
+}
+
+.tp-rccronos-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tp-rccronos-table th,
+.tp-rccronos-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--tp-border);
+}
+
+.tp-rccronos-table th {
+  font-weight: 600;
+  color: var(--tp-text-muted);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.tp-rccronos-table td {
+  color: var(--tp-text);
+}
+
+.tp-rccronos-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
 /* ----- Main content ----- */
 .tp-main {
   position: relative;

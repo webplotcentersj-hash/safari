@@ -43,10 +43,29 @@ interface RaceDisplayData {
   times: RaceTimeRow[];
 }
 
+interface RccronosRow {
+  tramo: string;
+  hora: string;
+  tiempos: string;
+}
+
+interface RccronosEtapa {
+  nombre: string;
+  tramos: RccronosRow[];
+}
+
+interface RccronosSchedule {
+  source: string;
+  updatedAt: string;
+  etapas: RccronosEtapa[];
+}
+
 export default function TiemposCarrera() {
   const [data, setData] = useState<RaceDisplayData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [schedule, setSchedule] = useState<RccronosSchedule | null>(null);
+  const [scheduleLoading, setScheduleLoading] = useState(true);
 
   const fetchFromSupabase = useCallback(async (): Promise<RaceDisplayData | null> => {
     if (!supabase) return null;
@@ -126,6 +145,41 @@ export default function TiemposCarrera() {
     return () => clearInterval(interval);
   }, [fetchDisplay]);
 
+  useEffect(() => {
+    const url = API_BASE
+      ? `${API_BASE.replace(/\/$/, '')}/api/public/rccronos-schedule`
+      : '/api/public/rccronos-schedule';
+    let cancelled = false;
+    setScheduleLoading(true);
+    fetch(`${url}?_t=${Date.now()}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json: RccronosSchedule | null) => {
+        if (!cancelled && json?.etapas) setSchedule(json);
+      })
+      .catch(() => {
+        if (!cancelled) setSchedule(null);
+      })
+      .finally(() => {
+        if (!cancelled) setScheduleLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      const url = API_BASE
+        ? `${API_BASE.replace(/\/$/, '')}/api/public/rccronos-schedule`
+        : '/api/public/rccronos-schedule';
+      fetch(`${url}?_t=${Date.now()}`, { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((json: RccronosSchedule | null) => {
+          if (json?.etapas) setSchedule(json);
+        })
+        .catch(() => {});
+    }, 120000);
+    return () => clearInterval(t);
+  }, []);
+
   const isRed = data?.semaphore === 'red';
   const stopMessage = (data?.stop_message ?? '').trim();
   const times = data?.times ?? [];
@@ -167,6 +221,43 @@ export default function TiemposCarrera() {
         <div className="tp-error">
           No se pudieron cargar los datos. Reintentando en unos segundos…
         </div>
+      )}
+
+      {!scheduleLoading && schedule && schedule.etapas.length > 0 && (
+        <section className="tp-rccronos" aria-label="Programa y tiempos por tramo">
+          <h2 className="tp-rccronos-title">Programa y tiempos por tramo</h2>
+          <p className="tp-rccronos-source">
+            Datos actualizados desde{' '}
+            <a href={schedule.source} target="_blank" rel="noopener noreferrer">RC Cronos</a> (cronómetro oficial).
+          </p>
+          <div className="tp-rccronos-tables">
+            {schedule.etapas.map((etapa, i) => (
+              <div key={i} className="tp-rccronos-block">
+                {etapa.nombre && <h3 className="tp-rccronos-etapa">{etapa.nombre}</h3>}
+                <div className="tp-rccronos-table-wrap">
+                  <table className="tp-rccronos-table">
+                    <thead>
+                      <tr>
+                        <th>Tramo</th>
+                        <th>Hora</th>
+                        <th>Tiempos</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {etapa.tramos.map((row, j) => (
+                        <tr key={j}>
+                          <td>{row.tramo}</td>
+                          <td>{row.hora || '—'}</td>
+                          <td>{row.tiempos || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       <main className="tp-main">

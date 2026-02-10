@@ -55,6 +55,83 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  // Rewrite: /api/public/rccronos-schedule → extrae tabla TRAMO/HORA/TIEMPOS de RC Cronos (sin auth)
+  if (String((q as any).__route) === 'public-rccronos-schedule') {
+    if (req.method === 'OPTIONS') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      return res.status(200).end();
+    }
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+    const RCCRONOS_URL = 'https://rccronos.com.ar/safari-tras-la-sierra-2026/';
+    try {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
+      const response = await fetch(RCCRONOS_URL, {
+        headers: { 'User-Agent': 'SafariTrasLasSierras/1.0 (compat)' },
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!response.ok) {
+        return res.status(502).json({ error: 'No se pudo obtener la página de RC Cronos', source: RCCRONOS_URL });
+      }
+      const html = await response.text();
+      const rows: { tramo: string; hora: string; tiempos: string }[] = [];
+      const tableMatch = html.match(/<table[^>]*>([\s\S]*?)<\/table>/i);
+      if (tableMatch) {
+        const tableBody = tableMatch[1];
+        const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+        let trMatch;
+        while ((trMatch = trRegex.exec(tableBody)) !== null) {
+          const cellRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+          const cells: string[] = [];
+          let cellMatch;
+          while ((cellMatch = cellRegex.exec(trMatch[1])) !== null) {
+            cells.push(cellMatch[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim());
+          }
+          if (cells.length >= 1) {
+            const tramo = cells[0] || '';
+            const hora = cells.length >= 2 ? cells[1] : '';
+            const tiempos = cells.length >= 3 ? cells[2] : '';
+            if (tramo.trim()) rows.push({ tramo, hora, tiempos });
+          }
+        }
+      }
+      const etapas: { nombre: string; tramos: { tramo: string; hora: string; tiempos: string }[] }[] = [];
+      let currentEtapa: { nombre: string; tramos: { tramo: string; hora: string; tiempos: string }[] } | null = null;
+      const skipHeaders = (t: string) => /^(TRAMO|HORA|TIEMPOS)$/i.test(t.trim());
+      for (const row of rows) {
+        if (skipHeaders(row.tramo)) continue;
+        const isEtapaHeader = /ETAPA\s+(UNO|DOS|TRES|ONE|TWO|1|2|3)/i.test(row.tramo) && !/^PE\d/i.test(row.tramo);
+        if (isEtapaHeader) {
+          currentEtapa = { nombre: row.tramo, tramos: [] };
+          etapas.push(currentEtapa);
+        } else if (currentEtapa) {
+          currentEtapa.tramos.push({ tramo: row.tramo, hora: row.hora, tiempos: row.tiempos });
+        } else {
+          currentEtapa = { nombre: '', tramos: [{ tramo: row.tramo, hora: row.hora, tiempos: row.tiempos }] };
+          etapas.push(currentEtapa);
+        }
+      }
+      if (etapas.length === 0 && rows.length > 0) {
+        etapas.push({ nombre: 'Programa', tramos: rows.filter((r) => !skipHeaders(r.tramo)) });
+      }
+      return res.status(200).json({
+        source: RCCRONOS_URL,
+        updatedAt: new Date().toISOString(),
+        etapas
+      });
+    } catch (e: unknown) {
+      console.error('public-rccronos-schedule error:', e);
+      return res.status(500).json({
+        error: 'Error al obtener programa desde RC Cronos',
+        source: RCCRONOS_URL
+      });
+    }
+  }
+
   // Rewrite: /api/public/prensa/pilots → todos los inscriptos (aprobados y pendientes), para página Prensa (sin auth)
   if (String((q as any).__route) === 'public-prensa-pilots') {
     if (req.method === 'OPTIONS') {
