@@ -346,15 +346,7 @@ export default function TiemposCarrera() {
               ))}
             </div>
           </>
-        ) : (
-          <div className="tp-empty">
-            <div className="tp-empty-box">
-              <ClockIcon className="tp-empty-icon" />
-              <p className="tp-empty-title">Aún no hay tiempos publicados.</p>
-              <p className="tp-empty-hint">Cuando la app Safari publique resultados, aparecerán aquí automáticamente.</p>
-            </div>
-          </div>
-        )}
+        ) : null}
       </main>
 
       <footer className="tp-footer">
