@@ -1085,17 +1085,23 @@ export default function PilotRegistration() {
             </div>
 
             {(tipoDisplay === 'auto' || (tipoDisplay === 'moto' && tipoCampeonato)) && (
-              <div className="registration-payment-box" style={{ marginBottom: '1.5rem' }}>
-                <span className="registration-payment-icon">💳</span>
-                <p className="registration-payment-text">Pagá acá la inscripción</p>
-                <a
-                  href={tipoDisplay === 'auto' ? 'https://mpago.la/1ccAJk9' : tipoCampeonato === 'enduro' ? 'https://mpago.la/1zfu8A9' : 'https://mpago.la/16eEYR9'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="registration-payment-link"
-                >
-                  {tipoDisplay === 'auto' ? 'Mercado Pago · Inscripción Autos' : tipoCampeonato === 'enduro' ? 'Mercado Pago · Inscripción Enduro' : 'Mercado Pago · Inscripción Travesías / Safari'}
-                </a>
+              <div className="registration-alias-payment">
+                <div className="registration-alias-payment-badge">💳 Forma de pago</div>
+                <p className="registration-alias-payment-title">Enviar inscripción al Alias <strong className="registration-alias-value">Alejandro633.nx</strong> <span className="registration-alias-name">(Alejandro Paéz)</span> con el monto de <strong className="registration-alias-monto">$70.000</strong></p>
+                <div className="registration-alias-detail">
+                  <div className="registration-alias-row">
+                    <span className="registration-alias-label">Alias</span>
+                    <span className="registration-alias-copy registration-alias-copy-main">Alejandro633.nx</span>
+                  </div>
+                  <div className="registration-alias-row">
+                    <span className="registration-alias-label">Titular</span>
+                    <span className="registration-alias-copy">Alejandro Paéz</span>
+                  </div>
+                  <div className="registration-alias-row registration-alias-monto-row">
+                    <span className="registration-alias-label">Monto a enviar</span>
+                    <span className="registration-alias-copy registration-alias-monto-big">$70.000</span>
+                  </div>
+                </div>
               </div>
             )}
 

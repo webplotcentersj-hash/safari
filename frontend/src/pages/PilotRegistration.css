@@ -100,45 +100,116 @@
   font-size: 1.25rem;
 }
 
-/* Caja de pago inscripción */
-.registration-payment-box {
+/* Caja de pago por alias — bien distintiva */
+.registration-alias-payment {
+  margin-bottom: 2rem;
+  padding: 0 1.75rem 1.75rem;
+  background: linear-gradient(160deg, #0a2d14 0%, #1a5c2e 35%, #0d4d20 70%, #0a2d14 100%);
+  border: 4px solid #d4af37;
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(212, 175, 55, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    0 0 40px rgba(212, 175, 55, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.registration-alias-payment-badge {
+  display: inline-block;
+  margin: -1px -1.75rem 1rem -1.75rem;
+  padding: 0.5rem 1.25rem;
+  background: linear-gradient(135deg, #d4af37 0%, #b8962e 100%);
+  color: #0a2d14;
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 12px 12px 0 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.registration-alias-payment-title {
+  margin: 0 0 1.25rem 0;
+  color: #fff;
+  font-size: 1.12rem;
+  line-height: 1.55;
+  text-align: center;
+  font-weight: 600;
+}
+
+.registration-alias-value {
+  color: #d4af37;
+  font-size: 1.25em;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+}
+
+.registration-alias-name {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+}
+
+.registration-alias-monto {
+  color: #d4af37;
+  font-size: 1.4em;
+  font-weight: 800;
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+}
+
+.registration-alias-detail {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 20px;
-  margin-bottom: 28px;
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #009ee3 0%, #0078c1 100%);
+  flex-direction: column;
+  gap: 12px;
+  padding: 1.25rem 1.5rem;
+  background: rgba(0, 0, 0, 0.35);
   border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(0, 158, 227, 0.35);
+  border: 2px solid rgba(212, 175, 55, 0.5);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.registration-payment-icon {
-  font-size: 1.75rem;
+.registration-alias-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
-.registration-payment-text {
-  margin: 0;
+.registration-alias-row.registration-alias-monto-row {
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 2px solid rgba(212, 175, 55, 0.35);
+}
+
+.registration-alias-row.registration-alias-monto-row .registration-alias-copy,
+.registration-alias-monto-big {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #d4af37;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 16px rgba(212, 175, 55, 0.35);
+}
+
+.registration-alias-copy-main {
+  font-size: 1.2rem;
+  color: #d4af37;
+  font-weight: 800;
+}
+
+.registration-alias-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.registration-alias-copy {
   color: #fff;
   font-weight: 700;
   font-size: 1.1rem;
-}
-
-.registration-payment-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 12px 24px;
-  background: #fff;
-  color: #009ee3;
-  font-weight: 700;
-  text-decoration: none;
-  border-radius: 10px;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.registration-payment-link:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
 }
 
 /* Modal medidas de seguridad */
