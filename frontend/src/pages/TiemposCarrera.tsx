@@ -47,6 +47,7 @@ interface RccronosRow {
   tramo: string;
   hora: string;
   tiempos: string;
+  tiemposLink?: string;
 }
 
 interface RccronosEtapa {
@@ -68,11 +69,11 @@ const DEFAULT_SCHEDULE: RccronosSchedule = {
   updatedAt: new Date().toISOString(),
   etapas: [
     { nombre: 'ETAPA UNO', ordenDia: 'ORDEN DIA 1', ordenDiaLink: 'https://drive.google.com/file/d/1HiqvGjxJqDZGxjH8aPpcjSMzATWGyRfH/view?usp=drive_link', tramos: [
-      { tramo: 'PE1: USMO - BALDE DE LAS CHILCA', hora: '09:00HS', tiempos: '' },
-      { tramo: 'PE2: BALDE DE LAS CHICA - COQUI QUINTANA', hora: '09:30HS', tiempos: '' }
+      { tramo: 'PE1: USMO - BALDE DE LAS CHILCA', hora: '09:00HS', tiempos: 'PE/GRAL', tiemposLink: 'https://drive.google.com/file/d/1dUAyVmWzdLVG53CLVMemfNGy4vOs_PQI/view?usp=drive_link' },
+      { tramo: 'PE2: BALDE DE LAS CHICA - COQUI QUINTANA', hora: '09:30HS', tiempos: 'PE/GRAL', tiemposLink: 'https://drive.google.com/file/d/1EyPCLdgQyFGbq-FB3IbDsE9eqzXePub1/view?usp=drive_link' }
     ]},
     { nombre: 'ETAPA DOS', ordenDia: 'ORDEN DIA 2', ordenDiaLink: 'https://drive.google.com/file/d/1jL6DPDhMaIK50Ud7R8hMDMg8fk2_tiSV/view?usp=drive_link', tramos: [
-      { tramo: 'PE3: BALDE DE LAS CHILCAS - COQUI QUINTANA', hora: '09:00HS', tiempos: '' }
+      { tramo: 'PE3: BALDE DE LAS CHILCAS - COQUI QUINTANA', hora: '09:00HS', tiempos: 'PE/GRAL', tiemposLink: 'https://drive.google.com/file/d/1PD2o-szuFyIMyBAqBvAW57ubGAy6O5HX/view?usp=drive_link' }
     ]}
   ]
 };
@@ -276,7 +277,13 @@ export default function TiemposCarrera() {
                         <tr key={j}>
                           <td>{row.tramo}</td>
                           <td>{row.hora || '—'}</td>
-                          <td>{row.tiempos || '—'}</td>
+                          <td>
+                            {row.tiemposLink ? (
+                              <a href={row.tiemposLink} target="_blank" rel="noopener noreferrer">{row.tiempos || 'Ver'}</a>
+                            ) : (
+                              row.tiempos || '—'
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

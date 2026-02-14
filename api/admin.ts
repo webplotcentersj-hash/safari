@@ -69,11 +69,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const RCCRONOS_URL = 'https://rccronos.com.ar/safari-tras-la-sierra-2026/';
     const defaultEtapas = [
       { nombre: 'ETAPA UNO', ordenDia: 'ORDEN DIA 1', ordenDiaLink: 'https://drive.google.com/file/d/1HiqvGjxJqDZGxjH8aPpcjSMzATWGyRfH/view?usp=drive_link', tramos: [
-        { tramo: 'PE1: USMO - BALDE DE LAS CHILCA', hora: '09:00HS', tiempos: '' },
-        { tramo: 'PE2: BALDE DE LAS CHICA - COQUI QUINTANA', hora: '09:30HS', tiempos: '' }
+        { tramo: 'PE1: USMO - BALDE DE LAS CHILCA', hora: '09:00HS', tiempos: 'PE/GRAL', tiemposLink: 'https://drive.google.com/file/d/1dUAyVmWzdLVG53CLVMemfNGy4vOs_PQI/view?usp=drive_link' },
+        { tramo: 'PE2: BALDE DE LAS CHICA - COQUI QUINTANA', hora: '09:30HS', tiempos: 'PE/GRAL', tiemposLink: 'https://drive.google.com/file/d/1EyPCLdgQyFGbq-FB3IbDsE9eqzXePub1/view?usp=drive_link' }
       ]},
       { nombre: 'ETAPA DOS', ordenDia: 'ORDEN DIA 2', ordenDiaLink: 'https://drive.google.com/file/d/1jL6DPDhMaIK50Ud7R8hMDMg8fk2_tiSV/view?usp=drive_link', tramos: [
-        { tramo: 'PE3: BALDE DE LAS CHILCAS - COQUI QUINTANA', hora: '09:00HS', tiempos: '' }
+        { tramo: 'PE3: BALDE DE LAS CHILCAS - COQUI QUINTANA', hora: '09:00HS', tiempos: 'PE/GRAL', tiemposLink: 'https://drive.google.com/file/d/1PD2o-szuFyIMyBAqBvAW57ubGAy6O5HX/view?usp=drive_link' }
       ]}
     ];
     try {
@@ -92,6 +92,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       const html = await response.text();
       type RowWithRaw = { tramo: string; hora: string; tiempos: string; rawRow?: string };
+      /** Extrae el href del primer enlace en la celda N (1-based) de la fila */
+      const linkFromCell = (rawRow: string | undefined, cellIndex1Based: number): string | undefined => {
+        if (!rawRow) return undefined;
+        const cellRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+        let idx = 0;
+        let m;
+        while ((m = cellRegex.exec(rawRow)) !== null) {
+          idx++;
+          if (idx === cellIndex1Based) {
+            const href = m[1].match(/<a\s+href=["']([^"']+)["']/i);
+            return href ? href[1] : undefined;
+          }
+        }
+        return undefined;
+      };
       const rows: RowWithRaw[] = [];
       const allTables = html.match(/<table[^>]*>([\s\S]*?)<\/table>/gi) || [];
       let tableBody: string | null = null;
@@ -119,22 +134,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
       }
-      /** Extrae el href del primer enlace en la segunda celda (para "Orden del día") */
-      const ordenDiaLinkFromRaw = (rawRow: string | undefined): string | undefined => {
-        if (!rawRow) return undefined;
-        const cellRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
-        let cellIndex = 0;
-        let m;
-        while ((m = cellRegex.exec(rawRow)) !== null) {
-          cellIndex++;
-          if (cellIndex === 2) {
-            const href = m[1].match(/<a\s+href=["']([^"']+)["']/i);
-            return href ? href[1] : undefined;
-          }
-        }
-        return undefined;
-      };
-      type EtapaItem = { nombre: string; ordenDia?: string; ordenDiaLink?: string; tramos: { tramo: string; hora: string; tiempos: string }[] };
+      const ordenDiaLinkFromRaw = (rawRow: string | undefined) => linkFromCell(rawRow, 2);
+      type TramoRow = { tramo: string; hora: string; tiempos: string; tiemposLink?: string };
+      type EtapaItem = { nombre: string; ordenDia?: string; ordenDiaLink?: string; tramos: TramoRow[] };
       const etapas: EtapaItem[] = [];
       let currentEtapa: EtapaItem | null = null;
       const ordenDiaFallback: Record<string, { texto: string; link: string }> = {
@@ -156,9 +158,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           };
           etapas.push(currentEtapa);
         } else if (currentEtapa) {
-          currentEtapa.tramos.push({ tramo: row.tramo, hora: row.hora, tiempos: row.tiempos });
+          currentEtapa.tramos.push({
+            tramo: row.tramo,
+            hora: row.hora,
+            tiempos: row.tiempos,
+            tiemposLink: linkFromCell(row.rawRow, 3)
+          });
         } else {
-          currentEtapa = { nombre: '', tramos: [{ tramo: row.tramo, hora: row.hora, tiempos: row.tiempos }] };
+          currentEtapa = {
+            nombre: '',
+            tramos: [{
+              tramo: row.tramo,
+              hora: row.hora,
+              tiempos: row.tiempos,
+              tiemposLink: linkFromCell(row.rawRow, 3)
+            }]
+          };
           etapas.push(currentEtapa);
         }
       }

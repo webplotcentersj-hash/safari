@@ -348,6 +348,15 @@
   color: var(--tp-text);
 }
 
+.tp-rccronos-table td a {
+  color: var(--tp-green-bright);
+  text-decoration: none;
+}
+
+.tp-rccronos-table td a:hover {
+  text-decoration: underline;
+}
+
 .tp-rccronos-table tbody tr:last-child td {
   border-bottom: 0;
 }
