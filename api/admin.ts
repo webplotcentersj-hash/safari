@@ -78,9 +78,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ];
     try {
       res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
+      // Caché corta para que la página de tiempos muestre lo actualizado de RC Cronos (poll cada 10s)
+      res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=30');
       const response = await fetch(RCCRONOS_URL, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SafariTrasLasSierras/1.0)' },
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        },
         signal: AbortSignal.timeout(10000)
       });
       if (!response.ok) {
