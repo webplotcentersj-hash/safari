@@ -155,31 +155,8 @@ export default function TiemposCarrera() {
     fetchDisplay();
   }, [fetchDisplay]);
 
-  // Actualización en tiempo real vía Supabase Realtime (cuando hay Supabase)
   useEffect(() => {
-    if (!supabase) return;
-    const channel = supabase
-      .channel('tiempos-carrera-live')
-      .on(
-        'postgres_changes',
-        { schema: 'public', table: 'race_times', event: '*' },
-        () => { fetchDisplay(); }
-      )
-      .on(
-        'postgres_changes',
-        { schema: 'public', table: 'race_status', event: '*' },
-        () => { fetchDisplay(); }
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchDisplay]);
-
-  // Polling de respaldo cada 2 s (por si Realtime no está habilitado o falla)
-  const POLL_INTERVAL_MS = 2000;
-  useEffect(() => {
-    const interval = setInterval(fetchDisplay, POLL_INTERVAL_MS);
+    const interval = setInterval(fetchDisplay, 5000);
     return () => clearInterval(interval);
   }, [fetchDisplay]);
 
@@ -386,7 +363,7 @@ export default function TiemposCarrera() {
             <img src="https://plotcenter.com.ar/wp-content/uploads/2026/02/insumos-para-figma-12.png" alt="" />
           </div>
         </div>
-        <p className="tp-footer-update">Actualización en tiempo real · Safari Tras las Sierras</p>
+        <p className="tp-footer-update">Programa RC Cronos cada 10 s · Safari Tras las Sierras</p>
       </footer>
     </div>
   );
