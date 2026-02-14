@@ -68,11 +68,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const RCCRONOS_URL = 'https://rccronos.com.ar/safari-tras-la-sierra-2026/';
     const defaultEtapas = [
-      { nombre: 'ETAPA UNO', tramos: [
+      { nombre: 'ETAPA UNO', ordenDia: 'ORDEN DIA 1', ordenDiaLink: 'https://drive.google.com/file/d/1HiqvGjxJqDZGxjH8aPpcjSMzATWGyRfH/view?usp=drive_link', tramos: [
         { tramo: 'PE1: USMO - BALDE DE LAS CHILCA', hora: '09:00HS', tiempos: '' },
         { tramo: 'PE2: BALDE DE LAS CHICA - COQUI QUINTANA', hora: '09:30HS', tiempos: '' }
       ]},
-      { nombre: 'ETAPA DOS', tramos: [
+      { nombre: 'ETAPA DOS', ordenDia: 'ORDEN DIA 2', ordenDiaLink: 'https://drive.google.com/file/d/1jL6DPDhMaIK50Ud7R8hMDMg8fk2_tiSV/view?usp=drive_link', tramos: [
         { tramo: 'PE3: BALDE DE LAS CHILCAS - COQUI QUINTANA', hora: '09:00HS', tiempos: '' }
       ]}
     ];
@@ -137,15 +137,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       type EtapaItem = { nombre: string; ordenDia?: string; ordenDiaLink?: string; tramos: { tramo: string; hora: string; tiempos: string }[] };
       const etapas: EtapaItem[] = [];
       let currentEtapa: EtapaItem | null = null;
+      const ordenDiaFallback: Record<string, { texto: string; link: string }> = {
+        'ETAPA UNO': { texto: 'ORDEN DIA 1', link: 'https://drive.google.com/file/d/1HiqvGjxJqDZGxjH8aPpcjSMzATWGyRfH/view?usp=drive_link' },
+        'ETAPA DOS': { texto: 'ORDEN DIA 2', link: 'https://drive.google.com/file/d/1jL6DPDhMaIK50Ud7R8hMDMg8fk2_tiSV/view?usp=drive_link' }
+      };
       const skipHeaders = (t: string) => /^(TRAMO|HORA|TIEMPOS)$/i.test(t.trim());
       for (const row of rows) {
         if (skipHeaders(row.tramo)) continue;
         const isEtapaHeader = /ETAPA\s+(UNO|DOS|TRES|ONE|TWO|1|2|3)/i.test(row.tramo) && !/^PE\d/i.test(row.tramo);
         if (isEtapaHeader) {
+          const ordenDia = row.hora?.trim() || ordenDiaFallback[row.tramo.toUpperCase()]?.texto;
+          const ordenDiaLink = ordenDiaLinkFromRaw(row.rawRow) || ordenDiaFallback[row.tramo.toUpperCase()]?.link;
           currentEtapa = {
             nombre: row.tramo,
-            ordenDia: row.hora?.trim() || undefined,
-            ordenDiaLink: ordenDiaLinkFromRaw(row.rawRow),
+            ordenDia: ordenDia || undefined,
+            ordenDiaLink: ordenDiaLink || undefined,
             tramos: []
           };
           etapas.push(currentEtapa);
