@@ -91,7 +91,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ source: RCCRONOS_URL, updatedAt: new Date().toISOString(), etapas: defaultEtapas });
       }
       const html = await response.text();
-      const rows: { tramo: string; hora: string; tiempos: string }[] = [];
+      type RowWithRaw = { tramo: string; hora: string; tiempos: string; rawRow?: string };
+      const rows: RowWithRaw[] = [];
       const allTables = html.match(/<table[^>]*>([\s\S]*?)<\/table>/gi) || [];
       let tableBody: string | null = null;
       for (const tbl of allTables) {
@@ -114,18 +115,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const tramo = cells[0] || '';
             const hora = cells.length >= 2 ? cells[1] : '';
             const tiempos = cells.length >= 3 ? cells[2] : '';
-            if (tramo.trim()) rows.push({ tramo, hora, tiempos });
+            if (tramo.trim()) rows.push({ tramo, hora, tiempos, rawRow: trMatch[1] });
           }
         }
       }
-      const etapas: { nombre: string; tramos: { tramo: string; hora: string; tiempos: string }[] }[] = [];
-      let currentEtapa: { nombre: string; tramos: { tramo: string; hora: string; tiempos: string }[] } | null = null;
+      /** Extrae el href del primer enlace en la segunda celda (para "Orden del día") */
+      const ordenDiaLinkFromRaw = (rawRow: string | undefined): string | undefined => {
+        if (!rawRow) return undefined;
+        const cellRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+        let cellIndex = 0;
+        let m;
+        while ((m = cellRegex.exec(rawRow)) !== null) {
+          cellIndex++;
+          if (cellIndex === 2) {
+            const href = m[1].match(/<a\s+href=["']([^"']+)["']/i);
+            return href ? href[1] : undefined;
+          }
+        }
+        return undefined;
+      };
+      type EtapaItem = { nombre: string; ordenDia?: string; ordenDiaLink?: string; tramos: { tramo: string; hora: string; tiempos: string }[] };
+      const etapas: EtapaItem[] = [];
+      let currentEtapa: EtapaItem | null = null;
       const skipHeaders = (t: string) => /^(TRAMO|HORA|TIEMPOS)$/i.test(t.trim());
       for (const row of rows) {
         if (skipHeaders(row.tramo)) continue;
         const isEtapaHeader = /ETAPA\s+(UNO|DOS|TRES|ONE|TWO|1|2|3)/i.test(row.tramo) && !/^PE\d/i.test(row.tramo);
         if (isEtapaHeader) {
-          currentEtapa = { nombre: row.tramo, tramos: [] };
+          currentEtapa = {
+            nombre: row.tramo,
+            ordenDia: row.hora?.trim() || undefined,
+            ordenDiaLink: ordenDiaLinkFromRaw(row.rawRow),
+            tramos: []
+          };
           etapas.push(currentEtapa);
         } else if (currentEtapa) {
           currentEtapa.tramos.push({ tramo: row.tramo, hora: row.hora, tiempos: row.tiempos });

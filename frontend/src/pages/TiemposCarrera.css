@@ -305,6 +305,22 @@
   border-bottom: 1px solid var(--tp-border);
 }
 
+.tp-rccronos-orden-dia {
+  margin: 0;
+  padding: 0.4rem 1rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--tp-text-muted, rgba(255, 255, 255, 0.85));
+}
+
+.tp-rccronos-orden-dia a {
+  color: var(--tp-green-bright);
+  text-decoration: none;
+}
+
+.tp-rccronos-orden-dia a:hover {
+  text-decoration: underline;
+}
+
 .tp-rccronos-table-wrap {
   overflow-x: auto;
 }

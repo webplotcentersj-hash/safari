@@ -51,6 +51,8 @@ interface RccronosRow {
 
 interface RccronosEtapa {
   nombre: string;
+  ordenDia?: string;
+  ordenDiaLink?: string;
   tramos: RccronosRow[];
 }
 
@@ -251,6 +253,15 @@ export default function TiemposCarrera() {
             {schedule.etapas.map((etapa, i) => (
               <div key={i} className="tp-rccronos-block">
                 {etapa.nombre && <h3 className="tp-rccronos-etapa">{etapa.nombre}</h3>}
+                {etapa.ordenDia && (
+                  <p className="tp-rccronos-orden-dia">
+                    {etapa.ordenDiaLink ? (
+                      <a href={etapa.ordenDiaLink} target="_blank" rel="noopener noreferrer">{etapa.ordenDia}</a>
+                    ) : (
+                      etapa.ordenDia
+                    )}
+                  </p>
+                )}
                 <div className="tp-rccronos-table-wrap">
                   <table className="tp-rccronos-table">
                     <thead>
